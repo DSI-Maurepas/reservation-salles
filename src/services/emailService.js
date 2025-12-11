@@ -33,8 +33,8 @@ class EmailService {
     }
   }
 
-  // Envoyer un email d'annulation de réservation
-  async sendCancellation(reservation, raison = '') {
+  // Envoyer un email d'annulation de réservation par priorité
+  async sendCancellation(reservation, raisonPriorite = '', adminEmail = '') {
     try {
       const templateParams = {
         to_email: reservation.email,
@@ -44,7 +44,8 @@ class EmailService {
         heure_debut: reservation.heureDebut,
         date_fin: reservation.dateFin,
         heure_fin: reservation.heureFin,
-        raison: raison || 'Annulation par l\'administrateur'
+        raison_priorite: raisonPriorite || 'Priorité administrative',
+        admin_email: adminEmail || 'Administration'
       };
 
       await emailjs.send(
