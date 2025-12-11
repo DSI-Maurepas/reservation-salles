@@ -58,7 +58,7 @@ function App() {
     <div className="App">
       <header className="app-header">
         <div className="header-content">
-          <h1>🏛️ Réservation de Salles - Mairie</h1>
+          <h1>🏛️ Réservation de Salles - Mairie de MAUREPAS</h1>
           <nav className="main-nav">
             <button 
               className={currentView === 'calendar' ? 'active' : ''}
