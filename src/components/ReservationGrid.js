@@ -22,23 +22,23 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
   useEffect(() => {
     loadReservations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate]);
 
   const loadReservations = async () => {
     try {
       const allReservations = await googleSheetsService.getAllReservations();
       const dateStr = googleSheetsService.formatDate(selectedDate);
-      
-      // Filtrer les r√©servations pour la date s√©lectionn√©e
-      const dayReservations = allReservations.filter(res => 
-        res.dateDebut === dateStr || 
+
+      const dayReservations = allReservations.filter(res =>
+        res.dateDebut === dateStr ||
         (res.dateDebut <= dateStr && res.dateFin >= dateStr)
       );
-      
+
       setReservations(dayReservations);
       setLoading(false);
     } catch (error) {
-      console.error('Erreur lors du chargement des r√©servations:', error);
+      console.error('Erreur lors du chargement des rÈservations :', error);
       setLoading(false);
     }
   };
@@ -46,15 +46,15 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
   const isSlotReserved = (salle, hour) => {
     return reservations.some(res => {
       if (res.salle !== salle) return false;
-      const startHour = parseInt(res.heureDebut.split(':')[0]);
-      const endHour = parseInt(res.heureFin.split(':')[0]);
+      const startHour = parseInt(res.heureDebut.split(':')[0], 10);
+      const endHour = parseInt(res.heureFin.split(':')[0], 10);
       return hour >= startHour && hour < endHour;
     });
   };
 
   const handleMouseDown = (salle, hour) => {
     if (isSlotReserved(salle, hour)) {
-      alert('Ce cr√©neau est d√©j√† r√©serv√©');
+      alert('Ce crÈneau est dÈj‡ rÈservÈ');
       return;
     }
     setIsDragging(true);
@@ -69,13 +69,12 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     if (!isDragging || !selection) return;
     if (selection.salle !== salle) return;
 
-    // V√©rifier que tous les cr√©neaux entre le d√©but et cette heure ne sont pas r√©serv√©s
     const start = Math.min(selection.startHour, hour);
     const end = Math.max(selection.startHour, hour) + 1;
-    
+
     for (let h = start; h < end; h++) {
       if (isSlotReserved(salle, h)) {
-        return; // Ne pas √©tendre la s√©lection si un cr√©neau est r√©serv√©
+        return;
       }
     }
 
@@ -103,7 +102,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     e.preventDefault();
 
     if (!selection) {
-      alert('Veuillez s√©lectionner un cr√©neau');
+      alert('Veuillez sÈlectionner un crÈneau');
       return;
     }
 
@@ -117,8 +116,8 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         salle: selection.salle,
         dateDebut: googleSheetsService.formatDate(selectedDate),
         heureDebut: googleSheetsService.formatTime(selection.startHour),
-        dateFin: formData.recurrence && formData.recurrenceJusquau 
-          ? formData.recurrenceJusquau 
+        dateFin: formData.recurrence && formData.recurrenceJusquau
+          ? formData.recurrenceJusquau
           : googleSheetsService.formatDate(selectedDate),
         heureFin: googleSheetsService.formatTime(selection.endHour),
         nom: formData.nom,
@@ -130,27 +129,22 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         recurrenceJusquau: formData.recurrenceJusquau || null
       };
 
-      // V√©rifier les conflits une derni√®re fois
       const conflicts = await googleSheetsService.checkConflicts(reservation);
       if (conflicts.length > 0) {
-        alert('ERREUR: Un conflit de r√©servation a √©t√© d√©tect√©. Veuillez rafra√Æchir la page et r√©essayer.');
+        alert('ERREUR : un conflit de rÈservation a ÈtÈ dÈtectÈ. Veuillez rafraÓchir la page et rÈessayer.');
         loadReservations();
         return;
       }
 
-      // Ajouter la r√©servation
       const result = await googleSheetsService.addReservation(reservation);
       reservation.id = result.id;
 
-      // Envoyer l'email de confirmation
       try {
         await emailService.sendConfirmation(reservation);
       } catch (emailError) {
-        console.error('Erreur email:', emailError);
-        // Ne pas bloquer m√™me si l'email √©choue
+        console.error('Erreur lors de líenvoi de líemail :', emailError);
       }
 
-      // R√©initialiser le formulaire
       setSelection(null);
       setFormData({
         nom: '',
@@ -164,62 +158,15 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
       onSuccess();
     } catch (error) {
-      alert(`Erreur lors de la r√©servation: ${error.message}`);
+      alert(`Erreur lors de la rÈservation : ${error.message}`);
     }
-  };
-
-  const renderTimeSlots = () => {
-    const slots = [];
-    for (let hour = HORAIRES.HEURE_DEBUT; hour < HORAIRES.HEURE_FIN; hour++) {
-      slots.push(
-        <div key={`time-${hour}`} className="time-label">
-          {googleSheetsService.formatTime(hour)}
-        </div>
-      );
-    }
-    return slots;
-  };
-
-  const renderGrid = () => {
-    const grid = [];
-    
-    SALLES.forEach(salle => {
-      grid.push(
-        <div key={`salle-header-${salle}`} className="salle-header">
-          {salle}
-        </div>
-      );
-    });
-
-    for (let hour = HORAIRES.HEURE_DEBUT; hour < HORAIRES.HEURE_FIN; hour++) {
-      SALLES.forEach(salle => {
-        const reserved = isSlotReserved(salle, hour);
-        const selected = isSlotSelected(salle, hour);
-        
-        grid.push(
-          <div
-            key={`slot-${salle}-${hour}`}
-            className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''}`}
-            onMouseDown={() => handleMouseDown(salle, hour)}
-            onMouseEnter={() => handleMouseEnter(salle, hour)}
-            onMouseUp={handleMouseUp}
-          >
-            {reserved && (
-              <span className="reserved-indicator">R√©serv√©</span>
-            )}
-          </div>
-        );
-      });
-    }
-
-    return grid;
   };
 
   if (loading) {
     return (
       <div className="loading-container">
         <div className="spinner"></div>
-        <p>Chargement des r√©servations...</p>
+        <p>Chargement des rÈservations...</p>
       </div>
     );
   }
@@ -228,10 +175,11 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     <div className="reservation-grid-container">
       <div className="grid-header">
         <button onClick={onBack} className="back-button">
-          ‚óÄ Retour au calendrier
+          ? Retour au calendrier
         </button>
         <h2>
-          R√©servation pour le {selectedDate.toLocaleDateString('fr-FR', {
+          RÈservation pour le{' '}
+          {selectedDate.toLocaleDateString('fr-FR', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -242,24 +190,70 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
       <div className="grid-instructions">
         <p>
-          <strong>Instructions:</strong> Cliquez et glissez pour s√©lectionner un cr√©neau.
-          Les cases grises sont d√©j√† r√©serv√©es.
+          <strong>Instructions :</strong> Cliquez et glissez pour sÈlectionner un crÈneau.
+          Les cases grises sont dÈj‡ rÈservÈes.
         </p>
       </div>
 
-      <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>
-        <div className="grid-corner"></div>
-        {renderTimeSlots()}
-        {renderGrid()}
+      {/* Grille : ligne díen-tÍte puis une ligne par heure */}
+      <div
+        className="reservation-grid"
+        onMouseLeave={() => setIsDragging(false)}
+      >
+        {/* Ligne díen-tÍte : coin vide + salles (colonnes) */}
+        <div className="grid-row header-row">
+          <div className="grid-corner" />
+          {SALLES.map((salle) => (
+            <div key={`salle-header-${salle}`} className="salle-header">
+              {salle}
+            </div>
+          ))}
+        </div>
+
+        {/* Lignes par heure : heure ‡ gauche (ligne) + crÈneaux par salle */}
+        {Array.from(
+          { length: HORAIRES.HEURE_FIN - HORAIRES.HEURE_DEBUT },
+          (_, i) => {
+            const hour = HORAIRES.HEURE_DEBUT + i;
+            return (
+              <div key={`row-${hour}`} className="grid-row">
+                <div className="time-label">
+                  {googleSheetsService.formatTime(hour)}
+                </div>
+                {SALLES.map((salle) => {
+                  const reserved = isSlotReserved(salle, hour);
+                  const selected = isSlotSelected(salle, hour);
+                  return (
+                    <div
+                      key={`slot-${salle}-${hour}`}
+                      className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''}`}
+                      onMouseDown={() => handleMouseDown(salle, hour)}
+                      onMouseEnter={() => handleMouseEnter(salle, hour)}
+                      onMouseUp={handleMouseUp}
+                    >
+                      {reserved && (
+                        <span className="reserved-indicator">RÈservÈ</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          }
+        )}
       </div>
 
       {selection && (
         <div className="reservation-form">
-          <h3>üìù Confirmer la r√©servation</h3>
+          <h3>?? Confirmer la rÈservation</h3>
           <div className="selection-summary">
-            <p><strong>Salle:</strong> {selection.salle}</p>
-            <p><strong>Horaire:</strong> {googleSheetsService.formatTime(selection.startHour)} - {googleSheetsService.formatTime(selection.endHour)}</p>
-            <p><strong>Dur√©e:</strong> {selection.endHour - selection.startHour}h</p>
+            <p><strong>Salle :</strong> {selection.salle}</p>
+            <p>
+              <strong>Horaire :</strong>{' '}
+              {googleSheetsService.formatTime(selection.startHour)} -{' '}
+              {googleSheetsService.formatTime(selection.endHour)}
+            </p>
+            <p><strong>DurÈe :</strong> {selection.endHour - selection.startHour}h</p>
           </div>
 
           <form onSubmit={handleSubmit}>
@@ -269,16 +263,20 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
                 <input
                   type="text"
                   value={formData.nom}
-                  onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nom: e.target.value })
+                  }
                   required
                 />
               </div>
               <div className="form-group">
-                <label>Pr√©nom *</label>
+                <label>PrÈnom *</label>
                 <input
                   type="text"
                   value={formData.prenom}
-                  onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, prenom: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -289,7 +287,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
               <input
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 required
               />
             </div>
@@ -298,26 +298,34 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
               <label>Service *</label>
               <select
                 value={formData.service}
-                onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, service: e.target.value })
+                }
                 required
               >
-                <option value="">-- S√©lectionner un service --</option>
-                {SERVICES.map(service => (
-                  <option key={service} value={service}>{service}</option>
+                <option value="">-- SÈlectionner un service --</option>
+                {SERVICES.map((service) => (
+                  <option key={service} value={service}>
+                    {service}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div className="form-group">
-              <label>Objet de la r√©servation *</label>
+              <label>Objet de la rÈservation *</label>
               <select
                 value={formData.objet}
-                onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, objet: e.target.value })
+                }
                 required
               >
-                <option value="">-- S√©lectionner un objet --</option>
-                {OBJETS_RESERVATION.map(objet => (
-                  <option key={objet} value={objet}>{objet}</option>
+                <option value="">-- SÈlectionner un objet --</option>
+                {OBJETS_RESERVATION.map((objet) => (
+                  <option key={objet} value={objet}>
+                    {objet}
+                  </option>
                 ))}
               </select>
             </div>
@@ -327,30 +335,44 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
                 <input
                   type="checkbox"
                   checked={formData.recurrence}
-                  onChange={(e) => setFormData({ ...formData, recurrence: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      recurrence: e.target.checked
+                    })
+                  }
                 />
-                R√©servation r√©currente (chaque semaine)
+                RÈservation rÈcurrente (chaque semaine)
               </label>
             </div>
 
             {formData.recurrence && (
               <div className="form-group">
-                <label>R√©currence jusqu'au</label>
+                <label>RÈcurrence jusqu'au</label>
                 <input
                   type="date"
                   value={formData.recurrenceJusquau}
-                  onChange={(e) => setFormData({ ...formData, recurrenceJusquau: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      recurrenceJusquau: e.target.value
+                    })
+                  }
                   min={googleSheetsService.formatDate(selectedDate)}
                 />
               </div>
             )}
 
             <div className="form-actions">
-              <button type="button" onClick={() => setSelection(null)} className="cancel-button">
-                Annuler la s√©lection
+              <button
+                type="button"
+                onClick={() => setSelection(null)}
+                className="cancel-button"
+              >
+                Annuler la sÈlection
               </button>
               <button type="submit" className="submit-button">
-                ‚úì Valider ma r√©servation
+                ? Valider ma rÈservation
               </button>
             </div>
           </form>
