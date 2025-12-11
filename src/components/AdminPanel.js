@@ -138,7 +138,7 @@ function AdminPanel() {
     }
 
     // Confirmation finale
-    const confirmation = confirm(
+    const confirmation = window.confirm(
       `⚠️ CONFIRMATION FINALE ⚠️\n\n` +
       `Vous êtes sur le point de supprimer cette réservation pour :\n` +
       `"${priorite}"\n\n` +
