@@ -215,13 +215,8 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       const result = await googleSheetsService.addReservation(reservation);
       reservation.id = result.id;
 
-      // Envoyer l'email de confirmation
-      try {
-        await emailService.sendConfirmation(reservation);
-      } catch (emailError) {
-        console.error('Erreur email:', emailError);
-        // Ne pas bloquer même si l'email échoue
-      }
+      // Email de confirmation désactivé pour économiser le quota EmailJS
+      // Seuls les emails d'annulation seront envoyés
 
       // Réinitialiser le formulaire
       setSelection(null);

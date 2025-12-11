@@ -113,33 +113,60 @@ function AdminPanel() {
   };
 
   const handleDeleteReservation = async (reservation) => {
-    const raison = prompt(
-      `Voulez-vous annuler cette réservation ?\n\n` +
-      `Salle: ${reservation.salle}\n` +
-      `Date: ${reservation.dateDebut} ${reservation.heureDebut} - ${reservation.heureFin}\n` +
-      `Agent: ${reservation.prenom} ${reservation.nom}\n\n` +
-      `Entrez une raison d'annulation (ou laissez vide):`
+    // Demander la raison de priorité (obligatoire)
+    const priorite = prompt(
+      `⚠️ SUPPRESSION DE RÉSERVATION PAR PRIORITÉ ⚠️\n\n` +
+      `Cette action va supprimer la réservation suivante :\n\n` +
+      `📍 Salle: ${reservation.salle}\n` +
+      `📅 Date: ${reservation.dateDebut}\n` +
+      `🕐 Horaire: ${reservation.heureDebut} - ${reservation.heureFin}\n` +
+      `👤 Agent: ${reservation.prenom} ${reservation.nom}\n` +
+      `📧 Email: ${reservation.email}\n\n` +
+      `⚠️ IMPORTANT : Un email sera envoyé à l'agent pour l'informer de la suppression.\n\n` +
+      `Veuillez indiquer la RAISON DE PRIORITÉ (obligatoire) :\n` +
+      `Exemples: "Réunion conseil municipal", "Visite préfectorale", "Événement urgent"...`
     );
 
-    if (raison === null) return; // Annulé
+    // Annulation si l'utilisateur clique sur "Annuler" ou laisse vide
+    if (priorite === null) {
+      return; // Annulé par l'utilisateur
+    }
+
+    if (!priorite || priorite.trim() === '') {
+      alert('❌ La raison de priorité est obligatoire pour supprimer une réservation.\n\nLa suppression a été annulée.');
+      return;
+    }
+
+    // Confirmation finale
+    const confirmation = confirm(
+      `⚠️ CONFIRMATION FINALE ⚠️\n\n` +
+      `Vous êtes sur le point de supprimer cette réservation pour :\n` +
+      `"${priorite}"\n\n` +
+      `Un email sera envoyé à ${reservation.email}\n\n` +
+      `Confirmez-vous cette action ?`
+    );
+
+    if (!confirmation) return;
 
     try {
       await googleSheetsService.deleteReservation(reservation.id);
       
-      // Envoyer email d'annulation
+      // Envoyer email d'annulation avec la raison de priorité
       try {
         await emailService.sendCancellation(
           reservation,
-          raison || 'Annulation par l\'administrateur'
+          priorite.trim(),
+          adminEmail // Email de l'administrateur qui supprime
         );
       } catch (emailError) {
         console.error('Erreur email:', emailError);
+        alert('⚠️ La réservation a été supprimée mais l\'email n\'a pas pu être envoyé.\n\nVeuillez contacter l\'agent manuellement.');
       }
 
-      alert('Réservation annulée avec succès. Un email a été envoyé à l\'agent.');
+      alert('✅ Réservation supprimée avec succès.\n\n📧 Un email a été envoyé à l\'agent pour l\'informer de la suppression et de la raison de priorité.');
       loadAllReservations();
     } catch (error) {
-      alert(`Erreur lors de l'annulation: ${error.message}`);
+      alert(`❌ Erreur lors de la suppression: ${error.message}`);
     }
   };
 
