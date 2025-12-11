@@ -52,10 +52,19 @@ class GoogleSheetsService {
   // Récupérer toutes les réservations
   async getAllReservations() {
     try {
+      // Vérifier que l'API est initialisée
+      if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
+        throw new Error('API Google Sheets non initialisée');
+      }
+
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
         range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A2:M`,
       });
+
+      if (!response || !response.result) {
+        throw new Error('Réponse invalide de Google Sheets');
+      }
 
       const rows = response.result.values || [];
       return rows.map((row, index) => ({
@@ -75,7 +84,16 @@ class GoogleSheetsService {
       }));
     } catch (error) {
       console.error('Erreur lors de la récupération des réservations:', error);
-      throw error;
+      
+      if (error.message) {
+        throw new Error(`Erreur de récupération: ${error.message}`);
+      } else if (error.status === 403) {
+        throw new Error('Accès refusé au Google Sheet. Vérifiez les permissions.');
+      } else if (error.status === 404) {
+        throw new Error('Google Sheet introuvable. Vérifiez la configuration.');
+      } else {
+        throw new Error('Impossible de récupérer les réservations. Vérifiez votre connexion.');
+      }
     }
   }
 
@@ -103,6 +121,11 @@ class GoogleSheetsService {
   // Ajouter une nouvelle réservation
   async addReservation(reservation) {
     try {
+      // Vérifier que l'API est initialisée
+      if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
+        throw new Error('API Google Sheets non initialisée. Veuillez rafraîchir la page.');
+      }
+
       // Vérifier d'abord les conflits
       const conflicts = await this.checkConflicts(reservation);
       if (conflicts.length > 0) {
@@ -111,6 +134,11 @@ class GoogleSheetsService {
 
       // Générer un ID unique
       const id = `RES_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Valider les données
+      if (!reservation.salle || !reservation.dateDebut || !reservation.heureDebut) {
+        throw new Error('Données de réservation incomplètes (salle, date ou heure manquante)');
+      }
 
       const values = [[
         id,
@@ -128,17 +156,34 @@ class GoogleSheetsService {
         reservation.email || ''
       ]];
 
-      await window.gapi.client.sheets.spreadsheets.values.append({
+      const response = await window.gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
         range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A:M`,
         valueInputOption: 'USER_ENTERED',
         resource: { values }
       });
 
+      // Vérifier que l'ajout a réussi
+      if (!response || !response.result) {
+        throw new Error('La réponse de Google Sheets est invalide');
+      }
+
       return { success: true, id };
     } catch (error) {
       console.error('Erreur lors de l\'ajout de la réservation:', error);
-      throw error;
+      
+      // Améliorer le message d'erreur
+      if (error.message) {
+        throw new Error(error.message);
+      } else if (error.result && error.result.error) {
+        throw new Error(`Erreur Google Sheets: ${error.result.error.message}`);
+      } else if (error.status === 403) {
+        throw new Error('Accès refusé. Vérifiez les permissions du Google Sheet.');
+      } else if (error.status === 404) {
+        throw new Error('Google Sheet introuvable. Vérifiez l\'ID de la feuille.');
+      } else {
+        throw new Error('Erreur inconnue lors de l\'ajout. Vérifiez votre connexion et réessayez.');
+      }
     }
   }
 
