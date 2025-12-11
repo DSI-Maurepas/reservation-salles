@@ -1,5 +1,6 @@
 {
-  "name": "reservation-salles-mairie",
+  "name": "reservation-salles",
+  "homepage": "https://DSI-Maurepas.github.io/reservation-salles",
   "version": "1.0.0",
   "description": "Système de réservation de salles pour la mairie",
   "private": true,
