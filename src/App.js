@@ -105,7 +105,7 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>© 2024 Mairie - Système de réservation de salles | DSI</p>
+        <p>© 2026 Mairie de MAUREPAS - Système de réservation de salles | DSI</p>
       </footer>
     </div>
   );

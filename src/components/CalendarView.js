@@ -9,6 +9,22 @@ function CalendarView({ onDateSelect }) {
   const [dateAvailability, setDateAvailability] = useState({});
   const [loading, setLoading] = useState(false);
 
+  // Fonction utilitaire pour créer une date locale sans risque de décalage
+  const createLocalDate = (year, month, day) => {
+    const date = new Date(year, month, day, 12, 0, 0, 0); // Midi pour éviter les décalages
+    return date;
+  };
+
+  // Fonction pour obtenir la date d'aujourd'hui de manière fiable
+  const getTodayLocal = () => {
+    const now = new Date();
+    return {
+      year: now.getFullYear(),
+      month: now.getMonth(),
+      day: now.getDate()
+    };
+  };
+
   useEffect(() => {
     loadMonthAvailability();
   }, [currentMonth]);
@@ -26,7 +42,7 @@ function CalendarView({ onDateSelect }) {
 
       // Calculer la disponibilité pour chaque jour du mois
       for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
+        const date = createLocalDate(year, month, day);
         const dateStr = googleSheetsService.formatDate(date);
         
         // Vérifier si c'est un dimanche ou jour férié
@@ -125,13 +141,21 @@ function CalendarView({ onDateSelect }) {
     }
 
     // Jours du mois
-    const today = new Date();
-    const todayYear = today.getFullYear();
-    const todayMonth = today.getMonth();
-    const todayDay = today.getDate();
+    // Obtenir la date actuelle de manière fiable
+    const todayInfo = getTodayLocal();
+    const todayYear = todayInfo.year;
+    const todayMonth = todayInfo.month;
+    const todayDay = todayInfo.day;
+    
+    console.log('📅 Date actuelle:', {
+      année: todayYear,
+      mois: todayMonth + 1, // +1 pour affichage humain (1-12)
+      jour: todayDay,
+      dateComplete: new Date(todayYear, todayMonth, todayDay).toLocaleDateString('fr-FR')
+    });
     
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
+      const date = createLocalDate(year, month, day);
       const dateStr = googleSheetsService.formatDate(date);
       const availability = dateAvailability[dateStr] || 'loading';
       const isToday = (year === todayYear && month === todayMonth && day === todayDay);
