@@ -21,10 +21,54 @@ function CalendarView({ onDateSelect }) {
       const month = currentMonth.getMonth();
       const daysInMonth = new Date(year, month + 1, 0).getDate();
 
+      // Charger TOUTES les réservations une seule fois
+      const allReservations = await googleSheetsService.getAllReservations();
+
+      // Calculer la disponibilité pour chaque jour du mois
       for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const dateStr = googleSheetsService.formatDate(date);
-        availability[dateStr] = await googleSheetsService.getDateAvailability(date);
+        
+        // Vérifier si c'est un dimanche ou jour férié
+        if (date.getDay() === 0 || JOURS_FERIES.includes(dateStr)) {
+          availability[dateStr] = 'closed';
+          continue;
+        }
+
+        // Compter les créneaux réservés pour cette date
+        const reservationsDuJour = allReservations.filter(res => 
+          res.dateDebut === dateStr || 
+          (res.dateDebut <= dateStr && res.dateFin >= dateStr)
+        );
+
+        if (reservationsDuJour.length === 0) {
+          availability[dateStr] = 'available';
+          continue;
+        }
+
+        // Calculer le taux d'occupation
+        const nbSalles = 9;
+        const nbCreneaux = 14; // 8h-22h
+        const totalCreneauxPossibles = nbSalles * nbCreneaux;
+
+        let creneauxReserves = 0;
+        reservationsDuJour.forEach(res => {
+          const debut = parseInt(res.heureDebut.split(':')[0]);
+          const fin = parseInt(res.heureFin.split(':')[0]);
+          creneauxReserves += (fin - debut);
+        });
+
+        const tauxOccupation = creneauxReserves / totalCreneauxPossibles;
+
+        if (tauxOccupation >= 1) {
+          availability[dateStr] = 'full';
+        } else if (tauxOccupation > 0.7) {
+          availability[dateStr] = 'busy';
+        } else if (tauxOccupation > 0.3) {
+          availability[dateStr] = 'partial';
+        } else {
+          availability[dateStr] = 'available';
+        }
       }
 
       setDateAvailability(availability);
