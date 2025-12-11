@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "description": "Système de réservation de salles pour la mairie",
   "private": true,
-  "homepage": ".",
   "dependencies": {
     "date-fns": "^2.30.0",
     "emailjs-com": "^3.2.0",
