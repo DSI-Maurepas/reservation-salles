@@ -2,17 +2,18 @@
 // Configuration pour l'API Google Sheets
 
 export const GOOGLE_CONFIG = {
-  // À REMPLACER : Votre API Key Google (voir guide d'installation)
-  API_KEY: 'AIzaSyAfpo4O0YkzjG8AaRl9tz9JMcAdQW3b8nY',
+  // À REMPLACER : Votre API Key Google (pour la lecture publique)
+  API_KEY: 'VOTRE_CLE_API_GOOGLE',
+  
+  // À REMPLACER : Votre Client ID OAuth 2.0 (pour l'écriture avec authentification)
+  // IMPORTANT : Nécessaire pour pouvoir créer/modifier/supprimer des réservations
+  // Obtenir depuis : https://console.cloud.google.com/apis/credentials
+  CLIENT_ID: 'VOTRE_CLIENT_ID.apps.googleusercontent.com',
   
   // À REMPLACER : L'ID de votre Google Sheet
   // Exemple: si l'URL est https://docs.google.com/spreadsheets/d/1ABC-xyz123/edit
   // alors SPREADSHEET_ID = '1ABC-xyz123'
-  SPREADSHEET_ID: '1SNkHpAXIzu3GNQxFX3csCRv_4rz9M52xO6ov0LCed7Q',
-
-  // IMPORTANT : � remplacer par votre vrai Client ID Google OAuth 2.0
-  // Exemple : "1234567890-abcdefg.apps.googleusercontent.com"
-  CLIENT_ID: '175113424020-t2ootm4m0v08kkn1vbadmd2qeqt5cv27.apps.googleusercontent.com',
+  SPREADSHEET_ID: 'VOTRE_ID_SPREADSHEET',
   
   // Noms des onglets dans votre Google Sheet
   SHEETS: {
@@ -29,10 +30,10 @@ export const GOOGLE_CONFIG = {
 // Configuration EmailJS pour les notifications
 export const EMAIL_CONFIG = {
   // À REMPLACER : Vos identifiants EmailJS (voir guide d'installation)
-  SERVICE_ID: 'service_xoen8ug',
-  TEMPLATE_ID_CONFIRMATION: 'template_awkvaoh',
-  TEMPLATE_ID_ANNULATION: 'template_i9aqlt9',
-  USER_ID: 'QFnQAOzHCSEtZoeVe'
+  SERVICE_ID: 'VOTRE_SERVICE_ID',
+  TEMPLATE_ID_CONFIRMATION: 'VOTRE_TEMPLATE_CONFIRMATION',
+  TEMPLATE_ID_ANNULATION: 'VOTRE_TEMPLATE_ANNULATION',
+  USER_ID: 'VOTRE_USER_ID'
 };
 
 // Liste des salles de la mairie
@@ -124,5 +125,6 @@ export const JOURS_FERIES = [
 
 // Administrateurs de l'application (adresses email)
 export const ADMINISTRATEURS = [
-  'j.matrat@maurepas.fr', // À REMPLACER par les vrais emails
+  'admin@mairie.fr', // À REMPLACER par les vrais emails
+  'dsi@mairie.fr'
 ];
