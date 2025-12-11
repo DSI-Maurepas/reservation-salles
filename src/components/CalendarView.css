@@ -235,6 +235,13 @@
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  /* TABLETTE : Cellules carrées 1:1 */
+  .calendar-day {
+    aspect-ratio: 1 / 1;
+  }
+}
+
 @media (max-width: 768px) {
   .calendar-view {
     padding: 0.8rem;
@@ -272,10 +279,12 @@
     max-width: 100%;
   }
 
+  /* MOBILE : Cellules carrées 1:1 pour tenir sans scroll */
   .calendar-day {
+    aspect-ratio: 1 / 1;
     padding: 0.3rem;
     min-height: 40px;
-    max-height: 60px;
+    max-height: none;
   }
 
   .calendar-day-header {
@@ -289,5 +298,44 @@
 
   .availability-indicator {
     font-size: 0.55rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* PETIT MOBILE : Cellules encore plus compactes mais toujours 1:1 */
+  .calendar-view {
+    padding: 0.5rem;
+  }
+
+  .calendar-grid {
+    gap: 3px;
+  }
+
+  .calendar-day {
+    aspect-ratio: 1 / 1;
+    padding: 0.2rem;
+    min-height: 35px;
+  }
+
+  .calendar-day-header {
+    font-size: 0.7rem;
+    padding: 0.2rem;
+  }
+
+  .day-number {
+    font-size: 0.8rem;
+  }
+
+  .availability-indicator {
+    font-size: 0.5rem;
+  }
+
+  .legend-item {
+    font-size: 0.7rem;
+  }
+
+  .legend-color {
+    width: 14px;
+    height: 14px;
   }
 }
