@@ -62,34 +62,17 @@
   font-size: 0.95rem;
 }
 
-/* Reservation Grid – conteneur vertical */
+/* Reservation Grid */
 .reservation-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 80px repeat(9, 1fr);
+  grid-template-rows: auto;
   gap: 2px;
   background: var(--border-color);
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 2rem;
   user-select: none;
-}
-
-/* Chaque ligne (header ou ligne d’heure) est une grille */
-.grid-row {
-  display: grid;
-  grid-template-columns: 80px repeat(9, 1fr); /* 1 colonne heure + 9 salles */
-  gap: 2px;
-}
-
-/* Ligne d’en-tête (salles) */
-.header-row .grid-corner {
-  background: var(--secondary-color);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  padding: 1rem 0.5rem;
 }
 
 .grid-corner {
@@ -100,6 +83,8 @@
   justify-content: center;
   font-weight: 700;
   padding: 1rem 0.5rem;
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .time-label {
@@ -111,6 +96,7 @@
   font-weight: 600;
   font-size: 0.85rem;
   padding: 0.8rem 0.3rem;
+  grid-column: 1;
 }
 
 .salle-header {
@@ -124,6 +110,7 @@
   font-size: 0.85rem;
   padding: 1rem 0.5rem;
   line-height: 1.2;
+  grid-row: 1;
 }
 
 .time-slot {
@@ -307,8 +294,9 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .grid-row {
+  .reservation-grid {
     grid-template-columns: 60px repeat(9, 1fr);
+    font-size: 0.8rem;
   }
 
   .salle-header {
@@ -330,6 +318,7 @@
 
   .reservation-grid {
     overflow-x: auto;
+    display: block;
   }
 
   .form-row {
