@@ -139,10 +139,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Support tactile amélioré */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .time-slot:hover:not(.reserved) {
   background: #e3f2fd;
+}
+
+/* Feedback visuel pendant le drag sur mobile */
+.time-slot:active:not(.reserved) {
+  background: #bbdefb;
 }
 
 .time-slot.selected {

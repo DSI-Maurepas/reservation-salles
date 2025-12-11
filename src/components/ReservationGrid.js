@@ -90,28 +90,78 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     setIsDragging(false);
   };
 
-  // Support tactile pour mobile
+  // Support tactile pour mobile - Version améliorée
   const handleTouchStart = (salle, hour) => {
-    handleMouseDown(salle, hour);
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDragging) return;
-    e.preventDefault();
-    
-    const touch = e.touches[0];
-    const element = document.elementFromPoint(touch.clientX, touch.clientY);
-    
-    if (element && element.dataset.salle && element.dataset.hour) {
-      const salle = element.dataset.salle;
-      const hour = parseInt(element.dataset.hour);
-      handleMouseEnter(salle, hour);
+    if (isSlotReserved(salle, hour)) {
+      alert('Ce créneau est déjà réservé');
+      return;
     }
+    setIsDragging(true);
+    setSelection({
+      salle,
+      startHour: hour,
+      endHour: hour + 1
+    });
   };
 
   const handleTouchEnd = () => {
     setIsDragging(false);
   };
+
+  // Gestion globale du touchmove pour permettre la sélection multiple
+  React.useEffect(() => {
+    const handleGlobalTouchMove = (e) => {
+      if (!isDragging || !selection) return;
+      
+      // Empêcher le scroll pendant la sélection
+      e.preventDefault();
+      
+      const touch = e.touches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      
+      if (element && element.dataset.salle && element.dataset.hour) {
+        const salle = element.dataset.salle;
+        const hour = parseInt(element.dataset.hour);
+        
+        // Vérifier qu'on est dans la même salle
+        if (salle !== selection.salle) return;
+        
+        // Vérifier que tous les créneaux entre le début et cette heure ne sont pas réservés
+        const start = Math.min(selection.startHour, hour);
+        const end = Math.max(selection.startHour, hour) + 1;
+        
+        let hasReserved = false;
+        for (let h = start; h < end; h++) {
+          if (isSlotReserved(salle, h)) {
+            hasReserved = true;
+            break;
+          }
+        }
+        
+        if (!hasReserved) {
+          setSelection({
+            salle,
+            startHour: start,
+            endHour: end
+          });
+        }
+      }
+    };
+
+    const handleGlobalTouchEnd = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('touchmove', handleGlobalTouchMove, { passive: false });
+      document.addEventListener('touchend', handleGlobalTouchEnd);
+      
+      return () => {
+        document.removeEventListener('touchmove', handleGlobalTouchMove);
+        document.removeEventListener('touchend', handleGlobalTouchEnd);
+      };
+    }
+  }, [isDragging, selection]);
 
   const isSlotSelected = (salle, hour) => {
     if (!selection) return false;
@@ -238,9 +288,10 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
             onMouseDown={() => handleMouseDown(salle, hour)}
             onMouseEnter={() => handleMouseEnter(salle, hour)}
             onMouseUp={handleMouseUp}
-            onTouchStart={() => handleTouchStart(salle, hour)}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              handleTouchStart(salle, hour);
+            }}
           >
             {reserved && (
               <span className="reserved-indicator">Réservé</span>
