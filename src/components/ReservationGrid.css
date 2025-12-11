@@ -62,6 +62,23 @@
   font-size: 0.95rem;
 }
 
+.mobile-instruction {
+  display: none;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #ff9800;
+  font-size: 0.85rem;
+  color: var(--text-dark);
+}
+
+@media (max-width: 768px) {
+  .mobile-instruction {
+    display: block;
+  }
+}
+
 /* Reservation Grid */
 .reservation-grid {
   display: grid;
@@ -307,7 +324,7 @@
 
 @media (max-width: 768px) {
   .reservation-grid-container {
-    padding: 1rem;
+    padding: 0.8rem;
   }
 
   .grid-header {
@@ -316,16 +333,121 @@
     gap: 1rem;
   }
 
+  .grid-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .back-button {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .grid-instructions {
+    font-size: 0.85rem;
+    padding: 0.8rem 1rem;
+  }
+
+  /* Grille avec scroll horizontal pour mobile */
   .reservation-grid {
+    grid-template-columns: 50px repeat(9, minmax(60px, 1fr));
     overflow-x: auto;
-    display: block;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    /* Garde la grille CSS active */
+    display: grid !important;
+    margin-bottom: 1rem;
+  }
+
+  .grid-corner {
+    font-size: 0.7rem;
+    padding: 0.6rem 0.2rem;
+    position: sticky;
+    left: 0;
+    z-index: 3;
+  }
+
+  .time-label {
+    font-size: 0.7rem;
+    padding: 0.6rem 0.2rem;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--secondary-color);
+  }
+
+  .salle-header {
+    font-size: 0.65rem;
+    padding: 0.6rem 0.2rem;
+    writing-mode: horizontal-tb;
+    min-width: 60px;
+  }
+
+  .time-slot {
+    min-height: 40px;
+    min-width: 60px;
+  }
+
+  /* Formulaire mobile */
+  .reservation-form {
+    padding: 1rem;
+  }
+
+  .reservation-form h3 {
+    font-size: 1.1rem;
   }
 
   .form-row {
     grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .form-group label {
+    font-size: 0.85rem;
+  }
+
+  .form-group input,
+  .form-group select {
+    font-size: 0.9rem;
+    padding: 0.7rem;
   }
 
   .form-actions {
     flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .cancel-button,
+  .submit-button {
+    padding: 0.8rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Extra petit écran (< 480px) */
+@media (max-width: 480px) {
+  .reservation-grid {
+    grid-template-columns: 45px repeat(9, minmax(55px, 1fr));
+    font-size: 0.7rem;
+  }
+
+  .grid-corner,
+  .time-label {
+    font-size: 0.65rem;
+    padding: 0.5rem 0.1rem;
+  }
+
+  .salle-header {
+    font-size: 0.6rem;
+    padding: 0.5rem 0.1rem;
+    min-width: 55px;
+  }
+
+  .time-slot {
+    min-height: 35px;
+    min-width: 55px;
+  }
+
+  .reserved-indicator {
+    font-size: 0.5rem;
   }
 }

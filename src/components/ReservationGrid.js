@@ -90,6 +90,29 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     setIsDragging(false);
   };
 
+  // Support tactile pour mobile
+  const handleTouchStart = (salle, hour) => {
+    handleMouseDown(salle, hour);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    if (element && element.dataset.salle && element.dataset.hour) {
+      const salle = element.dataset.salle;
+      const hour = parseInt(element.dataset.hour);
+      handleMouseEnter(salle, hour);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
   const isSlotSelected = (salle, hour) => {
     if (!selection) return false;
     return (
@@ -206,6 +229,8 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
           <div
             key={`slot-${salle}-${hour}`}
             className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''}`}
+            data-salle={salle}
+            data-hour={hour}
             style={{ 
               gridColumn: salleIndex + 2,
               gridRow: rowNumber
@@ -213,6 +238,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
             onMouseDown={() => handleMouseDown(salle, hour)}
             onMouseEnter={() => handleMouseEnter(salle, hour)}
             onMouseUp={handleMouseUp}
+            onTouchStart={() => handleTouchStart(salle, hour)}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
           >
             {reserved && (
               <span className="reserved-indicator">Réservé</span>
@@ -255,6 +283,11 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
           <strong>Instructions:</strong> Cliquez et glissez pour sélectionner un créneau.
           Les cases grises sont déjà réservées.
         </p>
+      </div>
+
+      <div className="mobile-instruction">
+        <strong>📱 Sur mobile :</strong> Faites glisser horizontalement pour voir toutes les salles. 
+        Cliquez et maintenez pour sélectionner plusieurs créneaux dans une même salle.
       </div>
 
       <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>
