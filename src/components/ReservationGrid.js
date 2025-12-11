@@ -213,10 +213,21 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
       // Ajouter la réservation
       const result = await googleSheetsService.addReservation(reservation);
+      
+      if (!result || !result.id) {
+        throw new Error('La réservation a échoué : aucun ID retourné');
+      }
+      
       reservation.id = result.id;
 
       // Email de confirmation désactivé pour économiser le quota EmailJS
       // Seuls les emails d'annulation seront envoyés
+
+      // Afficher un message de succès
+      alert('✅ Réservation créée avec succès !\n\n' +
+            `📍 Salle : ${reservation.salle}\n` +
+            `📅 Date : ${reservation.dateDebut}\n` +
+            `🕐 Horaire : ${reservation.heureDebut} - ${reservation.heureFin}`);
 
       // Réinitialiser le formulaire
       setSelection(null);
@@ -232,7 +243,22 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
       onSuccess();
     } catch (error) {
-      alert(`Erreur lors de la réservation: ${error.message}`);
+      console.error('Erreur détaillée:', error);
+      
+      // Message d'erreur plus explicite
+      let errorMessage = 'Erreur lors de la réservation';
+      
+      if (error.message) {
+        errorMessage += `: ${error.message}`;
+      } else if (error.result && error.result.error) {
+        errorMessage += `: ${error.result.error.message}`;
+      } else if (typeof error === 'string') {
+        errorMessage += `: ${error}`;
+      } else {
+        errorMessage += ': Erreur inconnue. Veuillez réessayer ou contacter l\'administrateur.';
+      }
+      
+      alert(`❌ ${errorMessage}\n\nDétails techniques : ${JSON.stringify(error, null, 2).substring(0, 200)}`);
     }
   };
 
