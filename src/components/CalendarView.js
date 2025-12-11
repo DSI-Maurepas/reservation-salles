@@ -105,7 +105,8 @@ function CalendarView({ onDateSelect }) {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     
     const days = [];
-    const weekDays = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+    // Commencer par Lundi au lieu de Dimanche
+    const weekDays = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
     // En-têtes des jours
     weekDays.forEach(day => {
@@ -117,7 +118,8 @@ function CalendarView({ onDateSelect }) {
     });
 
     // Espaces vides avant le premier jour
-    const startDay = firstDay === 0 ? 6 : firstDay - 1; // Ajuster pour commencer le lundi
+    // Convertir getDay() (0=Dim, 1=Lun, ..., 6=Sam) en position dans notre tableau (0=Lun, ..., 6=Dim)
+    const startDay = firstDay === 0 ? 6 : firstDay - 1;
     for (let i = 0; i < startDay; i++) {
       days.push(<div key={`empty-${i}`} className="calendar-day empty"></div>);
     }
