@@ -123,11 +123,16 @@ function CalendarView({ onDateSelect }) {
     }
 
     // Jours du mois
+    const today = new Date();
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+    const todayDay = today.getDate();
+    
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       const dateStr = googleSheetsService.formatDate(date);
       const availability = dateAvailability[dateStr] || 'loading';
-      const isToday = new Date().toDateString() === date.toDateString();
+      const isToday = (year === todayYear && month === todayMonth && day === todayDay);
 
       days.push(
         <div
