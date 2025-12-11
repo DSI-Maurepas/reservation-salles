@@ -117,7 +117,7 @@
 }
 
 .calendar-day {
-  aspect-ratio: 1;
+  aspect-ratio: 1.8 / 1;
   border-radius: 8px;
   padding: 0.4rem;
   display: flex;
@@ -129,7 +129,6 @@
   transition: all 0.3s ease;
   border: 2px solid transparent;
   min-height: 50px;
-  max-height: 80px;
 }
 
 .calendar-day.empty {
