@@ -52,6 +52,17 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     });
   };
 
+  // Récupérer l'email de l'agent qui a réservé un créneau
+  const getReservationEmail = (salle, hour) => {
+    const reservation = reservations.find(res => {
+      if (res.salle !== salle) return false;
+      const startHour = parseInt(res.heureDebut.split(':')[0]);
+      const endHour = parseInt(res.heureFin.split(':')[0]);
+      return hour >= startHour && hour < endHour;
+    });
+    return reservation ? reservation.email : '';
+  };
+
   const handleMouseDown = (salle, hour) => {
     if (isSlotReserved(salle, hour)) {
       alert('Ce créneau est déjà réservé');
@@ -295,6 +306,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       SALLES.forEach((salle, salleIndex) => {
         const reserved = isSlotReserved(salle, hour);
         const selected = isSlotSelected(salle, hour);
+        const reservationEmail = reserved ? getReservationEmail(salle, hour) : '';
         
         grid.push(
           <div
@@ -315,7 +327,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
             }}
           >
             {reserved && (
-              <span className="reserved-indicator">Réservé</span>
+              <span className="reserved-indicator" title={reservationEmail}>
+                {reservationEmail}
+              </span>
             )}
           </div>
         );

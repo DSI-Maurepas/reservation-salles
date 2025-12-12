@@ -176,10 +176,16 @@
 }
 
 .reserved-indicator {
-  font-size: 0.7rem;
-  color: var(--text-light);
+  font-size: 0.65rem;
+  color: #424242;
   font-weight: 600;
   text-align: center;
+  word-break: break-word;
+  padding: 0 4px;
+  line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Reservation Form */
