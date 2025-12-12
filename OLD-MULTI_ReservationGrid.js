@@ -252,46 +252,17 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         }
       }
 
-      // Ajouter toutes les réservations avec traitement par lots
+      // Ajouter toutes les réservations
       const results = [];
-      const BATCH_SIZE = 5; // Traiter 5 réservations à la fois
-      const DELAY_MS = 1000; // 1 seconde de délai entre chaque lot
-      
-      // Fonction pour attendre
-      const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-      
-      // Afficher un message de progression
-      alert(`⏳ Création de ${reservationsToCreate.length} réservations en cours...\n\nCela peut prendre ${Math.ceil(reservationsToCreate.length / BATCH_SIZE) * 2} secondes.\n\nMerci de patienter.`);
-      
-      // Traiter par lots
-      for (let i = 0; i < reservationsToCreate.length; i += BATCH_SIZE) {
-        const batch = reservationsToCreate.slice(i, i + BATCH_SIZE);
-        
-        console.log(`Traitement du lot ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(reservationsToCreate.length / BATCH_SIZE)}...`);
-        
-        // Créer toutes les réservations du lot
-        for (const reservation of batch) {
-          try {
-            const result = await googleSheetsService.addReservation(reservation);
-            if (!result || !result.id) {
-              throw new Error(`La réservation pour ${reservation.salle} à ${reservation.heureDebut} a échoué : aucun ID retourné`);
-            }
-            results.push({
-              ...reservation,
-              id: result.id
-            });
-            console.log(`✅ Réservation ${results.length}/${reservationsToCreate.length} créée : ${reservation.salle} ${reservation.heureDebut}`);
-          } catch (err) {
-            console.error(`❌ Erreur pour ${reservation.salle} à ${reservation.heureDebut}:`, err);
-            throw new Error(`Échec lors de la création de la réservation ${results.length + 1}/${reservationsToCreate.length} (${reservation.salle} ${reservation.heureDebut}). ${results.length} réservation(s) ont été créées avant l'erreur.`);
-          }
+      for (const reservation of reservationsToCreate) {
+        const result = await googleSheetsService.addReservation(reservation);
+        if (!result || !result.id) {
+          throw new Error(`La réservation pour ${reservation.salle} a échoué : aucun ID retourné`);
         }
-        
-        // Attendre avant le prochain lot (sauf pour le dernier)
-        if (i + BATCH_SIZE < reservationsToCreate.length) {
-          console.log(`⏳ Pause de ${DELAY_MS}ms avant le prochain lot...`);
-          await sleep(DELAY_MS);
-        }
+        results.push({
+          ...reservation,
+          id: result.id
+        });
       }
 
       // Email de confirmation désactivé pour économiser le quota EmailJS
@@ -327,25 +298,16 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       let errorMessage = 'Erreur lors de la réservation';
       
       if (error.message) {
-        errorMessage = error.message; // Utilise directement le message d'erreur personnalisé
+        errorMessage += `: ${error.message}`;
       } else if (error.result && error.result.error) {
         errorMessage += `: ${error.result.error.message}`;
       } else if (typeof error === 'string') {
         errorMessage += `: ${error}`;
-      } else if (error.status === 429) {
-        errorMessage = 'Trop de requêtes simultanées. Veuillez patienter 30 secondes et réessayer avec moins de créneaux à la fois (maximum 10 recommandé).';
-      } else if (error.status === 403) {
-        errorMessage = 'Erreur d\'authentification. Veuillez rafraîchir la page et vous reconnecter.';
-      } else if (!navigator.onLine) {
-        errorMessage = 'Pas de connexion internet. Vérifiez votre connexion et réessayez.';
       } else {
-        errorMessage = 'Erreur réseau ou timeout. Essayez avec moins de créneaux à la fois (5-10 maximum recommandé) ou réessayez dans quelques minutes.';
+        errorMessage += ': Erreur inconnue. Veuillez réessayer ou contacter l\'administrateur.';
       }
       
-      alert(`❌ ${errorMessage}\n\n💡 Conseil : Pour de grandes réservations (10+ créneaux), faites plusieurs groupes de 5-10 créneaux.`);
-      
-      // Rafraîchir les réservations pour voir celles qui ont été créées
-      loadReservations();
+      alert(`❌ ${errorMessage}\n\nDétails techniques : ${JSON.stringify(error, null, 2).substring(0, 200)}`);
     }
   };
 
@@ -459,14 +421,6 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       {selections.length > 0 && (
         <div className="reservation-form">
           <h3>📝 Confirmer la réservation ({selections.length} créneau{selections.length > 1 ? 'x' : ''})</h3>
-          
-          {selections.length > 10 && (
-            <div className="warning-message">
-              <strong>⚠️ Attention :</strong> Vous avez sélectionné {selections.length} créneaux. 
-              Pour des raisons de performance, il est recommandé de limiter à 10 créneaux par réservation. 
-              Le traitement prendra environ {Math.ceil(selections.length / 5) * 2} secondes.
-            </div>
-          )}
           
           <div className="selections-summary">
             <h4>Créneaux sélectionnés :</h4>
