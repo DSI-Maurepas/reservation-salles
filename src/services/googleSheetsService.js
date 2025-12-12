@@ -49,6 +49,64 @@ class GoogleSheetsService {
     });
   }
 
+  // Demander l'accès OAuth 2.0
+  async requestAccessToken() {
+    return new Promise((resolve, reject) => {
+      try {
+        // Vérifier que le tokenClient est initialisé
+        if (!this.tokenClient) {
+          reject(new Error('Token client non initialisé. CLIENT_ID manquant ?'));
+          return;
+        }
+
+        // Callback pour gérer la réponse OAuth
+        this.tokenClient.callback = async (response) => {
+          if (response.error !== undefined) {
+            reject(response);
+            return;
+          }
+          
+          this.accessToken = response.access_token;
+          
+          // Configurer le token pour gapi.client
+          window.gapi.client.setToken({
+            access_token: this.accessToken
+          });
+          
+          resolve(response);
+        };
+
+        // Si l'utilisateur a déjà un token valide
+        if (this.accessToken && window.gapi.client.getToken()) {
+          resolve({ access_token: this.accessToken });
+          return;
+        }
+
+        // Demander un nouveau token (popup OAuth)
+        this.tokenClient.requestAccessToken({ prompt: 'consent' });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  // Vérifier si l'utilisateur est authentifié
+  isAuthenticated() {
+    return this.accessToken !== null && window.gapi.client.getToken() !== null;
+  }
+
+  // Se déconnecter
+  revokeToken() {
+    const token = window.gapi.client.getToken();
+    if (token !== null) {
+      window.google.accounts.oauth2.revoke(token.access_token, () => {
+        console.log('Token révoqué');
+      });
+      window.gapi.client.setToken(null);
+      this.accessToken = null;
+    }
+  }
+
   // Récupérer toutes les réservations
   async getAllReservations() {
     try {
@@ -126,6 +184,12 @@ class GoogleSheetsService {
         throw new Error('API Google Sheets non initialisée. Veuillez rafraîchir la page.');
       }
 
+      // IMPORTANT : Demander l'authentification OAuth avant d'écrire
+      if (!this.isAuthenticated()) {
+        console.log('Authentification requise pour créer une réservation...');
+        await this.requestAccessToken();
+      }
+
       // Vérifier d'abord les conflits
       const conflicts = await this.checkConflicts(reservation);
       if (conflicts.length > 0) {
@@ -190,6 +254,12 @@ class GoogleSheetsService {
   // Supprimer une réservation
   async deleteReservation(reservationId) {
     try {
+      // IMPORTANT : Demander l'authentification OAuth avant de supprimer
+      if (!this.isAuthenticated()) {
+        console.log('Authentification requise pour supprimer une réservation...');
+        await this.requestAccessToken();
+      }
+
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
         range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A:A`,
