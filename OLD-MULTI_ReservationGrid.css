@@ -534,20 +534,3 @@
     padding: 0.5rem 0.2rem;
   }
 }
-
-/* Message d'avertissement pour beaucoup de sélections */
-.warning-message {
-  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-  padding: 1rem 1.5rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  border-left: 4px solid #ff9800;
-  color: #e65100;
-  font-size: 0.9rem;
-}
-
-.warning-message strong {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-}
