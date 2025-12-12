@@ -41,7 +41,8 @@ function App() {
   };
 
   const handleReservationSuccess = () => {
-    alert('Réservation confirmée ! Vous allez recevoir un email de confirmation.');
+    // Le message de succès est déjà affiché dans ReservationGrid.js
+    // Pas d'email envoyé lors de la création (seulement lors de suppression admin)
     setCurrentView('calendar');
   };
 
