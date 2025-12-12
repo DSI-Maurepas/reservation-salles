@@ -58,7 +58,7 @@ export const SERVICES = [
   'CCAS',
   'Centres de Loisirs',
   'Commande Publique',
-  'Direction des Systèmes d'Information',
+  'Direction des Systèmes d\'Information',
   'Direction Générale',
   'Direction Ressources Humaines',
   'Élus',
@@ -133,7 +133,7 @@ export const JOURS_FERIES = [
   '2025-12-25',
   '2026-01-01', '2026-04-06', '2026-05-01', '2026-05-08', '2026-05-14',
   '2026-05-25', '2026-07-14', '2026-08-15', '2026-11-01', '2026-11-11',
-  '2026-12-25'
+  '2026-12-25',
   '2027-01-01', '2027-03-29', '2027-05-01', '2027-05-06',
   '2027-05-08', '2027-05-17', '2027-07-14', '2027-08-15',
   '2027-11-01', '2027-11-11', '2027-12-25',
