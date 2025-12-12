@@ -147,13 +147,6 @@ function CalendarView({ onDateSelect }) {
     const todayMonth = todayInfo.month;
     const todayDay = todayInfo.day;
     
-    console.log('📅 Date actuelle:', {
-      année: todayYear,
-      mois: todayMonth + 1, // +1 pour affichage humain (1-12)
-      jour: todayDay,
-      dateComplete: new Date(todayYear, todayMonth, todayDay).toLocaleDateString('fr-FR')
-    });
-    
     for (let day = 1; day <= daysInMonth; day++) {
       const date = createLocalDate(year, month, day);
       const dateStr = googleSheetsService.formatDate(date);
