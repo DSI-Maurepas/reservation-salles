@@ -260,8 +260,10 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       // Fonction pour attendre
       const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
       
-      // Afficher un message de progression
-      alert(`⏳ Création de ${reservationsToCreate.length} réservations en cours...\n\nCela peut prendre ${Math.ceil(reservationsToCreate.length / BATCH_SIZE) * 2} secondes.\n\nMerci de patienter.`);
+      // Afficher un message de progression UNIQUEMENT pour les grandes réservations (10+)
+      if (reservationsToCreate.length >= 10) {
+        alert(`⏳ Création de ${reservationsToCreate.length} réservations en cours...\n\nCela peut prendre ${Math.ceil(reservationsToCreate.length / BATCH_SIZE) * 2} secondes.\n\nMerci de patienter.`);
+      }
       
       // Traiter par lots
       for (let i = 0; i < reservationsToCreate.length; i += BATCH_SIZE) {
