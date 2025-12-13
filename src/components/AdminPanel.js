@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
-import { ADMINISTRATEURS, SALLES } from '../config/googleSheets';
+import { ADMINISTRATEURS, SALLES, MOTIFS_ANNULATION } from '../config/googleSheets';
 import './AdminPanel.css';
 
 function AdminPanel() {
@@ -113,35 +113,44 @@ function AdminPanel() {
   };
 
   const handleDeleteReservation = async (reservation) => {
-    // Demander la raison de priorité (obligatoire)
-    const priorite = prompt(
-      `⚠️ SUPPRESSION DE RÉSERVATION PAR PRIORITÉ ⚠️\n\n` +
-      `Cette action va supprimer la réservation suivante :\n\n` +
-      `📍 Salle: ${reservation.salle}\n` +
-      `📅 Date: ${reservation.dateDebut}\n` +
-      `🕐 Horaire: ${reservation.heureDebut} - ${reservation.heureFin}\n` +
-      `👤 Agent: ${reservation.prenom} ${reservation.nom}\n` +
-      `📧 Email: ${reservation.email}\n\n` +
-      `⚠️ IMPORTANT : Un email sera envoyé à l'agent pour l'informer de la suppression.\n\n` +
-      `Veuillez indiquer la RAISON DE PRIORITÉ (obligatoire) :\n` +
-      `Exemples: "Réunion conseil municipal", "Visite préfectorale", "Événement urgent"...`
-    );
+    // Demander le motif d'annulation (obligatoire) depuis la liste prédéfinie
+    let motifTexte = '';
+    
+    while (!motifTexte) {
+      const choix = window.prompt(
+        `⚠️ SUPPRESSION DE RÉSERVATION PAR L'ADMINISTRATEUR ⚠️\n\n` +
+        `Cette action va supprimer la réservation suivante :\n\n` +
+        `📍 Salle: ${reservation.salle}\n` +
+        `📅 Date: ${reservation.dateDebut}\n` +
+        `🕐 Horaire: ${reservation.heureDebut} - ${reservation.heureFin}\n` +
+        `👤 Agent: ${reservation.prenom} ${reservation.nom}\n` +
+        `📧 Email: ${reservation.email}\n\n` +
+        `⚠️ IMPORTANT : Un email sera envoyé à l'agent pour l'informer.\n\n` +
+        `MOTIF D'ANNULATION OBLIGATOIRE\n` +
+        `Sélectionnez le numéro du motif :\n\n` +
+        MOTIFS_ANNULATION.map((motif, index) => `${index + 1}. ${motif}`).join('\n') +
+        `\n\nEntrez le numéro (1-${MOTIFS_ANNULATION.length}) :`
+      );
 
-    // Annulation si l'utilisateur clique sur "Annuler" ou laisse vide
-    if (priorite === null) {
-      return; // Annulé par l'utilisateur
-    }
+      if (choix === null) {
+        // Annulation par l'utilisateur
+        return;
+      }
 
-    if (!priorite || priorite.trim() === '') {
-      alert('❌ La raison de priorité est obligatoire pour supprimer une réservation.\n\nLa suppression a été annulée.');
-      return;
+      const motifIndex = parseInt(choix);
+      
+      if (motifIndex >= 1 && motifIndex <= MOTIFS_ANNULATION.length) {
+        motifTexte = MOTIFS_ANNULATION[motifIndex - 1];
+      } else {
+        alert(`❌ Numéro invalide. Veuillez entrer un numéro entre 1 et ${MOTIFS_ANNULATION.length}.`);
+      }
     }
 
     // Confirmation finale
     const confirmation = window.confirm(
       `⚠️ CONFIRMATION FINALE ⚠️\n\n` +
       `Vous êtes sur le point de supprimer cette réservation pour :\n` +
-      `"${priorite}"\n\n` +
+      `"${motifTexte}"\n\n` +
       `Un email sera envoyé à ${reservation.email}\n\n` +
       `Confirmez-vous cette action ?`
     );
@@ -151,11 +160,11 @@ function AdminPanel() {
     try {
       await googleSheetsService.deleteReservation(reservation.id);
       
-      // Envoyer email d'annulation avec la raison de priorité
+      // Envoyer email d'annulation avec le motif
       try {
         await emailService.sendCancellation(
           reservation,
-          priorite.trim(),
+          motifTexte,
           adminEmail // Email de l'administrateur qui supprime
         );
       } catch (emailError) {
@@ -163,7 +172,7 @@ function AdminPanel() {
         alert('⚠️ La réservation a été supprimée mais l\'email n\'a pas pu être envoyé.\n\nVeuillez contacter l\'agent manuellement.');
       }
 
-      alert('✅ Réservation supprimée avec succès.\n\n📧 Un email a été envoyé à l\'agent pour l\'informer de la suppression et de la raison de priorité.');
+      alert(`✅ Réservation supprimée avec succès.\n\nMotif : ${motifTexte}\n\n📧 Un email a été envoyé à l'agent.`);
       loadAllReservations();
     } catch (error) {
       alert(`❌ Erreur lors de la suppression: ${error.message}`);

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
+import { MOTIFS_ANNULATION } from '../config/googleSheets';
 import './MyReservations.css';
 
 function MyReservations({ userEmail, setUserEmail }) {
@@ -48,29 +49,83 @@ function MyReservations({ userEmail, setUserEmail }) {
   };
 
   const handleCancelReservation = async (reservation) => {
-    const confirm = window.confirm(
-      `Êtes-vous sûr de vouloir annuler cette réservation ?\n\n` +
+    // Créer une fenêtre modale pour le choix du motif
+    const modalHtml = `
+      <div style="font-family: Arial, sans-serif;">
+        <p style="margin-bottom: 15px; font-weight: bold;">
+          Êtes-vous sûr de vouloir annuler cette réservation ?
+        </p>
+        <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+          <p style="margin: 5px 0;"><strong>Salle :</strong> ${reservation.salle}</p>
+          <p style="margin: 5px 0;"><strong>Date :</strong> ${reservation.dateDebut}</p>
+          <p style="margin: 5px 0;"><strong>Horaire :</strong> ${reservation.heureDebut} - ${reservation.heureFin}</p>
+        </div>
+        <p style="margin-bottom: 10px; color: #d32f2f; font-weight: bold;">
+          ⚠️ Motif d'annulation obligatoire
+        </p>
+        <select id="motif-annulation" style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
+          <option value="">-- Sélectionner un motif --</option>
+          ${MOTIFS_ANNULATION.map(motif => `<option value="${motif}">${motif}</option>`).join('')}
+        </select>
+      </div>
+    `;
+
+    // Créer un conteneur temporaire
+    const container = document.createElement('div');
+    container.innerHTML = modalHtml;
+    
+    // Afficher avec une confirmation personnalisée
+    const proceed = window.confirm(
+      `ANNULATION DE RÉSERVATION\n\n` +
       `Salle: ${reservation.salle}\n` +
       `Date: ${reservation.dateDebut}\n` +
-      `Horaire: ${reservation.heureDebut} - ${reservation.heureFin}`
+      `Horaire: ${reservation.heureDebut} - ${reservation.heureFin}\n\n` +
+      `⚠️ ATTENTION: Un motif d'annulation est obligatoire.\n\n` +
+      `Cliquez sur OK pour continuer.`
     );
 
-    if (!confirm) return;
+    if (!proceed) return;
+
+    // Demander le motif via prompt
+    let motifIndex = null;
+    let motifTexte = '';
+    
+    while (!motifTexte) {
+      const choix = window.prompt(
+        `MOTIF D'ANNULATION OBLIGATOIRE\n\n` +
+        `Sélectionnez le numéro du motif :\n\n` +
+        MOTIFS_ANNULATION.map((motif, index) => `${index + 1}. ${motif}`).join('\n') +
+        `\n\nEntrez le numéro (1-${MOTIFS_ANNULATION.length}) :`
+      );
+
+      if (choix === null) {
+        // Annulation
+        return;
+      }
+
+      motifIndex = parseInt(choix);
+      
+      if (motifIndex >= 1 && motifIndex <= MOTIFS_ANNULATION.length) {
+        motifTexte = MOTIFS_ANNULATION[motifIndex - 1];
+      } else {
+        alert(`❌ Numéro invalide. Veuillez entrer un numéro entre 1 et ${MOTIFS_ANNULATION.length}.`);
+      }
+    }
 
     try {
       await googleSheetsService.deleteReservation(reservation.id);
       
-      // Envoyer email d'annulation
+      // Envoyer email d'annulation avec le motif
       try {
-        await emailService.sendCancellation(reservation, 'Annulation par l\'utilisateur');
+        await emailService.sendCancellation(reservation, motifTexte);
       } catch (emailError) {
         console.error('Erreur email:', emailError);
       }
 
-      alert('Réservation annulée avec succès');
+      alert(`✅ Réservation annulée avec succès\n\nMotif : ${motifTexte}`);
       loadUserReservations();
     } catch (error) {
-      alert(`Erreur lors de l'annulation: ${error.message}`);
+      alert(`❌ Erreur lors de l'annulation: ${error.message}`);
     }
   };
 
