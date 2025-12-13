@@ -2,6 +2,7 @@
 // VERSION MULTI-SÉLECTION - Permet de réserver plusieurs créneaux dans plusieurs salles en une fois
 import React, { useState, useEffect, useCallback } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
+import emailService from '../services/emailService';
 import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES } from '../config/googleSheets';
 import './ReservationGrid.css';
 
@@ -119,6 +120,14 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       startHour: hour,
       endHour: hour + 1
     });
+  };
+
+  const handleTouchEnd = () => {
+    if (currentSelection) {
+      setSelections([...selections, currentSelection]);
+      setCurrentSelection(null);
+    }
+    setIsDragging(false);
   };
 
   // Gestion globale du touchmove pour permettre la sélection multiple

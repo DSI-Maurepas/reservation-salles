@@ -358,5 +358,4 @@ class GoogleSheetsService {
   }
 }
 
-const googleSheetsService = new GoogleSheetsService();
-export default googleSheetsService;
+export default new GoogleSheetsService();
