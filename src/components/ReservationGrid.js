@@ -466,7 +466,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
           )}
           
           <div className="selections-summary">
-            <h4>Créneaux sélectionnés :</h4>
+            <h4>📍 Créneau{selections.length > 1 ? 'x' : ''} sélectionné{selections.length > 1 ? 's' : ''}</h4>
             {selections.map((sel, index) => (
               <div key={index} className="selection-item">
                 <div className="selection-info">
