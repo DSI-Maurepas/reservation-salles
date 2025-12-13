@@ -27,6 +27,7 @@
   margin-bottom: 1.5rem;
   padding-bottom: 0.8rem;
   border-bottom: 2px solid var(--border-color);
+  gap: 1rem;
 }
 
 .calendar-header h2 {
@@ -35,15 +36,58 @@
   font-weight: 700;
 }
 
+.date-selectors {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.month-selector,
+.year-selector {
+  padding: 0.6rem 1rem;
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.month-selector {
+  min-width: 140px;
+}
+
+.year-selector {
+  min-width: 90px;
+}
+
+.month-selector:hover,
+.year-selector:hover {
+  background: var(--primary-color);
+  color: white;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+.month-selector:focus,
+.year-selector:focus {
+  border-color: var(--secondary-color);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+}
+
 .nav-button {
   background: var(--primary-color);
   color: white;
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   font-weight: 600;
   transition: all 0.3s ease;
+  cursor: pointer;
+  min-width: 50px;
 }
 
 .nav-button:hover {
@@ -248,17 +292,35 @@
   }
 
   .calendar-header {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.8rem;
   }
 
-  .calendar-header h2 {
-    font-size: 1.2rem;
+  .date-selectors {
+    flex: 1 1 100%;
+    justify-content: center;
+    order: -1;
+  }
+
+  .month-selector,
+  .year-selector {
+    font-size: 0.9rem;
+    padding: 0.5rem 0.8rem;
+  }
+
+  .month-selector {
+    min-width: 120px;
+  }
+
+  .year-selector {
+    min-width: 80px;
   }
 
   .nav-button {
-    padding: 0.5rem 0.8rem;
-    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    flex: 1;
   }
 
   .calendar-legend {
