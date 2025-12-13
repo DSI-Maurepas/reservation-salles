@@ -178,14 +178,35 @@ function CalendarView({ onDateSelect }) {
   return (
     <div className="calendar-view">
       <div className="calendar-header">
-        <button onClick={handlePreviousMonth} className="nav-button">
-          ◀ Mois précédent
+        <button onClick={handlePreviousMonth} className="nav-button" title="Mois précédent">
+          ◀
         </button>
-        <h2>
-          {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-        </h2>
-        <button onClick={handleNextMonth} className="nav-button">
-          Mois suivant ▶
+        
+        <div className="date-selectors">
+          <select 
+            value={currentMonth.getMonth()} 
+            onChange={(e) => setCurrentMonth(new Date(currentMonth.getFullYear(), parseInt(e.target.value), 1))}
+            className="month-selector"
+          >
+            {monthNames.map((name, index) => (
+              <option key={index} value={index}>{name}</option>
+            ))}
+          </select>
+          
+          <select 
+            value={currentMonth.getFullYear()} 
+            onChange={(e) => setCurrentMonth(new Date(parseInt(e.target.value), currentMonth.getMonth(), 1))}
+            className="year-selector"
+          >
+            {Array.from({ length: 5 }, (_, i) => {
+              const year = new Date().getFullYear() + i;
+              return <option key={year} value={year}>{year}</option>;
+            })}
+          </select>
+        </div>
+        
+        <button onClick={handleNextMonth} className="nav-button" title="Mois suivant">
+          ▶
         </button>
       </div>
 
