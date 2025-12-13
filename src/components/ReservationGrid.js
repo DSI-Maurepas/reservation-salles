@@ -445,13 +445,17 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         Cliquez et maintenez pour sélectionner plusieurs créneaux. Relâchez pour valider chaque sélection.
       </div>
 
-      <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>
-        {renderGrid()}
-      </div>
+      <div className="reservation-content">
+        <div className="grid-column">
+          <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>
+            {renderGrid()}
+          </div>
+        </div>
 
-      {selections.length > 0 && (
-        <div className="reservation-form">
-          <h3>📝 Confirmer la réservation ({selections.length} créneau{selections.length > 1 ? 'x' : ''})</h3>
+        {selections.length > 0 && (
+          <div className="form-column">
+            <div className="reservation-form">
+              <h3>📝 Confirmer la réservation ({selections.length} créneau{selections.length > 1 ? 'x' : ''})</h3>
           
           {selections.length > 10 && (
             <div className="warning-message">
@@ -582,8 +586,10 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
               </button>
             </div>
           </form>
-        </div>
-      )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
