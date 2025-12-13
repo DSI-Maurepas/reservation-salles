@@ -272,7 +272,9 @@ class GoogleSheetsService {
         throw new Error('Réservation non trouvée');
       }
 
-      // Supprimer la ligne (rowIndex + 1 car on commence à 1 dans Sheets)
+      // Supprimer la ligne
+      // rowIndex correspond déjà à la position correcte car rows inclut l'en-tête
+      // deleteDimension utilise des index 0-based où 0 = première ligne (en-tête)
       await window.gapi.client.sheets.spreadsheets.batchUpdate({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
         resource: {
@@ -281,8 +283,8 @@ class GoogleSheetsService {
               range: {
                 sheetId: 0, // ID de l'onglet Réservations
                 dimension: 'ROWS',
-                startIndex: rowIndex + 1,
-                endIndex: rowIndex + 2
+                startIndex: rowIndex,
+                endIndex: rowIndex + 1
               }
             }
           }]
