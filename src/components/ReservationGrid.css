@@ -87,6 +87,41 @@
   overflow-x: auto;
   overflow-y: visible;
   padding-bottom: 1rem; /* Espace pour la scrollbar */
+  position: relative;
+}
+
+/* Indicateur de scroll visible en haut */
+.scroll-indicator {
+  position: absolute;
+  top: 0;
+  right: 20px;
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 12px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+  animation: pulseScroll 2s ease-in-out infinite;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+@keyframes pulseScroll {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+
+.scroll-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Masquer l'indicateur si pas de scroll nécessaire */
+.grid-column:not([scrollWidth]) .scroll-indicator {
+  display: none;
 }
 
 /* Scrollbar personnalisée pour la grille */
@@ -199,6 +234,15 @@
   text-align: center;
   padding: 0 4px;
   line-height: 1.2;
+  display: block;
+  word-break: break-all; /* Permet de couper n'importe où si nécessaire */
+}
+
+/* Forcer la césure avant @ pour les emails */
+.reserved-indicator::after {
+  content: '';
+  display: inline-block;
+  width: 0;
 }
 
 /* Formulaire à droite */
