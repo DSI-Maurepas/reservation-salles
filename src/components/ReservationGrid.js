@@ -50,26 +50,6 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     loadReservations();
   }, [loadReservations]);
 
-  // Masquer l'indicateur de scroll si pas nécessaire
-  useEffect(() => {
-    const checkScrollNeeded = () => {
-      const gridColumn = document.querySelector('.grid-column');
-      const indicator = document.querySelector('.scroll-indicator');
-      
-      if (gridColumn && indicator) {
-        const needsScroll = gridColumn.scrollWidth > gridColumn.clientWidth;
-        indicator.style.display = needsScroll ? 'block' : 'none';
-      }
-    };
-    
-    // Vérifier après le rendu
-    setTimeout(checkScrollNeeded, 100);
-    
-    // Revérifier au redimensionnement
-    window.addEventListener('resize', checkScrollNeeded);
-    return () => window.removeEventListener('resize', checkScrollNeeded);
-  }, [reservations]);
-
   const isSlotReserved = (salle, hour) => {
     return reservations.some(res => {
       if (res.salle !== salle) return false;
@@ -515,23 +495,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       </div>
 
       <div className="reservation-content">
-        <div className="grid-column" onScroll={(e) => {
-          const target = e.currentTarget;
-          const indicator = target.querySelector('.scroll-indicator');
-          if (indicator) {
-            // Masquer l'indicateur si on a scrollé
-            if (target.scrollLeft > 10) {
-              indicator.style.opacity = '0';
-            } else {
-              indicator.style.opacity = '1';
-            }
-          }
-        }}>
-          {/* Indicateur de scroll (visible uniquement si scroll nécessaire) */}
-          <div className="scroll-indicator">
-            <span className="scroll-icon">◀ Faites défiler ▶</span>
-          </div>
-          
+        <div className="grid-column">
           <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>
             {renderGrid()}
           </div>
