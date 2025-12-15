@@ -38,15 +38,15 @@ export const EMAIL_CONFIG = {
 
 // Liste des salles de la mairie
 export const SALLES = [
-  'Salle du Conseil',
-  'Salle des Mariages',
-  'Salle du 16eme A',
-  'Salle du 16eme B',
-  'Salle rdc N°1',
-  'Salle rdc N°2',
-  'Salle rdc N°3',
-  'Salle CCAS',
-  'Salle CTM'
+  'Salle du Conseil - 80 Personnes',
+  'Salle des Mariages - 40 Personnes',
+  'Salle du 16eme A - 20 Personnes',
+  'Salle du 16eme B - 19 Personnes',
+  'Salle rdc N°1 - 2 Personnes',
+  'Salle rdc N°2 - 12 Personnes',
+  'Salle rdc N°3 - 8 Personnes',
+  'Salle rdc N°4 - 4 Personnes',
+  'Salle du CCAS'
 ];
 
 // Liste des services
