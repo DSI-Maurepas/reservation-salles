@@ -215,23 +215,62 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     }
 
     try {
-      // Créer une réservation pour chaque sélection
-      const reservationsToCreate = selections.map(sel => ({
-        salle: sel.salle,
-        dateDebut: googleSheetsService.formatDate(selectedDate),
-        heureDebut: googleSheetsService.formatTime(sel.startHour),
-        dateFin: formData.recurrence && formData.recurrenceJusquau 
-          ? formData.recurrenceJusquau 
-          : googleSheetsService.formatDate(selectedDate),
-        heureFin: googleSheetsService.formatTime(sel.endHour),
-        nom: formData.nom,
-        prenom: formData.prenom,
-        email: formData.email,
-        service: formData.service,
-        objet: formData.objet,
-        recurrence: formData.recurrence,
-        recurrenceJusquau: formData.recurrenceJusquau || null
-      }));
+      // Fonction pour générer les dates de récurrence
+      const generateRecurrenceDates = (startDate, endDate) => {
+        const dates = [];
+        const current = new Date(startDate);
+        const end = new Date(endDate);
+        
+        while (current <= end) {
+          dates.push(new Date(current));
+          current.setDate(current.getDate() + 7); // Ajouter 7 jours (1 semaine)
+        }
+        
+        return dates;
+      };
+
+      // Créer les réservations
+      let reservationsToCreate = [];
+      
+      if (formData.recurrence && formData.recurrenceJusquau) {
+        // Pour les récurrences : créer une réservation par occurrence
+        const recurrenceDates = generateRecurrenceDates(selectedDate, new Date(formData.recurrenceJusquau));
+        
+        for (const date of recurrenceDates) {
+          for (const sel of selections) {
+            reservationsToCreate.push({
+              salle: sel.salle,
+              dateDebut: googleSheetsService.formatDate(date),
+              heureDebut: googleSheetsService.formatTime(sel.startHour),
+              dateFin: googleSheetsService.formatDate(date),
+              heureFin: googleSheetsService.formatTime(sel.endHour),
+              nom: formData.nom,
+              prenom: formData.prenom,
+              email: formData.email,
+              service: formData.service,
+              objet: formData.objet,
+              recurrence: true,
+              recurrenceJusquau: formData.recurrenceJusquau
+            });
+          }
+        }
+      } else {
+        // Pour les réservations simples : une réservation par sélection
+        reservationsToCreate = selections.map(sel => ({
+          salle: sel.salle,
+          dateDebut: googleSheetsService.formatDate(selectedDate),
+          heureDebut: googleSheetsService.formatTime(sel.startHour),
+          dateFin: googleSheetsService.formatDate(selectedDate),
+          heureFin: googleSheetsService.formatTime(sel.endHour),
+          nom: formData.nom,
+          prenom: formData.prenom,
+          email: formData.email,
+          service: formData.service,
+          objet: formData.objet,
+          recurrence: false,
+          recurrenceJusquau: null
+        }));
+      }
 
       // Vérifier les conflits pour toutes les réservations
       for (const reservation of reservationsToCreate) {
