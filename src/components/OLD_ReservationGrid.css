@@ -473,3 +473,221 @@
     width: 100%;
   }
 }
+
+/* ============================================
+   MODALE DE SUCCÈS
+   ============================================ */
+
+.success-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  padding: 1rem;
+}
+
+.success-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideInUp 0.4s ease;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.success-modal-header {
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 16px 16px 0 0;
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 1rem;
+  animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.success-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.success-modal-body {
+  padding: 2rem;
+}
+
+.success-subtitle {
+  text-align: center;
+  font-size: 1.1rem;
+  color: #424242;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.reservations-list {
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.reservation-item-success {
+  background: white;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-left: 4px solid #4caf50;
+}
+
+.reservation-item-success:last-child {
+  margin-bottom: 0;
+}
+
+.room-badge {
+  font-weight: 700;
+  color: #2196f3;
+  font-size: 1rem;
+}
+
+.time-info {
+  color: #757575;
+  font-size: 0.9rem;
+}
+
+.ical-download-section {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 2px solid #2196f3;
+}
+
+.ical-info {
+  color: #1565c0;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.download-ical-button {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+.download-ical-button:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(33, 150, 243, 0.5);
+}
+
+.download-ical-button:active {
+  transform: translateY(0);
+}
+
+.download-icon {
+  font-size: 1.5rem;
+}
+
+.ical-hint {
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  color: #424242;
+  font-style: italic;
+}
+
+.success-modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e0e0e0;
+  text-align: right;
+}
+
+.close-modal-button {
+  background: #757575;
+  color: white;
+  border: none;
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.close-modal-button:hover {
+  background: #616161;
+  transform: translateY(-2px);
+}
+
+/* Responsive modale */
+@media (max-width: 768px) {
+  .success-modal {
+    max-width: 100%;
+    margin: 1rem;
+  }
+
+  .success-modal-header {
+    padding: 1.5rem;
+  }
+
+  .success-icon {
+    font-size: 3rem;
+  }
+
+  .success-modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .success-modal-body {
+    padding: 1.5rem;
+  }
+
+  .download-ical-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
