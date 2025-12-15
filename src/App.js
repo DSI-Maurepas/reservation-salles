@@ -59,7 +59,14 @@ function App() {
     <div className="App">
       <header className="app-header">
         <div className="header-content">
-          <h1>🏛️ Réservation de Salles - Mairie de MAUREPAS</h1>
+          <div className="header-title">
+            <img 
+              src={`${process.env.PUBLIC_URL}/images/Blason_ville_MAUREPAS.png`} 
+              alt="Blason de Maurepas" 
+              className="blason-maurepas"
+            />
+            <h1>Réservation de Salles - Mairie de MAUREPAS</h1>
+          </div>
           <nav className="main-nav">
             <button 
               className={currentView === 'calendar' ? 'active' : ''}
