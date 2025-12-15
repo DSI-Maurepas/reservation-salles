@@ -84,6 +84,28 @@
 .grid-column {
   width: 100%;
   min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-bottom: 1rem; /* Espace pour la scrollbar */
+}
+
+/* Scrollbar personnalisée pour la grille */
+.grid-column::-webkit-scrollbar {
+  height: 12px;
+}
+
+.grid-column::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 6px;
+}
+
+.grid-column::-webkit-scrollbar-thumb {
+  background: #2196f3;
+  border-radius: 6px;
+}
+
+.grid-column::-webkit-scrollbar-thumb:hover {
+  background: #1976d2;
 }
 
 .form-column {
@@ -97,11 +119,12 @@
 /* Grille de réservation */
 .reservation-grid {
   display: grid;
-  grid-template-columns: 80px repeat(9, 1fr);
+  grid-template-columns: 80px repeat(9, minmax(100px, 1fr));
+  min-width: max-content;
   gap: 2px;
   background: #e0e0e0;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   user-select: none;
 }
 
@@ -447,9 +470,15 @@
     text-align: center;
   }
 
+  .grid-column {
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+
   .reservation-grid {
     grid-template-columns: 60px repeat(9, minmax(80px, 1fr));
-    overflow-x: auto;
+    min-width: max-content;
+    overflow-x: visible;
   }
 
   .time-slot {
