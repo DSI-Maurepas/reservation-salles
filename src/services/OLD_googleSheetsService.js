@@ -165,9 +165,9 @@ class GoogleSheetsService {
 
       // Vérifier le chevauchement temporel
       const resDebut = new Date(`${res.dateDebut}T${res.heureDebut}`);
-      const resFin = new Date(`${res.dateFin || res.dateDebut}T${res.heureFin}`);
+      const resFin = new Date(`${res.dateFin}T${res.heureFin}`);
       const newDebut = new Date(`${nouvelleReservation.dateDebut}T${nouvelleReservation.heureDebut}`);
-      const newFin = new Date(`${nouvelleReservation.dateFin || nouvelleReservation.dateDebut}T${nouvelleReservation.heureFin}`);
+      const newFin = new Date(`${nouvelleReservation.dateFin}T${nouvelleReservation.heureFin}`);
 
       // Il y a conflit si les périodes se chevauchent
       return (newDebut < resFin && newFin > resDebut);
@@ -358,4 +358,5 @@ class GoogleSheetsService {
   }
 }
 
-export default new GoogleSheetsService();
+const googleSheetsService = new GoogleSheetsService();
+export default googleSheetsService;
