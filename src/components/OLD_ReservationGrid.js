@@ -2,6 +2,7 @@
 // VERSION MULTI-SÉLECTION - Permet de réserver plusieurs créneaux dans plusieurs salles en une fois
 import React, { useState, useEffect, useCallback } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
+import icalService from '../services/icalService';
 import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES } from '../config/googleSheets';
 import './ReservationGrid.css';
 
@@ -334,9 +335,21 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         `📍 ${sel.salle} : ${googleSheetsService.formatTime(sel.startHour)} - ${googleSheetsService.formatTime(sel.endHour)}`
       ).join('\n');
 
-      alert(`✅ ${selections.length} réservation${selections.length > 1 ? 's' : ''} créée${selections.length > 1 ? 's' : ''} avec succès !\n\n` +
-            `📅 Date : ${googleSheetsService.formatDate(selectedDate)}\n\n` +
+      alert(`✅ ${results.length} réservation${results.length > 1 ? 's' : ''} créée${results.length > 1 ? 's' : ''} avec succès !\n\n` +
+            `📅 Date${formData.recurrence ? 's' : ''} : ${googleSheetsService.formatDate(selectedDate)}${formData.recurrence ? ' (et suivantes)' : ''}\n\n` +
             summary);
+
+      // Proposer le téléchargement iCal pour Outlook/Google Calendar
+      const downloadICal = window.confirm(
+        `📅 Ajouter ${results.length > 1 ? 'ces réservations' : 'cette réservation'} à votre calendrier Outlook/Google ?\n\n` +
+        `Cliquez sur OK pour télécharger le fichier .ics`
+      );
+
+      if (downloadICal) {
+        // Générer le fichier iCal avec toutes les réservations créées
+        const filename = icalService.generateFilename(results);
+        icalService.generateAndDownload(results, filename);
+      }
 
       // Réinitialiser le formulaire
       setSelections([]);

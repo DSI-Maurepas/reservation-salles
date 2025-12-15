@@ -21,6 +21,11 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     recurrenceJusquau: ''
   });
   const [loading, setLoading] = useState(true);
+  const [successModal, setSuccessModal] = useState({
+    show: false,
+    reservations: [],
+    message: ''
+  });
 
   const loadReservations = useCallback(async () => {
     try {
@@ -330,26 +335,16 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       // Email de confirmation désactivé pour économiser le quota EmailJS
       // Seuls les emails d'annulation seront envoyés
 
-      // Afficher un message de succès avec toutes les réservations
+      // Afficher une modale de succès avec bouton de téléchargement iCal
       const summary = selections.map(sel => 
-        `📍 ${sel.salle} : ${googleSheetsService.formatTime(sel.startHour)} - ${googleSheetsService.formatTime(sel.endHour)}`
-      ).join('\n');
+        `${sel.salle} : ${googleSheetsService.formatTime(sel.startHour)} - ${googleSheetsService.formatTime(sel.endHour)}`
+      ).join(', ');
 
-      alert(`✅ ${results.length} réservation${results.length > 1 ? 's' : ''} créée${results.length > 1 ? 's' : ''} avec succès !\n\n` +
-            `📅 Date${formData.recurrence ? 's' : ''} : ${googleSheetsService.formatDate(selectedDate)}${formData.recurrence ? ' (et suivantes)' : ''}\n\n` +
-            summary);
-
-      // Proposer le téléchargement iCal pour Outlook/Google Calendar
-      const downloadICal = window.confirm(
-        `📅 Ajouter ${results.length > 1 ? 'ces réservations' : 'cette réservation'} à votre calendrier Outlook/Google ?\n\n` +
-        `Cliquez sur OK pour télécharger le fichier .ics`
-      );
-
-      if (downloadICal) {
-        // Générer le fichier iCal avec toutes les réservations créées
-        const filename = icalService.generateFilename(results);
-        icalService.generateAndDownload(results, filename);
-      }
+      setSuccessModal({
+        show: true,
+        reservations: results,
+        message: `${results.length} réservation${results.length > 1 ? 's' : ''} créée${results.length > 1 ? 's' : ''} avec succès !`
+      });
 
       // Réinitialiser le formulaire
       setSelections([]);
@@ -364,7 +359,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         recurrenceJusquau: ''
       });
 
-      onSuccess();
+      // onSuccess() sera appelé à la fermeture de la modale
     } catch (error) {
       console.error('Erreur détaillée:', error);
       
@@ -642,6 +637,69 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
           </div>
         )}
       </div>
+
+      {/* Modale de succès avec téléchargement iCal */}
+      {successModal.show && (
+        <div className="success-modal-overlay" onClick={() => {
+          setSuccessModal({ show: false, reservations: [], message: '' });
+          onSuccess();
+        }}>
+          <div className="success-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="success-modal-header">
+              <span className="success-icon">✅</span>
+              <h2>{successModal.message}</h2>
+            </div>
+            
+            <div className="success-modal-body">
+              <p className="success-subtitle">
+                📅 {successModal.reservations.length} créneau{successModal.reservations.length > 1 ? 'x' : ''} confirmé{successModal.reservations.length > 1 ? 's' : ''}
+              </p>
+              
+              <div className="reservations-list">
+                {successModal.reservations.map((res, index) => (
+                  <div key={index} className="reservation-item-success">
+                    <span className="room-badge">{res.salle}</span>
+                    <span className="time-info">
+                      {res.dateDebut} · {res.heureDebut} - {res.heureFin}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="ical-download-section">
+                <p className="ical-info">
+                  📲 Ajoutez ces réservations à votre agenda Outlook, Google Calendar ou Apple Calendar
+                </p>
+                <button 
+                  className="download-ical-button"
+                  onClick={() => {
+                    const filename = icalService.generateFilename(successModal.reservations);
+                    icalService.generateAndDownload(successModal.reservations, filename);
+                  }}
+                >
+                  <span className="download-icon">📥</span>
+                  Télécharger le fichier .ics
+                </button>
+                <p className="ical-hint">
+                  Le fichier .ics s'ouvrira automatiquement dans votre application de calendrier
+                </p>
+              </div>
+            </div>
+
+            <div className="success-modal-footer">
+              <button 
+                className="close-modal-button"
+                onClick={() => {
+                  setSuccessModal({ show: false, reservations: [], message: '' });
+                  onSuccess();
+                }}
+              >
+                Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
