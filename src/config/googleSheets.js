@@ -2,18 +2,14 @@
 // Configuration pour l'API Google Sheets
 
 export const GOOGLE_CONFIG = {
-  // À REMPLACER : Votre API Key Google (pour la lecture publique)
-  API_KEY: 'VOTRE_CLE_API_GOOGLE',
+  // API Key Google (pour la lecture publique)
+  API_KEY: 'AIzaSyAfpo4O0YkzjG8AaRl9tz9JMcAdQW3b8nY',
   
-  // À REMPLACER : Votre Client ID OAuth 2.0 (pour l'écriture avec authentification)
-  // IMPORTANT : Nécessaire pour pouvoir créer/modifier/supprimer des réservations
-  // Obtenir depuis : https://console.cloud.google.com/apis/credentials
-  CLIENT_ID: 'VOTRE_CLIENT_ID.apps.googleusercontent.com',
+  // Client ID OAuth 2.0 (pour l'écriture avec authentification)
+  CLIENT_ID: '175113424020-t2ootm4m0v08kkn1vbadmd2qeqt5cv27.apps.googleusercontent.com',
   
-  // À REMPLACER : L'ID de votre Google Sheet
-  // Exemple: si l'URL est https://docs.google.com/spreadsheets/d/1ABC-xyz123/edit
-  // alors SPREADSHEET_ID = '1ABC-xyz123'
-  SPREADSHEET_ID: 'VOTRE_ID_SPREADSHEET',
+  // ID de votre Google Sheet
+  SPREADSHEET_ID: '1SNkHpAXIzu3GNQxFX3csCRv_4rz9M52xO6ov0LCed7Q',
   
   // Noms des onglets dans votre Google Sheet
   SHEETS: {
