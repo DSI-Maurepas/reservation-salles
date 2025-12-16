@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
-import { SALLES, CAPACITES_SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES } from '../config/googleSheets';
+import { SALLES, CAPACITES_SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS } from '../config/googleSheets';
 import './ReservationGrid.css';
 
 function ReservationGrid({ selectedDate, onBack, onSuccess }) {
@@ -28,6 +28,22 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     reservations: [],
     message: ''
   });
+
+  // Vérifier si l'utilisateur est admin
+  const isUserAdmin = (email) => {
+    return ADMINISTRATEURS.includes(email?.toLowerCase());
+  };
+
+  // Vérifier si une salle est réservée aux admins uniquement
+  const isAdminOnlyRoom = (salle) => {
+    return SALLES_ADMIN_ONLY.includes(salle);
+  };
+
+  // Vérifier si l'utilisateur peut réserver cette salle
+  const canUserBookRoom = (salle, userEmail) => {
+    if (!isAdminOnlyRoom(salle)) return true; // Salle publique
+    return isUserAdmin(userEmail); // Salle admin : vérifier si user est admin
+  };
 
   const loadReservations = useCallback(async () => {
     try {
@@ -73,6 +89,12 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
   };
 
   const handleMouseDown = (salle, hour) => {
+    // Vérifier si la salle est réservée aux admins
+    if (isAdminOnlyRoom(salle) && !canUserBookRoom(salle, formData.email)) {
+      alert(`🔒 La salle "${salle}" est réservée aux administrateurs.\n\nVeuillez contacter la DSI pour toute réservation.`);
+      return;
+    }
+    
     if (isSlotReserved(salle, hour)) {
       alert('Ce créneau est déjà réservé');
       return;
@@ -436,13 +458,16 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         const selected = isSlotSelected(salle, hour);
         const reservationEmail = reserved ? getReservationEmail(salle, hour) : '';
         const isLunchBreak = hour === 12 || hour === 13; // 12h-13h et 13h-14h
+        const isAdminRoom = isAdminOnlyRoom(salle);
+        const canBook = canUserBookRoom(salle, formData.email);
         
         grid.push(
           <div
             key={`slot-${salle}-${hour}`}
-            className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''} ${isLunchBreak ? 'lunch-break' : ''}`}
+            className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''} ${isLunchBreak ? 'lunch-break' : ''} ${isAdminRoom && !canBook ? 'admin-only-locked' : ''}`}
             data-salle={salle}
             data-hour={hour}
+            title={isAdminRoom && !canBook ? `🔒 Salle réservée aux administrateurs` : ''}
             style={{ 
               gridColumn: salleIndex + 2,
               gridRow: rowNumber

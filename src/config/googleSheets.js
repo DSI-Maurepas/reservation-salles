@@ -3,17 +3,17 @@
 
 export const GOOGLE_CONFIG = {
   // À REMPLACER : Votre API Key Google (pour la lecture publique)
-  API_KEY: 'AIzaSyAfpo4O0YkzjG8AaRl9tz9JMcAdQW3b8nY',
+  API_KEY: 'VOTRE_CLE_API_GOOGLE',
   
   // À REMPLACER : Votre Client ID OAuth 2.0 (pour l'écriture avec authentification)
   // IMPORTANT : Nécessaire pour pouvoir créer/modifier/supprimer des réservations
   // Obtenir depuis : https://console.cloud.google.com/apis/credentials
-  CLIENT_ID: '175113424020-t2ootm4m0v08kkn1vbadmd2qeqt5cv27.apps.googleusercontent.com',
+  CLIENT_ID: 'VOTRE_CLIENT_ID.apps.googleusercontent.com',
   
   // À REMPLACER : L'ID de votre Google Sheet
   // Exemple: si l'URL est https://docs.google.com/spreadsheets/d/1ABC-xyz123/edit
   // alors SPREADSHEET_ID = '1ABC-xyz123'
-  SPREADSHEET_ID: '1SNkHpAXIzu3GNQxFX3csCRv_4rz9M52xO6ov0LCed7Q',
+  SPREADSHEET_ID: 'VOTRE_ID_SPREADSHEET',
   
   // Noms des onglets dans votre Google Sheet
   SHEETS: {
@@ -38,29 +38,28 @@ export const EMAIL_CONFIG = {
 
 // Liste des salles de la mairie
 export const SALLES = [
-  'Salle Conseil',
-  'Salle Mariages',
-  'Salle 16eme A',
-  'Salle 16eme B',
-  'Salle N°1',
-  'Salle N°2',
-  'Salle N°3',
-  'Salle N°4',
-  'Salle CCAS'
+  'Salle du Conseil',
+  'Salle des Mariages',
+  'Salle du 16eme A',
+  'Salle du 16eme B',
+  'Salle rdc N°1',
+  'Salle rdc N°2',
+  'Salle rdc N°3',
+  'Salle CCAS',
+  'Salle CTM'
 ];
-
 
 // Capacités des salles
 export const CAPACITES_SALLES = {
-  'Salle Conseil': '80 pers.',
-  'Salle Mariages': '40 pers.',
-  'Salle 16eme A': '20 pers.',
-  'Salle 16eme B': '19 pers.',
-  'Salle N°1': '8 pers.',
-  'Salle N°2': '12 pers.',
-  'Salle N°3': '4 pers.',
-  'Salle N°4': '2 pers.',
-  'Salle CCAS': '12 pers.'
+  'Salle du Conseil': '30 pers.',
+  'Salle des Mariages': '20 pers.',
+  'Salle du 16eme A': '12 pers.',
+  'Salle du 16eme B': '12 pers.',
+  'Salle rdc N°1': '8 pers.',
+  'Salle rdc N°2': '8 pers.',
+  'Salle rdc N°3': '8 pers.',
+  'Salle CCAS': '10 pers.',
+  'Salle CTM': '15 pers.'
 };
 
 // Liste des services
@@ -140,7 +139,16 @@ export const JOURS_FERIES = [
 // Administrateurs de l'application (adresses email)
 export const ADMINISTRATEURS = [
   'j.matrat@maurepas.fr', // DSI
-  'admin@maurepas.fr'
+  'admin@maurepas.fr',
+  'direction@maurepas.fr', // Exemple
+  'cabinet@maurepas.fr',   // Exemple
+  'dgs@maurepas.fr'        // Exemple
+];
+
+// Salles réservées uniquement aux administrateurs
+export const SALLES_ADMIN_ONLY = [
+  'Salle du Conseil',
+  'Salle des Mariages'
 ];
 
 // Motifs d'annulation obligatoires pour toute suppression
