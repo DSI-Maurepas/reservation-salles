@@ -33,7 +33,7 @@ export const SALLES = [
   'Salle N°2 - 12 Personnes',
   'Salle N°3 - 8 Personnes',
   'Salle N°4 - 4 Personnes',
-  'Salle CCAS'
+  'Salle CCAS - 10 Personnes'
 ];
 
 // Liste des services
