@@ -2,45 +2,47 @@
 .my-reservations {
   background: white;
   border-radius: 16px;
-  padding: 2rem;
+  padding: 1.5rem; /* Réduit de 2rem */
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   animation: fadeIn 0.5s ease;
+  max-width: 100%;
+  overflow: visible; /* Pas de scroll */
 }
 
 .my-reservations h2 {
   color: var(--primary-color);
-  margin-bottom: 2rem;
-  font-size: 1.8rem;
+  margin-bottom: 1.5rem; /* Réduit */
+  font-size: 1.6rem; /* Réduit */
 }
 
 /* Search Section */
 .search-section {
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  padding: 1.5rem;
+  padding: 1rem; /* Réduit */
   border-radius: 12px;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem; /* Réduit */
   border-left: 4px solid var(--primary-color);
 }
 
 .search-section label {
   display: block;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.5rem; /* Réduit */
   color: var(--text-dark);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem; /* Réduit */
 }
 
 .search-input-group {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem; /* Réduit */
 }
 
 .search-input-group input {
   flex: 1;
-  padding: 0.8rem 1rem;
+  padding: 0.6rem 0.8rem; /* Réduit */
   border: 2px solid var(--border-color);
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem; /* Réduit */
   transition: all 0.3s ease;
 }
 
@@ -51,12 +53,12 @@
 }
 
 .search-input-group button {
-  padding: 0.8rem 1.5rem;
+  padding: 0.6rem 1.2rem; /* Réduit */
   background: var(--primary-color);
   color: white;
   border: none;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem; /* Réduit */
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -72,8 +74,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding: 1rem;
+  margin-bottom: 1rem; /* Réduit */
+  padding: 0.8rem; /* Réduit */
   background: var(--light-bg);
   border-radius: 10px;
   flex-wrap: wrap;
@@ -271,5 +273,41 @@
 
   .detail-row .label {
     min-width: auto;
+  }
+}
+
+/* Styles pour l'impression PDF */
+@media print {
+  .my-reservations {
+    padding: 1rem;
+    box-shadow: none;
+  }
+
+  .search-section,
+  .filter-section {
+    display: none !important; /* Masquer les filtres */
+  }
+
+  .export-buttons {
+    display: none !important; /* Masquer les boutons export */
+  }
+
+  .cancel-btn {
+    display: none !important; /* Masquer les boutons annuler */
+  }
+
+  .reservations-list {
+    max-height: none !important; /* Enlever la limite de hauteur */
+    overflow: visible !important;
+  }
+
+  .reservation-card {
+    page-break-inside: avoid; /* Éviter de couper les cartes */
+    margin-bottom: 1rem;
+  }
+
+  /* Forcer l'affichage de tous les éléments */
+  * {
+    overflow: visible !important;
   }
 }

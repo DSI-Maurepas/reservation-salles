@@ -90,23 +90,28 @@
   padding-top: 1rem;
 }
 
-/* Scrollbar personnalisée pour la grille */
+/* Scrollbar personnalisée moderne et visible */
 .grid-column::-webkit-scrollbar {
-  height: 12px;
+  height: 16px; /* Plus haute */
 }
 
 .grid-column::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 6px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-radius: 10px;
+  border: 2px solid #2196f3;
 }
 
 .grid-column::-webkit-scrollbar-thumb {
-  background: #2196f3;
-  border-radius: 6px;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); /* Orange vif */
+  border-radius: 10px;
+  border: 2px solid white;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.5);
 }
 
 .grid-column::-webkit-scrollbar-thumb:hover {
-  background: #1976d2;
+  background: linear-gradient(135deg, #f57c00 0%, #e65100 100%);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.7);
+  transform: scaleY(1.1);
 }
 
 .form-column {
@@ -120,14 +125,14 @@
 /* Grille de réservation */
 .reservation-grid {
   display: grid;
-  grid-template-columns: 80px repeat(9, minmax(100px, 1fr));
+  grid-template-columns: 80px repeat(9, minmax(90px, 1fr)); /* Colonnes plus étroites */
   min-width: max-content;
-  gap: 2px;
+  gap: 1px; /* Gap réduit */
   background: #e0e0e0;
   border-radius: 12px;
   overflow: visible;
   user-select: none;
-  transform: rotateX(180deg); /* Ré-inverse pour remettre à l'endroit */
+  transform: rotateX(180deg);
 }
 
 .grid-corner {
@@ -137,7 +142,10 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  padding: 1rem 0.5rem;
+  padding: 0.6rem 0.3rem; /* Padding réduit */
+  position: sticky;
+  left: 0;
+  z-index: 20;
 }
 
 .time-label {
@@ -147,26 +155,43 @@
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.85rem;
-  padding: 0.8rem 0.3rem;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.2rem; /* Padding réduit */
+  position: sticky;
+  left: 0;
+  z-index: 10;
 }
 
 .salle-header {
   background: #2196f3;
   color: white;
   display: flex;
+  flex-direction: column; /* 2 lignes */
   align-items: center;
   justify-content: center;
   text-align: center;
   font-weight: 700;
-  font-size: 0.85rem;
-  padding: 1rem 0.5rem;
+  font-size: 0.75rem; /* Taille réduite */
+  padding: 0.6rem 0.3rem; /* Padding réduit */
   line-height: 1.2;
+  gap: 0.2rem;
+}
+
+.salle-header .salle-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.salle-header .salle-capacity {
+  font-size: 0.7rem;
+  font-weight: 400;
+  opacity: 0.9;
 }
 
 .time-slot {
   background: white;
-  min-height: 50px;
+  min-height: 35px; /* Réduit de 50px à 35px */
+  max-height: 35px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
