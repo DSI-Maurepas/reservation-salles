@@ -22,7 +22,7 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f7fa; /* Gris très clair moderne au lieu du dégradé mauve */
   min-height: 100vh;
   color: var(--text-dark);
 }
@@ -108,18 +108,17 @@ body {
   flex: 1;
   max-width: 1400px;
   width: 100%;
-  margin: 2rem auto;
-  padding: 0 2rem;
+  margin: 1rem auto; /* Réduit de 2rem */
+  padding: 0 1.5rem; /* Réduit de 2rem */
 }
 
 /* Footer */
 .app-footer {
-  background: rgba(0, 0, 0, 0.1);
-  color: white;
+  background: rgba(0, 0, 0, 0.05); /* Plus subtil sur fond clair */
+  color: #424242; /* Texte foncé au lieu de blanc */
   text-align: center;
-  padding: 1.5rem;
+  padding: 1rem; /* Réduit */
   margin-top: auto;
-  backdrop-filter: blur(10px);
 }
 
 /* Loading States */
