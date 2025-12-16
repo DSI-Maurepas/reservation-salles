@@ -15,10 +15,12 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     nom: '',
     prenom: '',
     email: '',
+    telephone: '',
     service: '',
     objet: '',
     recurrence: false,
-    recurrenceJusquau: ''
+    recurrenceJusquau: '',
+    recurrenceType: 'weekly' // 'weekly' ou 'biweekly'
   });
   const [loading, setLoading] = useState(true);
   const [successModal, setSuccessModal] = useState({
@@ -222,7 +224,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
     try {
       // Fonction pour générer les dates de récurrence
-      const generateRecurrenceDates = (startDate, endDate) => {
+      const generateRecurrenceDates = (startDate, endDate, type = 'weekly') => {
         const dates = [];
         const current = new Date(startDate);
         current.setHours(0, 0, 0, 0); // Normaliser à minuit
@@ -230,9 +232,11 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999); // Fin de journée pour inclure la date finale
         
+        const increment = type === 'biweekly' ? 14 : 7; // 14 jours si bi-hebdomadaire, sinon 7
+        
         while (current <= end) {
           dates.push(new Date(current));
-          current.setDate(current.getDate() + 7); // Ajouter 7 jours (1 semaine)
+          current.setDate(current.getDate() + increment);
         }
         
         return dates;
@@ -243,7 +247,11 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       
       if (formData.recurrence && formData.recurrenceJusquau) {
         // Pour les récurrences : créer une réservation par occurrence
-        const recurrenceDates = generateRecurrenceDates(selectedDate, new Date(formData.recurrenceJusquau));
+        const recurrenceDates = generateRecurrenceDates(
+          selectedDate, 
+          new Date(formData.recurrenceJusquau),
+          formData.recurrenceType
+        );
         
         for (const date of recurrenceDates) {
           for (const sel of selections) {
@@ -427,11 +435,12 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         const reserved = isSlotReserved(salle, hour);
         const selected = isSlotSelected(salle, hour);
         const reservationEmail = reserved ? getReservationEmail(salle, hour) : '';
+        const isLunchBreak = hour === 12 || hour === 13; // 12h-13h et 13h-14h
         
         grid.push(
           <div
             key={`slot-${salle}-${hour}`}
-            className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''}`}
+            className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''} ${isLunchBreak ? 'lunch-break' : ''}`}
             data-salle={salle}
             data-hour={hour}
             style={{ 
@@ -508,7 +517,10 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         {selections.length > 0 && (
           <div className="form-column">
             <div className="reservation-form">
-              <h3>📝 Confirmer la réservation ({selections.length} créneau{selections.length > 1 ? 'x' : ''})</h3>
+              <h3>
+                <span className="form-title-line1">📝 Confirmer la réservation</span>
+                <span className="form-title-line2">({selections.length} créneau{selections.length > 1 ? 'x' : ''})</span>
+              </h3>
           
           {selections.length > 10 && (
             <div className="warning-message">
@@ -559,24 +571,34 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
                 />
               </div>
               <div className="form-group">
-                <label>Prénom *</label>
+                <label>Prénom</label>
                 <input
                   type="text"
                   value={formData.prenom}
                   onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-                  required
                 />
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Email *</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Email *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Téléphone</label>
+                <input
+                  type="tel"
+                  value={formData.telephone || ''}
+                  onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                  placeholder="06 12 34 56 78"
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -614,20 +636,32 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
                   checked={formData.recurrence}
                   onChange={(e) => setFormData({ ...formData, recurrence: e.target.checked })}
                 />
-                Réservation récurrente (chaque semaine)
+                Réservation récurrente
               </label>
             </div>
 
             {formData.recurrence && (
-              <div className="form-group">
-                <label>Récurrence jusqu'au</label>
-                <input
-                  type="date"
-                  value={formData.recurrenceJusquau}
-                  onChange={(e) => setFormData({ ...formData, recurrenceJusquau: e.target.value })}
-                  min={googleSheetsService.formatDate(selectedDate)}
-                />
-              </div>
+              <>
+                <div className="form-group">
+                  <label>Type de récurrence</label>
+                  <select
+                    value={formData.recurrenceType}
+                    onChange={(e) => setFormData({ ...formData, recurrenceType: e.target.value })}
+                  >
+                    <option value="weekly">Chaque semaine</option>
+                    <option value="biweekly">Une semaine sur 2</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>Récurrence jusqu'au</label>
+                  <input
+                    type="date"
+                    value={formData.recurrenceJusquau}
+                    onChange={(e) => setFormData({ ...formData, recurrenceJusquau: e.target.value })}
+                    min={googleSheetsService.formatDate(selectedDate)}
+                  />
+                </div>
+              </>
             )}
 
             <div className="form-actions">

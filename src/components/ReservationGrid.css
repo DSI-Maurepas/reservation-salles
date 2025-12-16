@@ -4,8 +4,8 @@
 .reservation-grid-container {
   background: white;
   border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 1.2rem; /* Réduit de 2rem */
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); /* Ombre plus marquée */
   animation: slideIn 0.5s ease;
 }
 
@@ -18,14 +18,14 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1rem; /* Réduit */
+  padding-bottom: 0.8rem; /* Réduit */
   border-bottom: 2px solid #e0e0e0;
 }
 
 .grid-header h2 {
   color: #2196f3;
-  font-size: 1.6rem;
+  font-size: 1.4rem; /* Réduit */
 }
 
 .back-button {
@@ -217,6 +217,23 @@
   cursor: not-allowed;
 }
 
+/* 7. Heures de pause méridienne (12h-14h) en évidence légère */
+.time-slot.lunch-break {
+  background: #fff9e6 !important; /* Jaune très clair */
+}
+
+.time-slot.lunch-break:hover:not(.reserved) {
+  background: #fff3cd !important;
+}
+
+.time-slot.lunch-break.selected {
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%) !important;
+}
+
+.time-slot.lunch-break.reserved {
+  background: linear-gradient(135deg, #f5f3e0 0%, #e8e6d0 100%) !important;
+}
+
 .reserved-indicator {
   font-size: 0.65rem;
   color: #424242;
@@ -238,7 +255,7 @@
 /* Formulaire à droite */
 .reservation-form {
   background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-  padding: 1.5rem;
+  padding: 1rem; /* Réduit de 1.5rem */
   border-radius: 12px;
   border: 2px solid #e0e0e0;
   animation: slideInRight 0.5s ease;
@@ -252,36 +269,51 @@
 
 .reservation-form h3 {
   color: #424242;
-  margin-bottom: 1rem;
-  font-size: 1.2rem;
+  margin-bottom: 0.6rem; /* Réduit de 1rem */
+  font-size: 1rem; /* Réduit de 1.2rem */
   text-align: center;
   font-weight: 700;
+  line-height: 1.3; /* Pour le texte sur 2 lignes */
+}
+
+.form-title-line1 {
+  display: block;
+  font-size: 1rem;
+}
+
+.form-title-line2 {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  opacity: 0.8;
+  margin-top: 0.2rem;
 }
 
 .warning-message {
   background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-  padding: 0.8rem 1rem;
+  padding: 0.5rem 0.7rem; /* Réduit */
   border-radius: 8px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem; /* Réduit */
   border-left: 4px solid #ff9800;
   color: #e65100;
-  font-size: 0.85rem;
+  font-size: 0.75rem; /* Réduit */
+  line-height: 1.3;
 }
 
 .selections-summary {
   background: white;
-  padding: 1rem;
+  padding: 0.7rem; /* Réduit */
   border-radius: 8px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem; /* Réduit */
   border-left: 4px solid #757575;
-  max-height: 250px;
+  max-height: 180px; /* Réduit de 250px */
   overflow-y: auto;
 }
 
 .selections-summary h4 {
   color: #424242;
-  margin-bottom: 0.8rem;
-  font-size: 0.9rem;
+  margin-bottom: 0.5rem; /* Réduit */
+  font-size: 0.85rem; /* Réduit */
   font-weight: 600;
 }
 
@@ -290,9 +322,9 @@
   justify-content: space-between;
   align-items: center;
   background: #f8f9fa;
-  padding: 0.6rem 0.8rem;
+  padding: 0.4rem 0.6rem; /* Réduit */
   border-radius: 6px;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem; /* Réduit */
   border: 1px solid #dee2e6;
 }
 
@@ -303,18 +335,19 @@
 
 .selection-info p {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem; /* Réduit */
+  line-height: 1.3;
 }
 
 .selection-info p:first-child {
   color: #424242;
   font-weight: 600;
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.15rem; /* Réduit */
 }
 
 .selection-info p:last-child {
   color: #757575;
-  font-size: 0.75rem;
+  font-size: 0.7rem; /* Réduit */
 }
 
 .remove-selection-btn {
@@ -338,43 +371,43 @@
 }
 
 .selection-date {
-  margin-top: 0.8rem;
-  padding-top: 0.8rem;
+  margin-top: 0.5rem; /* Réduit */
+  padding-top: 0.5rem; /* Réduit */
   border-top: 2px solid #dee2e6;
 }
 
 .selection-date p {
   margin: 0;
   color: #424242;
-  font-size: 0.85rem;
+  font-size: 0.8rem; /* Réduit */
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.8rem;
-  margin-bottom: 0.8rem;
+  gap: 0.5rem; /* Réduit */
+  margin-bottom: 0.5rem; /* Réduit */
 }
 
 .form-group {
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.5rem; /* Réduit */
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem; /* Réduit */
   color: #424242;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem; /* Réduit */
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 0.6rem;
+  padding: 0.45rem 0.5rem; /* Réduit */
   border: 2px solid #dee2e6;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 0.85rem; /* Réduit */
   transition: all 0.3s ease;
 }
 
@@ -388,16 +421,16 @@
 .checkbox-group {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem; /* Réduit */
 }
 
 .checkbox-group label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem; /* Réduit */
   margin: 0;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.8rem; /* Réduit */
 }
 
 .checkbox-group input[type="checkbox"] {
@@ -425,12 +458,13 @@
 }
 
 .cancel-button {
-  background: #757575;
-  color: white;
+  background: #ffcdd2; /* Rouge pâle */
+  color: #c62828; /* Texte rouge foncé */
 }
 
 .cancel-button:hover {
-  background: #424242;
+  background: #ef9a9a; /* Rouge pâle plus foncé au hover */
+  color: #b71c1c;
 }
 
 .submit-button {
