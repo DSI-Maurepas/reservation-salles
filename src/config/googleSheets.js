@@ -38,28 +38,29 @@ export const EMAIL_CONFIG = {
 
 // Liste des salles de la mairie
 export const SALLES = [
-  'Salle du Conseil',
-  'Salle des Mariages',
-  'Salle du 16eme A',
-  'Salle du 16eme B',
-  'Salle rdc N°1',
-  'Salle rdc N°2',
-  'Salle rdc N°3',
-  'Salle CCAS',
-  'Salle CTM'
+  'Salle Conseil',
+  'Salle Mariages',
+  'Salle 16eme A',
+  'Salle 16eme B',
+  'Salle N°1',
+  'Salle N°2',
+  'Salle N°3',
+  'Salle N°4',
+  'Salle CCAS'
 ];
+
 
 // Capacités des salles
 export const CAPACITES_SALLES = {
-  'Salle du Conseil': '30 pers.',
-  'Salle des Mariages': '20 pers.',
-  'Salle du 16eme A': '12 pers.',
-  'Salle du 16eme B': '12 pers.',
-  'Salle rdc N°1': '8 pers.',
-  'Salle rdc N°2': '8 pers.',
-  'Salle rdc N°3': '8 pers.',
-  'Salle CCAS': '10 pers.',
-  'Salle CTM': '15 pers.'
+  'Salle Conseil': '80 pers.',
+  'Salle Mariages': '40 pers.',
+  'Salle 16eme A': '20 pers.',
+  'Salle 16eme B': '19 pers.',
+  'Salle N°1': '8 pers.',
+  'Salle N°2': '12 pers.',
+  'Salle N°3': '4 pers.',
+  'Salle N°4': '2 pers.',
+  'Salle CCAS': '12 pers.'
 };
 
 // Liste des services
