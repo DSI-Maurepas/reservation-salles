@@ -229,9 +229,9 @@ function Statistics({ reservations }) {
         />
         
         <PieChart 
-          data={stats.parService} 
-          title="🏛️ Répartition par service"
-          colors={colors3}
+          data={stats.parHoraire} 
+          title="🕐 Répartition par horaire"
+          colors={colors2}
         />
         
         <PieChart 
@@ -239,13 +239,13 @@ function Statistics({ reservations }) {
           title="📝 Répartition par objet"
           colors={colors1}
         />
-        
+
         <PieChart 
-          data={stats.parHoraire} 
-          title="🕐 Répartition par horaire"
-          colors={colors2}
+          data={stats.parService} 
+          title="🏛️ Répartition par service"
+          colors={colors3}
         />
-        
+             
         <div className="chart-card">
           <h3>📊 Taux d'occupation</h3>
           <div className="occupation-bars">
