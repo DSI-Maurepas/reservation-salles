@@ -33,7 +33,7 @@ function Statistics({ reservations }) {
       parJour[jour]++;
     });
 
-    // 3. Top 5 utilisateurs
+    // 3. Top 10 utilisateurs
     const parUtilisateur = {};
     reservations.forEach(res => {
       const key = `${res.nom} ${res.prenom}`.trim();
@@ -41,7 +41,7 @@ function Statistics({ reservations }) {
     });
     const topUtilisateurs = Object.entries(parUtilisateur)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+      .slice(0, 10);
 
     // 4. Répartition par objet
     const parObjet = {};
