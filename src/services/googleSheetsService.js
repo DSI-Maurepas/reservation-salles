@@ -125,24 +125,26 @@ class GoogleSheetsService {
       }
 
       const rows = response.result.values || [];
-      return rows.map((row, index) => ({
-        id: row[0] || `res_${index}`,
-        salle: row[1],
-        dateDebut: row[2],
-        heureDebut: row[3],
-        dateFin: row[4],
-        heureFin: row[5],
-        nom: row[6],
-        prenom: row[7],
-        email: row[8] || '',          // Colonne I (index 8)
-        telephone: row[9] || '',       // Colonne J (index 9)
-        service: row[10],              // Colonne K (index 10)
-        objet: row[11],                // Colonne L (index 11)
-        recurrence: row[12] === 'OUI', // Colonne M (index 12)
-        recurrenceJusquau: row[13] || null, // Colonne N (index 13)
-        statut: row[14] || 'active',   // Colonne O (index 14)
-        dateCreation: row[15] || ''    // Colonne P (index 15)
-      }));
+      return rows
+        .filter(row => row && row[0] && row[1]) // Filtrer lignes vides et sans ID/Salle
+        .map((row, index) => ({
+          id: row[0] || `res_${index}`,
+          salle: row[1] || '',
+          dateDebut: row[2] || '',
+          heureDebut: row[3] || '',
+          dateFin: row[4] || '',
+          heureFin: row[5] || '',
+          nom: row[6] || '',
+          prenom: row[7] || '',
+          email: row[8] || '',          // Colonne I (index 8)
+          telephone: row[9] || '',       // Colonne J (index 9)
+          service: row[10] || '',        // Colonne K (index 10)
+          objet: row[11] || '',          // Colonne L (index 11)
+          recurrence: (row[12] || '').toUpperCase() === 'OUI', // Colonne M (index 12)
+          recurrenceJusquau: row[13] || null, // Colonne N (index 13)
+          statut: row[14] || 'active',   // Colonne O (index 14)
+          dateCreation: row[15] || ''    // Colonne P (index 15)
+        }));
     } catch (error) {
       console.error('Erreur lors de la récupération des réservations:', error);
       
