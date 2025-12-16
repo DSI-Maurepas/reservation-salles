@@ -28,6 +28,16 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     reservations: [],
     message: ''
   });
+  
+  // État pour le mot de passe admin
+  const [adminPasswordModal, setAdminPasswordModal] = useState({
+    show: false,
+    salle: null,
+    hour: null,
+    password: ''
+  });
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+  const ADMIN_PASSWORD = 'R3sa@Morepas78';
 
   // Vérifier si l'utilisateur est admin
   const isUserAdmin = (email) => {
@@ -89,22 +99,51 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
   };
 
   const handleMouseDown = (salle, hour) => {
-    // Vérifier si la salle est réservée aux admins
-    if (isAdminOnlyRoom(salle) && !canUserBookRoom(salle, formData.email)) {
-      alert(`🔒 La salle "${salle}" est réservée aux administrateurs.\n\nVeuillez contacter la DSI pour toute réservation.`);
-      return;
-    }
-    
+    // Vérifier si créneau réservé
     if (isSlotReserved(salle, hour)) {
       alert('Ce créneau est déjà réservé');
       return;
     }
+    
+    // Vérifier si salle admin et pas encore déverrouillée
+    if (isAdminOnlyRoom(salle) && !isAdminUnlocked) {
+      setAdminPasswordModal({
+        show: true,
+        salle,
+        hour,
+        password: ''
+      });
+      return;
+    }
+    
+    // Continuer normalement
     setIsDragging(true);
     setCurrentSelection({
       salle,
       startHour: hour,
       endHour: hour + 1
     });
+  };
+
+  // Valider le mot de passe admin
+  const handleAdminPasswordSubmit = () => {
+    if (adminPasswordModal.password === ADMIN_PASSWORD) {
+      // Mot de passe correct
+      setIsAdminUnlocked(true);
+      setAdminPasswordModal({ show: false, salle: null, hour: null, password: '' });
+      
+      // Démarrer la sélection
+      setIsDragging(true);
+      setCurrentSelection({
+        salle: adminPasswordModal.salle,
+        startHour: adminPasswordModal.hour,
+        endHour: adminPasswordModal.hour + 1
+      });
+    } else {
+      // Mot de passe incorrect
+      alert('❌ Mot de passe incorrect');
+      setAdminPasswordModal({ ...adminPasswordModal, password: '' });
+    }
   };
 
   const handleMouseEnter = (salle, hour) => {
@@ -433,9 +472,18 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     );
     
     SALLES.forEach((salle, salleIndex) => {
+      // Séparer le nom de la salle et sa capacité
+      // Ex: "Salle Conseil - 80 Personnes" → ["Salle Conseil", "80 Personnes"]
+      const parts = salle.split(' - ');
+      const salleNom = parts[0] || salle;
+      const salleCapacite = parts[1] || '';
+      const isAdminRoom = isAdminOnlyRoom(salle);
+      
       grid.push(
-        <div key={`salle-header-${salleIndex}`} className="salle-header" style={{ gridColumn: salleIndex + 2 }}>
-          <span className="salle-name">{salle}</span>
+        <div key={`salle-header-${salleIndex}`} className={`salle-header ${isAdminRoom && !isAdminUnlocked ? 'admin-header-locked' : ''}`} style={{ gridColumn: salleIndex + 2 }}>
+          {isAdminRoom && !isAdminUnlocked && <span className="header-lock-icon">🔒</span>}
+          <span className="salle-name">{salleNom}</span>
+          {salleCapacite && <span className="salle-capacity">{salleCapacite}</span>}
         </div>
       );
     });
@@ -463,10 +511,10 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         grid.push(
           <div
             key={`slot-${salle}-${hour}`}
-            className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''} ${isLunchBreak ? 'lunch-break' : ''} ${isAdminRoom && !canBook ? 'admin-only-locked' : ''}`}
+            className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''} ${isLunchBreak ? 'lunch-break' : ''} ${isAdminRoom && !isAdminUnlocked ? 'admin-only-locked' : ''}`}
             data-salle={salle}
             data-hour={hour}
-            title={isAdminRoom && !canBook ? `🔒 Salle réservée aux administrateurs` : ''}
+            title={isAdminRoom && !isAdminUnlocked ? `🔒 Salle réservée - Mot de passe requis` : ''}
             style={{ 
               gridColumn: salleIndex + 2,
               gridRow: rowNumber
@@ -479,6 +527,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
               handleTouchStart(salle, hour);
             }}
           >
+            {isAdminRoom && !isAdminUnlocked && !reserved && (
+              <span className="lock-icon">🔒</span>
+            )}
             {reserved && (
               <span className="reserved-indicator" title={reservationEmail}>
                 {reservationEmail.split('@')[0]}
@@ -759,6 +810,53 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
                 }}
               >
                 Fermer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal mot de passe admin */}
+      {adminPasswordModal.show && (
+        <div className="modal-overlay" onClick={() => setAdminPasswordModal({ show: false, salle: null, hour: null, password: '' })}>
+          <div className="modal-content admin-password-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>🔒 Accès Salle Réservée</h2>
+            </div>
+            
+            <div className="modal-body">
+              <p className="admin-warning">
+                La salle <strong>{adminPasswordModal.salle}</strong> est réservée aux administrateurs.
+              </p>
+              <p className="admin-instruction">
+                Veuillez saisir le mot de passe administrateur pour accéder à cette salle.
+              </p>
+              
+              <div className="password-input-group">
+                <label>Mot de passe</label>
+                <input
+                  type="password"
+                  value={adminPasswordModal.password}
+                  onChange={(e) => setAdminPasswordModal({ ...adminPasswordModal, password: e.target.value })}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAdminPasswordSubmit()}
+                  placeholder="Entrez le mot de passe"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="cancel-button"
+                onClick={() => setAdminPasswordModal({ show: false, salle: null, hour: null, password: '' })}
+              >
+                Annuler
+              </button>
+              <button 
+                className="submit-button"
+                onClick={handleAdminPasswordSubmit}
+              >
+                Valider
               </button>
             </div>
           </div>
