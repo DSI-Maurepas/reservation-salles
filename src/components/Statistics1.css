@@ -81,8 +81,6 @@
   padding: 1.5rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
-  display: flex;
-  flex-direction: column;
 }
 
 .chart-card:hover {
@@ -101,8 +99,7 @@
 .chart-content {
   display: flex;
   gap: 2rem;
-  align-items: flex-start;
-  flex: 1;
+  align-items: center;
 }
 
 /* Graphique en camembert */
@@ -122,18 +119,10 @@
   stroke-width: 1;
 }
 
-/* Légende - Par défaut pas de scroll */
+/* Légende */
 .chart-legend {
   flex: 1;
-  max-height: none;
-  overflow-y: visible;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Légende scrollable pour graphiques avec beaucoup d'items (salles, services, objets) */
-.chart-legend.scrollable {
-  max-height: 400px;
+  max-height: 250px;
   overflow-y: auto;
 }
 
@@ -176,7 +165,6 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  flex: 1;
 }
 
 .top-user-item {
@@ -220,13 +208,11 @@
   font-weight: 500;
 }
 
-/* Barres d'occupation - Hauteur complète du bloc */
+/* Barres d'occupation */
 .occupation-bars {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  flex: 1;
-  justify-content: space-evenly;
 }
 
 .occupation-item {
@@ -236,8 +222,8 @@
 }
 
 .occupation-label {
-  width: 180px;
-  font-size: 0.85rem;
+  width: 140px;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-dark);
   flex-shrink: 0;
