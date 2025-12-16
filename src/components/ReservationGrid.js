@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
-import { SALLES, CAPACITES_SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS } from '../config/googleSheets';
 import './ReservationGrid.css';
 
 function ReservationGrid({ selectedDate, onBack, onSuccess }) {
@@ -436,7 +435,6 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       grid.push(
         <div key={`salle-header-${salleIndex}`} className="salle-header" style={{ gridColumn: salleIndex + 2 }}>
           <span className="salle-name">{salle}</span>
-          <span className="salle-capacity">{CAPACITES_SALLES[salle]}</span>
         </div>
       );
     });
