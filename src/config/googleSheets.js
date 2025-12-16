@@ -54,7 +54,7 @@ export const SERVICES = [
   'CCAS',
   'Centres de Loisirs',
   'Commande Publique',
-  'Direction des Systèmes d'Information',
+  'Direction des Systèmes d\'Information',
   'Direction Générale',
   'Direction Ressources Humaines',
   'Élus',
