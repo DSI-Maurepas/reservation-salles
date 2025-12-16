@@ -41,20 +41,20 @@ export const SALLES = [
   'Salle N°2 - 12 Personnes',
   'Salle N°3 - 8 Personnes',
   'Salle N°4 - 4 Personnes',
-  'Salle du CCAS'
+  'Salle CCAS'
 ];
 
 // Capacités des salles (pour compatibilité)
 export const CAPACITES_SALLES = {
-  'Salle Conseil - 80 Personnes': '80 pers.',
-  'Salle Mariages - 40 Personnes': '40 pers.',
-  'Salle 16eme A - 20 Personnes': '20 pers.',
-  'Salle 16eme B - 19 Personnes': '19 pers.',
-  'Salle N°1 - 2 Personnes': '2 pers.',
-  'Salle N°2 - 12 Personnes': '12 pers.',
-  'Salle N°3 - 8 Personnes': '8 pers.',
-  'Salle N°4 - 4 Personnes': '4 pers.',
-  'Salle du CCAS': '10 pers.'
+  'Salle Conseil': '80 pers.',
+  'Salle Mariages': '40 pers.',
+  'Salle 16eme A': '20 pers.',
+  'Salle 16eme B': '19 pers.',
+  'Salle N°1': '2 pers.',
+  'Salle N°2': '12 pers.',
+  'Salle N°3': '8 pers.',
+  'Salle N°4': '4 pers.',
+  'Salle CCAS': '10 pers.'
 };
 
 // Liste des services
