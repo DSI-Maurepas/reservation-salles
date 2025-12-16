@@ -19,7 +19,7 @@ class GoogleSheetsService {
         script1.onload = () => {
           window.gapi.load('client', async () => {
             await window.gapi.client.init({
-              apiKey: AIzaSyAfpo4O0YkzjG8AaRl9tz9JMcAdQW3b8nY,
+              apiKey: GOOGLE_CONFIG.API_KEY,
               discoveryDocs: GOOGLE_CONFIG.DISCOVERY_DOCS,
             });
             this.gapiLoaded = true;
@@ -36,7 +36,7 @@ class GoogleSheetsService {
         script2.src = 'https://accounts.google.com/gsi/client';
         script2.onload = () => {
           this.tokenClient = window.google.accounts.oauth2.initTokenClient({
-            client_id: VOTRE_CLIENT_ID.apps.googleusercontent.com,
+            client_id: GOOGLE_CONFIG.CLIENT_ID,
             scope: GOOGLE_CONFIG.SCOPES,
             callback: '', // sera défini lors de l'appel
           });
@@ -116,7 +116,7 @@ class GoogleSheetsService {
       }
 
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
-        spreadsheetId: 1SNkHpAXIzu3GNQxFX3csCRv_4rz9M52xO6ov0LCed7Q,
+        spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
         range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A2:P`,
       });
 
