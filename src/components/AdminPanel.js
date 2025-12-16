@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
 import { ADMINISTRATEURS, SALLES, MOTIFS_ANNULATION } from '../config/googleSheets';
+import Statistics from './Statistics';
 import './AdminPanel.css';
 
 function AdminPanel() {
@@ -249,36 +250,11 @@ function AdminPanel() {
         </button>
       </div>
 
-      <div className="stats-section">
-        <h3>📊 Statistiques</h3>
-        <div className="stats-grid">
-          <div className="stat-card">
-            <h4>Total réservations</h4>
-            <p className="stat-number">{stats.total}</p>
-          </div>
-          
-          <div className="stat-card">
-            <h4>Salle la plus réservée</h4>
-            <p className="stat-value">
-              {Object.entries(stats.parSalle).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
-            </p>
-          </div>
-          
-          <div className="stat-card">
-            <h4>Service le plus actif</h4>
-            <p className="stat-value">
-              {Object.entries(stats.parService).sort((a, b) => b[1] - a[1])[0]?.[0]?.substring(0, 30) || 'N/A'}
-            </p>
-          </div>
-        </div>
-        
-        <button onClick={exportStats} className="export-stats-btn">
-          📊 Exporter les statistiques (CSV)
-        </button>
-      </div>
+      {/* Nouveau composant Statistics avec graphiques */}
+      <Statistics reservations={reservations} />
 
       <div className="filters-section">
-        <h3>🔍 Filtres</h3>
+        <h3>🔍 Filtres et recherche</h3>
         <div className="filters-grid">
           <div className="filter-group">
             <label>Salle</label>

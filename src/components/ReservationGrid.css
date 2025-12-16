@@ -234,6 +234,41 @@
   background: linear-gradient(135deg, #f5f3e0 0%, #e8e6d0 100%) !important;
 }
 
+/* Salles réservées aux administrateurs (verrouillées pour non-admins) */
+.time-slot.admin-only-locked {
+  background: repeating-linear-gradient(
+    45deg,
+    #f5f5f5,
+    #f5f5f5 10px,
+    #e8e8e8 10px,
+    #e8e8e8 20px
+  ) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  position: relative;
+}
+
+.time-slot.admin-only-locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  opacity: 0.3;
+}
+
+.time-slot.admin-only-locked:hover {
+  background: repeating-linear-gradient(
+    45deg,
+    #ffe0e0,
+    #ffe0e0 10px,
+    #ffd0d0 10px,
+    #ffd0d0 20px
+  ) !important;
+  opacity: 0.8;
+}
+
 .reserved-indicator {
   font-size: 0.65rem;
   color: #424242;
