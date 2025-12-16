@@ -225,7 +225,10 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       const generateRecurrenceDates = (startDate, endDate) => {
         const dates = [];
         const current = new Date(startDate);
+        current.setHours(0, 0, 0, 0); // Normaliser à minuit
+        
         const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Fin de journée pour inclure la date finale
         
         while (current <= end) {
           dates.push(new Date(current));
