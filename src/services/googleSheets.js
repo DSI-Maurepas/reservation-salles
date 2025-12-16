@@ -38,15 +38,15 @@ export const EMAIL_CONFIG = {
 
 // Liste des salles de la mairie
 export const SALLES = [
-  'Salle du Conseil - 80 Personnes',
-  'Salle des Mariages - 40 Personnes',
-  'Salle du 16eme A - 20 Personnes',
-  'Salle du 16eme B - 19 Personnes',
-  'Salle rdc N°1 - 2 Personnes',
-  'Salle rdc N°2 - 12 Personnes',
-  'Salle rdc N°3 - 8 Personnes',
-  'Salle rdc N°4 - 4 Personnes',
-  'Salle du CCAS'
+  'Salle Conseil - 80 Personnes',
+  'Salle Mariages - 40 Personnes',
+  'Salle 16e A - 20 Personnes',
+  'Salle 16e B - 19 Personnes',
+  'Salle N°1 - 2 Personnes',
+  'Salle N°2 - 12 Personnes',
+  'Salle N°3 - 8 Personnes',
+  'Salle N°4 - 4 Personnes',
+  'Salle CCAS'
 ];
 
 // Liste des services
@@ -133,7 +133,7 @@ export const JOURS_FERIES = [
   '2025-12-25',
   '2026-01-01', '2026-04-06', '2026-05-01', '2026-05-08', '2026-05-14',
   '2026-05-25', '2026-07-14', '2026-08-15', '2026-11-01', '2026-11-11',
-  '2026-12-25'
+  '2026-12-25',
   '2027-01-01', '2027-03-29', '2027-05-01', '2027-05-06',
   '2027-05-08', '2027-05-17', '2027-07-14', '2027-08-15',
   '2027-11-01', '2027-11-11', '2027-12-25',
@@ -156,6 +156,24 @@ export const JOURS_FERIES = [
 
 // Administrateurs de l'application (adresses email)
 export const ADMINISTRATEURS = [
-  'j.matrat@maurepas.fr', // À REMPLACER par les vrais emails
-  'admin@mairie.fr'
+  'j.matrat@maurepas.fr', // DSI
+  'admin@maurepas.fr',
+  'sevindi.munure@gmail.com', // Exemple
+  'cabinet@maurepas.fr',   // Exemple
+  'mchaumeron@gmail.com'        // Exemple
+];
+
+// Salles réservées uniquement aux administrateurs
+export const SALLES_ADMIN_ONLY = [
+  'Salle Conseil',
+  'Salle Mariages'
+];
+
+// Motifs d'annulation obligatoires pour toute suppression
+export const MOTIFS_ANNULATION = [
+  "Réquisition par la Direction / Cabinet du Maire",
+  "Évènement institutionnel prioritaire",
+  "Indisponibilité exceptionnelle de la salle",
+  "Réorganisation interne / besoin de service",
+  "Annulation à la demande de l'agent"
 ];
