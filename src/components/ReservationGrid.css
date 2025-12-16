@@ -836,3 +836,110 @@
     justify-content: center;
   }
 }
+
+/* Modal mot de passe admin */
+.admin-password-modal {
+  max-width: 500px;
+}
+
+.admin-warning {
+  background: #fff3e0;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #ff9800;
+  color: #e65100;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.admin-instruction {
+  color: #424242;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.password-input-group {
+  margin-bottom: 1.5rem;
+}
+
+.password-input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #424242;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.password-input-group input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.password-input-group input:focus {
+  outline: none;
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+.modal-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.modal-footer .cancel-button {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.modal-footer .cancel-button:hover {
+  background: #ef9a9a;
+  color: #b71c1c;
+}
+
+.modal-footer .submit-button {
+  background: #4caf50;
+  color: white;
+}
+
+.modal-footer .submit-button:hover {
+  background: #388e3c;
+}
+
+/* Cadenas sur salles admin */
+.lock-icon {
+  font-size: 1.5rem;
+  opacity: 0.4;
+  display: block;
+  text-align: center;
+  line-height: 1;
+}
+
+.time-slot.admin-only-locked {
+  cursor: pointer !important;
+}
+
+.time-slot.admin-only-locked:hover .lock-icon {
+  opacity: 0.7;
+  transform: scale(1.1);
+  transition: all 0.3s ease;
+}
+
+/* Cadenas dans en-tête salle admin */
+.admin-header-locked {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%) !important;
+  border-color: #ff9800 !important;
+}
+
+.header-lock-icon {
+  font-size: 1.2rem;
+  display: block;
+  margin-bottom: 0.3rem;
+  opacity: 0.6;
+}
