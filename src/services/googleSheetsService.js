@@ -117,7 +117,7 @@ class GoogleSheetsService {
 
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
-        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A2:M`,
+        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A2:P`,
       });
 
       if (!response || !response.result) {
@@ -134,11 +134,14 @@ class GoogleSheetsService {
         heureFin: row[5],
         nom: row[6],
         prenom: row[7],
-        service: row[8],
-        objet: row[9],
-        recurrence: row[10] === 'OUI',
-        recurrenceJusquau: row[11] || null,
-        email: row[12] || '',
+        email: row[8] || '',          // Colonne I (index 8)
+        telephone: row[9] || '',       // Colonne J (index 9)
+        service: row[10],              // Colonne K (index 10)
+        objet: row[11],                // Colonne L (index 11)
+        recurrence: row[12] === 'OUI', // Colonne M (index 12)
+        recurrenceJusquau: row[13] || null, // Colonne N (index 13)
+        statut: row[14] || 'active',   // Colonne O (index 14)
+        dateCreation: row[15] || ''    // Colonne P (index 15)
       }));
     } catch (error) {
       console.error('Erreur lors de la récupération des réservations:', error);
@@ -205,24 +208,27 @@ class GoogleSheetsService {
       }
 
       const values = [[
-        id,
-        reservation.salle,
-        reservation.dateDebut,
-        reservation.heureDebut,
-        reservation.dateFin,
-        reservation.heureFin,
-        reservation.nom,
-        reservation.prenom,
-        reservation.service,
-        reservation.objet,
-        reservation.recurrence ? 'OUI' : 'NON',
-        reservation.recurrenceJusquau || '',
-        reservation.email || ''
+        id,                                    // A: ID
+        reservation.salle,                     // B: Salle
+        reservation.dateDebut,                 // C: Date Début
+        reservation.heureDebut,                // D: Heure Début
+        reservation.dateFin,                   // E: Date Fin
+        reservation.heureFin,                  // F: Heure Fin
+        reservation.nom,                       // G: Nom
+        reservation.prenom,                    // H: Prénom
+        reservation.email || '',               // I: Email
+        reservation.telephone || '',           // J: Téléphone
+        reservation.service,                   // K: Service
+        reservation.objet,                     // L: Objet
+        reservation.recurrence ? 'OUI' : 'NON', // M: Récurrence
+        reservation.recurrenceJusquau || '',   // N: Récurrence Jusqu'au
+        'active',                              // O: Statut
+        new Date().toISOString()               // P: Date de création
       ]];
 
       const response = await window.gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
-        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A:M`,
+        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A:P`,
         valueInputOption: 'USER_ENTERED',
         resource: { values }
       });
