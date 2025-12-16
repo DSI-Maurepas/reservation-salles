@@ -133,7 +133,7 @@
 
 /* Légende scrollable pour graphiques avec beaucoup d'items */
 .chart-legend.scrollable {
-  max-height: 250px; /* Réduit pour remplir le bloc */
+  max-height: 350px; /* Augmenté pour mieux remplir le bloc */
   overflow-y: auto;
 }
 
