@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
+import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS } from '../config/googleSheets';
 import './ReservationGrid.css';
 
 function ReservationGrid({ selectedDate, onBack, onSuccess }) {
