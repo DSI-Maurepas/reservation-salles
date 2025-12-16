@@ -247,6 +247,19 @@ function Statistics({ reservations }) {
         />
         
         <div className="chart-card">
+          <h3>👥 Top 5 utilisateurs</h3>
+          <div className="top-users-list">
+            {stats.topUtilisateurs.map(([nom, count], i) => (
+              <div key={i} className="top-user-item">
+                <span className="user-rank">{i + 1}</span>
+                <span className="user-name">{nom}</span>
+                <span className="user-count">{count} réservations</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="chart-card">
           <h3>📊 Taux d'occupation</h3>
           <div className="occupation-bars">
             {Object.entries(stats.tauxOccupation)
@@ -265,19 +278,6 @@ function Statistics({ reservations }) {
                   </div>
                   <div className="occupation-value">{taux}%</div>
                 </div>
-            ))}
-          </div>
-        </div>
-        
-	<div className="chart-card">
-          <h3>👥 Top 10 utilisateurs</h3>
-          <div className="top-users-list">
-            {stats.topUtilisateurs.map(([nom, count], i) => (
-              <div key={i} className="top-user-item">
-                <span className="user-rank">{i + 1}</span>
-                <span className="user-name">{nom}</span>
-                <span className="user-count">{count} réservations</span>
-              </div>
             ))}
           </div>
         </div>
