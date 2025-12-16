@@ -1,19 +1,40 @@
 // src/components/Statistics.js
 import React, { useMemo } from 'react';
+import { SALLES } from '../config/googleSheets';
 import './Statistics.css';
+
+// Mapping des anciens noms vers les nouveaux noms
+const SALLE_MAPPING = {
+  'Salle du Conseil': 'Salle Conseil - 80 Personnes',
+  'Salle des Mariages': 'Salle Mariages - 40 Personnes',
+  'Salle du 16eme A': 'Salle 16e A - 20 Personnes',
+  'Salle du 16eme B': 'Salle 16e B - 19 Personnes',
+  'Salle rdc N°1': 'Salle N°1 - 2 Personnes',
+  'Salle rdc N°2': 'Salle N°2 - 12 Personnes',
+  'Salle rdc N°3': 'Salle N°3 - 8 Personnes',
+  'Salle rdc N°4': 'Salle N°4 - 4 Personnes',
+  'Salle CCAS': 'Salle CCAS',
+  'Salle CTM': 'Salle CCAS'
+};
+
+const normalizeSalleName = (salle) => {
+  if (!salle) return 'Salle inconnue';
+  if (SALLE_MAPPING[salle]) return SALLE_MAPPING[salle];
+  return salle;
+};
 
 function Statistics({ reservations }) {
   
-  // Calcul des statistiques
   const stats = useMemo(() => {
     if (!reservations || reservations.length === 0) {
       return null;
     }
 
-    // 1. Répartition par salle
+    // 1. Répartition par salle (avec normalisation)
     const parSalle = {};
     reservations.forEach(res => {
-      parSalle[res.salle] = (parSalle[res.salle] || 0) + 1;
+      const salleNormalisee = normalizeSalleName(res.salle);
+      parSalle[salleNormalisee] = (parSalle[salleNormalisee] || 0) + 1;
     });
 
     // 2. Répartition par jour de la semaine
@@ -56,7 +77,7 @@ function Statistics({ reservations }) {
       parService[res.service] = (parService[res.service] || 0) + 1;
     });
 
-    // 6. Répartition par horaire (plages de 2h)
+    // 6. Répartition par horaire
     const parHoraire = {
       '08h-10h': 0,
       '10h-12h': 0,
@@ -75,7 +96,7 @@ function Statistics({ reservations }) {
       else if (heure >= 18) parHoraire['18h-19h']++;
     });
 
-    // 7. Durée moyenne des réservations
+    // 7. Durée moyenne
     let dureeTotale = 0;
     reservations.forEach(res => {
       const debut = parseInt(res.heureDebut.split(':')[0]);
@@ -84,7 +105,7 @@ function Statistics({ reservations }) {
     });
     const dureeMoyenne = (dureeTotale / reservations.length).toFixed(1);
 
-    // 8. Taux d'occupation par salle (estimé sur 11h x 5 jours = 55h/semaine)
+    // 8. Taux d'occupation par salle
     const tauxOccupation = {};
     Object.keys(parSalle).forEach(salle => {
       const nbRes = parSalle[salle];
@@ -113,8 +134,8 @@ function Statistics({ reservations }) {
     );
   }
 
-  // Fonction pour générer un graphique en camembert
-  const PieChart = ({ data, title, colors }) => {
+  // Graphique en camembert avec option scrollable
+  const PieChart = ({ data, title, colors, scrollable = false }) => {
     const entries = Object.entries(data);
     const total = entries.reduce((sum, [, value]) => sum + value, 0);
     
@@ -128,7 +149,6 @@ function Statistics({ reservations }) {
       const endAngle = currentAngle + angle;
       currentAngle = endAngle;
 
-      // Calcul du chemin SVG
       const startX = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
       const startY = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
       const endX = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
@@ -161,7 +181,7 @@ function Statistics({ reservations }) {
               </path>
             ))}
           </svg>
-          <div className="chart-legend">
+          <div className={`chart-legend ${scrollable ? 'scrollable' : ''}`}>
             {segments.map((segment, i) => (
               <div key={i} className="legend-item">
                 <span className="legend-color" style={{ backgroundColor: segment.color }}></span>
@@ -175,7 +195,6 @@ function Statistics({ reservations }) {
     );
   };
 
-  // Palettes de couleurs
   const colors1 = ['#2196f3', '#4caf50', '#ff9800', '#e91e63', '#9c27b0', '#00bcd4', '#cddc39', '#795548', '#607d8b'];
   const colors2 = ['#3f51b5', '#009688', '#ffc107', '#f44336', '#673ab7', '#03a9f4', '#8bc34a', '#ff5722', '#9e9e9e'];
   const colors3 = ['#1976d2', '#388e3c', '#f57c00', '#c2185b', '#7b1fa2', '#0097a7', '#afb42b', '#5d4037', '#455a64'];
@@ -220,36 +239,42 @@ function Statistics({ reservations }) {
           data={stats.parSalle} 
           title="📍 Répartition par salle"
           colors={colors1}
+          scrollable={true}
         />
         
         <PieChart 
           data={stats.parJour} 
           title="📆 Répartition par jour"
           colors={colors2}
+          scrollable={false}
         />
         
         <PieChart 
           data={stats.parHoraire} 
           title="🕐 Répartition par horaire"
           colors={colors2}
+          scrollable={false}
         />
         
         <PieChart 
           data={stats.parObjet} 
           title="📝 Répartition par objet"
           colors={colors1}
+          scrollable={true}
         />
 
         <PieChart 
           data={stats.parService} 
           title="🏛️ Répartition par service"
           colors={colors3}
+          scrollable={true}
         />
-             
+        
         <div className="chart-card">
           <h3>📊 Taux d'occupation</h3>
           <div className="occupation-bars">
             {Object.entries(stats.tauxOccupation)
+              .filter(([salle]) => SALLES.includes(salle))
               .sort((a, b) => b[1] - a[1])
               .map(([salle, taux], i) => (
                 <div key={i} className="occupation-item">
@@ -269,7 +294,7 @@ function Statistics({ reservations }) {
           </div>
         </div>
         
-	<div className="chart-card">
+        <div className="chart-card">
           <h3>👥 Top 10 utilisateurs</h3>
           <div className="top-users-list">
             {stats.topUtilisateurs.map(([nom, count], i) => (

@@ -67,11 +67,12 @@
   font-weight: 500;
 }
 
-/* Grille de graphiques */
+/* Grille de graphiques - 2 colonnes fixes */
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: 1fr 1fr; /* Exactement 2 colonnes */
   gap: 2rem;
+  grid-auto-rows: 1fr; /* Toutes les lignes ont la même hauteur */
 }
 
 .chart-card {

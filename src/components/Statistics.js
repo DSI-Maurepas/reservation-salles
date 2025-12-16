@@ -54,6 +54,28 @@ function Statistics({ reservations }) {
       parJour[jour]++;
     });
 
+    // 2b. Répartition par mois
+    const parMois = {
+      'Janvier': 0,
+      'Février': 0,
+      'Mars': 0,
+      'Avril': 0,
+      'Mai': 0,
+      'Juin': 0,
+      'Juillet': 0,
+      'Août': 0,
+      'Septembre': 0,
+      'Octobre': 0,
+      'Novembre': 0,
+      'Décembre': 0
+    };
+    const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    reservations.forEach(res => {
+      const date = new Date(res.dateDebut);
+      const mois = moisNoms[date.getMonth()];
+      parMois[mois]++;
+    });
+
     // 3. Top 10 utilisateurs
     const parUtilisateur = {};
     reservations.forEach(res => {
@@ -117,6 +139,7 @@ function Statistics({ reservations }) {
       total: reservations.length,
       parSalle,
       parJour,
+      parMois,
       topUtilisateurs,
       parObjet,
       parService,
@@ -235,11 +258,12 @@ function Statistics({ reservations }) {
       </div>
 
       <div className="charts-grid">
+        {/* LIGNE 1 : Horaire + Jour */}
         <PieChart 
-          data={stats.parSalle} 
-          title="📍 Répartition par salle"
-          colors={colors1}
-          scrollable={true}
+          data={stats.parHoraire} 
+          title="🕐 Répartition par horaire"
+          colors={colors2}
+          scrollable={false}
         />
         
         <PieChart 
@@ -249,24 +273,26 @@ function Statistics({ reservations }) {
           scrollable={false}
         />
         
+        {/* LIGNE 2 : Mois + Salle */}
         <PieChart 
-          data={stats.parHoraire} 
-          title="🕐 Répartition par horaire"
-          colors={colors2}
+          data={stats.parMois} 
+          title="📅 Répartition par mois"
+          colors={colors3}
           scrollable={false}
         />
         
         <PieChart 
+          data={stats.parSalle} 
+          title="📍 Répartition par salle"
+          colors={colors1}
+          scrollable={false}
+        />
+        
+        {/* LIGNE 3 : Objet + Taux occupation */}
+        <PieChart 
           data={stats.parObjet} 
           title="📝 Répartition par objet"
           colors={colors1}
-          scrollable={true}
-        />
-
-        <PieChart 
-          data={stats.parService} 
-          title="🏛️ Répartition par service"
-          colors={colors3}
           scrollable={true}
         />
         
@@ -294,6 +320,7 @@ function Statistics({ reservations }) {
           </div>
         </div>
         
+        {/* LIGNE 4 : Top 10 utilisateurs + Service */}
         <div className="chart-card">
           <h3>👥 Top 10 utilisateurs</h3>
           <div className="top-users-list">
@@ -306,6 +333,13 @@ function Statistics({ reservations }) {
             ))}
           </div>
         </div>
+
+        <PieChart 
+          data={stats.parService} 
+          title="🏛️ Répartition par service"
+          colors={colors3}
+          scrollable={true}
+        />
       </div>
     </div>
   );
