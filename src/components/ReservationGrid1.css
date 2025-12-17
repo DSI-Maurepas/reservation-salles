@@ -176,15 +176,12 @@
 }
 
 .salle-header .salle-name {
-  display: block;
-  font-size: 0.72rem;
+  font-size: 0.72rem; /* Réduit */
   font-weight: 700;
-  margin-bottom: 0.2rem;
 }
 
 .salle-header .salle-capacity {
-  display: block;
-  font-size: 0.65rem;
+  font-size: 0.65rem; /* Réduit */
   font-weight: 400;
   opacity: 0.9;
 }
@@ -945,60 +942,4 @@
   display: block;
   margin-bottom: 0.3rem;
   opacity: 0.6;
-}
-
-/* Navigation jour par jour */
-.date-navigation {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  justify-content: center;
-  flex: 1;
-}
-
-.nav-day-button {
-  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
-}
-
-.nav-day-button:hover {
-  background: linear-gradient(135deg, #357abd 0%, #2868a8 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.4);
-}
-
-.nav-day-button:active {
-  transform: translateY(0);
-}
-
-.date-navigation h2 {
-  margin: 0;
-  white-space: nowrap;
-}
-
-/* Responsive navigation */
-@media (max-width: 768px) {
-  .date-navigation {
-    flex-direction: column;
-    gap: 0.8rem;
-  }
-  
-  .nav-day-button {
-    width: 100%;
-    font-size: 0.85rem;
-    padding: 0.5rem 1rem;
-  }
-  
-  .date-navigation h2 {
-    font-size: 1.2rem;
-    text-align: center;
-  }
 }
