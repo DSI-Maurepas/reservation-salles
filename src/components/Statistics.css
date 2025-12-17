@@ -171,32 +171,32 @@
   font-weight: 600;
 }
 
-/* Top utilisateurs - Compact */
+/* Top utilisateurs - Ultra compact */
 .top-users-list {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem; /* Réduit de 1rem à 0.5rem */
+  gap: 0.3rem; /* Ultra réduit */
 }
 
 .top-user-item {
   display: flex;
   align-items: center;
-  gap: 0.7rem; /* Réduit de 1rem à 0.7rem */
-  padding: 0.6rem 0.8rem; /* Réduit de 1rem à 0.6rem/0.8rem */
+  gap: 0.5rem; /* Ultra réduit */
+  padding: 0.4rem 0.6rem; /* Ultra réduit */
   background: var(--light-bg);
-  border-radius: 6px; /* Réduit de 8px à 6px */
-  border-left: 3px solid var(--primary-color); /* Réduit de 4px à 3px */
+  border-radius: 4px; /* Ultra réduit */
+  border-left: 2px solid var(--primary-color); /* Ultra réduit */
   transition: all 0.3s ease;
 }
 
 .top-user-item:hover {
   background: #e3f2fd;
-  transform: translateX(5px);
+  transform: translateX(3px);
 }
 
 .user-rank {
-  width: 26px; /* Réduit de 32px à 26px */
-  height: 26px; /* Réduit de 32px à 26px */
+  width: 22px; /* Ultra réduit */
+  height: 22px; /* Ultra réduit */
   background: var(--primary-color);
   color: white;
   border-radius: 50%;
@@ -204,19 +204,19 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.9rem; /* Réduit de 1.1rem à 0.9rem */
+  font-size: 0.75rem; /* Ultra réduit */
   flex-shrink: 0;
 }
 
 .user-name {
   flex: 1;
   font-weight: 600;
-  font-size: 0.85rem; /* Ajouté : réduction taille */
+  font-size: 0.8rem; /* Ultra réduit */
   color: var(--text-dark);
 }
 
 .user-count {
-  font-size: 0.8rem; /* Réduit de 0.9rem à 0.8rem */
+  font-size: 0.75rem; /* Ultra réduit */
   color: var(--text-light);
   font-weight: 500;
 }
@@ -347,4 +347,10 @@
   flex: 1;
   max-height: none;
   overflow-y: auto;
+}
+
+/* Réduire l'espacement du titre pour le Top 10 */
+.chart-card.align-row-4 h3 {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
 }
