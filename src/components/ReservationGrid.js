@@ -24,6 +24,8 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
     recurrenceType: 'weekly' // 'weekly' ou 'biweekly'
   });
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
   const [successModal, setSuccessModal] = useState({
     show: false,
     reservations: [],
@@ -303,6 +305,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       return;
     }
 
+    // Activer l'état de soumission IMMÉDIATEMENT
+    setIsSubmitting(true);
+
     try {
       // Fonction pour générer les dates de récurrence
       const generateRecurrenceDates = (startDate, endDate, type = 'weekly') => {
@@ -382,16 +387,14 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
       // Ajouter toutes les réservations avec traitement par lots
       const results = [];
-      const BATCH_SIZE = 10; // Réduire à 10 pour éviter limites API Google
-      const DELAY_MS = 2000; // 2 secondes de délai entre chaque lot (augmenté pour stabilité)
+      const BATCH_SIZE = 10;
+      const DELAY_MS = 2000;
       
       // Fonction pour attendre
       const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
       
-      // Afficher un message de progression UNIQUEMENT pour les grandes réservations (10+)
-      if (reservationsToCreate.length >= 10) {
-        alert(`⏳ Création de ${reservationsToCreate.length} réservations en cours...\n\nCela peut prendre environ ${Math.ceil(reservationsToCreate.length / BATCH_SIZE) * 3} secondes.\n\nNe fermez pas cette fenêtre.\n\nMerci de patienter.`);
-      }
+      // Initialiser la progression
+      setSubmissionProgress({ current: 0, total: reservationsToCreate.length });
       
       // Traiter par lots
       for (let i = 0; i < reservationsToCreate.length; i += BATCH_SIZE) {
@@ -410,9 +413,14 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
               ...reservation,
               id: result.id
             });
+            
+            // Mettre à jour la progression
+            setSubmissionProgress({ current: results.length, total: reservationsToCreate.length });
+            
             console.log(`✅ Réservation ${results.length}/${reservationsToCreate.length} créée : ${reservation.salle} ${reservation.heureDebut}`);
           } catch (err) {
             console.error(`❌ Erreur pour ${reservation.salle} à ${reservation.heureDebut}:`, err);
+            setIsSubmitting(false);
             throw new Error(`Échec lors de la création de la réservation ${results.length + 1}/${reservationsToCreate.length} (${reservation.salle} ${reservation.heureDebut}). ${results.length} réservation(s) ont été créées avant l'erreur.`);
           }
         }
@@ -440,6 +448,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
       // Recharger les réservations pour afficher les nouvelles sur la grille
       await loadReservations();
+      
+      // Désactiver l'état de soumission
+      setIsSubmitting(false);
 
       // Réinitialiser le formulaire
       setSelections([]);
@@ -459,6 +470,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       // onSuccess() sera appelé à la fermeture de la modale
     } catch (error) {
       console.error('Erreur détaillée:', error);
+      
+      // Désactiver l'état de soumission en cas d'erreur
+      setIsSubmitting(false);
       
       // Message d'erreur plus explicite
       let errorMessage = 'Erreur lors de la réservation';
@@ -581,43 +595,96 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
   return (
     <div className="reservation-grid-container">
+      {/* Modal de progression */}
+      {isSubmitting && (
+        <div className="submission-modal-overlay">
+          <div className="submission-modal">
+            <h3>⏳ Création en cours...</h3>
+            <p>Veuillez patienter, ne fermez pas cette fenêtre.</p>
+            <div className="progress-bar-container">
+              <div 
+                className="progress-bar" 
+                style={{ width: `${(submissionProgress.current / submissionProgress.total) * 100}%` }}
+              ></div>
+            </div>
+            <p className="progress-text">
+              {submissionProgress.current} / {submissionProgress.total} réservations créées
+            </p>
+            <p className="progress-estimate">
+              Temps estimé restant : {Math.ceil((submissionProgress.total - submissionProgress.current) / 10 * 3)} secondes
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid-header">
-        <button onClick={onBack} className="back-button">
-          ◀ Retour au calendrier
+        <button onClick={onBack} className="back-button-small">
+          ◀ Calendrier
         </button>
-        <div className="date-navigation">
-          <button 
-            onClick={() => {
-              const prevDay = new Date(currentDate);
-              prevDay.setDate(prevDay.getDate() - 1);
-              setCurrentDate(prevDay);
-              setLoading(true);
-            }}
-            className="nav-day-button"
-            title="Jour précédent"
-          >
-            ◀ Jour précédent
-          </button>
+        
+        <div className="date-navigation-full">
+          <div className="nav-week-buttons">
+            <button 
+              onClick={() => {
+                const prevWeek = new Date(currentDate);
+                prevWeek.setDate(prevWeek.getDate() - 7);
+                setCurrentDate(prevWeek);
+                setLoading(true);
+              }}
+              className="nav-week-button"
+              title="Semaine précédente"
+            >
+              ◀◀
+            </button>
+            <button 
+              onClick={() => {
+                const prevDay = new Date(currentDate);
+                prevDay.setDate(prevDay.getDate() - 1);
+                setCurrentDate(prevDay);
+                setLoading(true);
+              }}
+              className="nav-day-button"
+              title="Jour précédent"
+            >
+              ◀
+            </button>
+          </div>
+          
           <h2>
-            Réservation pour le {currentDate.toLocaleDateString('fr-FR', {
+            {currentDate.toLocaleDateString('fr-FR', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
               day: 'numeric'
             })}
           </h2>
-          <button 
-            onClick={() => {
-              const nextDay = new Date(currentDate);
-              nextDay.setDate(nextDay.getDate() + 1);
-              setCurrentDate(nextDay);
-              setLoading(true);
-            }}
-            className="nav-day-button"
-            title="Jour suivant"
-          >
-            Jour suivant ▶
-          </button>
+          
+          <div className="nav-week-buttons">
+            <button 
+              onClick={() => {
+                const nextDay = new Date(currentDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                setCurrentDate(nextDay);
+                setLoading(true);
+              }}
+              className="nav-day-button"
+              title="Jour suivant"
+            >
+              ▶
+            </button>
+            <button 
+              onClick={() => {
+                const nextWeek = new Date(currentDate);
+                nextWeek.setDate(nextWeek.getDate() + 7);
+                setCurrentDate(nextWeek);
+                setLoading(true);
+              }}
+              className="nav-week-button"
+              title="Semaine suivante"
+            >
+              ▶▶
+            </button>
+          </div>
         </div>
       </div>
 
