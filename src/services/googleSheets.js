@@ -146,7 +146,7 @@ export const ADMINISTRATEURS = [
   'j.matrat@maurepas.fr',
   'admin@maurepas.fr',
   'sevindi.munure@gmail.com',
-  'cabinet@maurepas.fr',
+  'romain.saujet@gmail.com',
   'mchaumeron@gmail.com'
 ];
 
