@@ -322,29 +322,29 @@
   animation: fadeInUp 0.5s ease;
 }
 
-/* Alignement ligne 4 : Top 10 et Service */
+/* Alignement ligne 4 : Service s'aligne sur Top 10 */
 .chart-card.align-row-4 {
   display: flex;
   flex-direction: column;
-  min-height: 400px; /* Hauteur minimale commune */
+  /* Pas de min-height, le Grid force automatiquement la même hauteur */
 }
 
-.chart-card.align-row-4 .chart-content,
+/* Top 10 : hauteur naturelle du contenu */
 .chart-card.align-row-4 .top-users-list {
+  /* Pas de flex: 1, hauteur naturelle */
+}
+
+/* Service : s'étire pour remplir */
+.chart-card.align-row-4 .chart-content {
   flex: 1;
   display: flex;
-  flex-direction: column;
-}
-
-/* Le chart-content dans align-row-4 garde son comportement flex */
-.chart-card.align-row-4 .chart-content {
   align-items: flex-start;
   gap: 2rem;
 }
 
-/* La légende scrollable dans ligne 4 remplit l'espace */
+/* La légende scrollable remplit l'espace disponible */
 .chart-card.align-row-4 .chart-legend.scrollable {
   flex: 1;
-  max-height: none; /* Utilise toute la hauteur disponible */
+  max-height: none;
   overflow-y: auto;
 }
