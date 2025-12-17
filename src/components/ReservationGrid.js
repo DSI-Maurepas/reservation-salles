@@ -7,6 +7,7 @@ import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMI
 import './ReservationGrid.css';
 
 function ReservationGrid({ selectedDate, onBack, onSuccess }) {
+  const [currentDate, setCurrentDate] = useState(selectedDate);
   const [reservations, setReservations] = useState([]);
   const [selections, setSelections] = useState([]); // Array de sélections validées
   const [currentSelection, setCurrentSelection] = useState(null); // Sélection en cours de drag
@@ -58,7 +59,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
   const loadReservations = useCallback(async () => {
     try {
       const allReservations = await googleSheetsService.getAllReservations();
-      const dateStr = googleSheetsService.formatDate(selectedDate);
+      const dateStr = googleSheetsService.formatDate(currentDate);
       
       // Filtrer les réservations pour la date sélectionnée
       const dayReservations = allReservations.filter(res => 
@@ -72,7 +73,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       console.error('Erreur lors du chargement des réservations:', error);
       setLoading(false);
     }
-  }, [selectedDate]);
+  }, [currentDate]);
 
   useEffect(() => {
     loadReservations();
@@ -318,7 +319,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       if (formData.recurrence && formData.recurrenceJusquau) {
         // Pour les récurrences : créer une réservation par occurrence
         const recurrenceDates = generateRecurrenceDates(
-          selectedDate, 
+          currentDate, 
           new Date(formData.recurrenceJusquau),
           formData.recurrenceType
         );
@@ -345,9 +346,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         // Pour les réservations simples : une réservation par sélection
         reservationsToCreate = selections.map(sel => ({
           salle: sel.salle,
-          dateDebut: googleSheetsService.formatDate(selectedDate),
+          dateDebut: googleSheetsService.formatDate(currentDate),
           heureDebut: googleSheetsService.formatTime(sel.startHour),
-          dateFin: googleSheetsService.formatDate(selectedDate),
+          dateFin: googleSheetsService.formatDate(currentDate),
           heureFin: googleSheetsService.formatTime(sel.endHour),
           nom: formData.nom,
           prenom: formData.prenom,
@@ -371,15 +372,15 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
       // Ajouter toutes les réservations avec traitement par lots
       const results = [];
-      const BATCH_SIZE = 60; // Traiter 60 réservations à la fois (augmenté pour performance)
-      const DELAY_MS = 1000; // 1 seconde de délai entre chaque lot
+      const BATCH_SIZE = 10; // Réduire à 10 pour éviter limites API Google
+      const DELAY_MS = 2000; // 2 secondes de délai entre chaque lot (augmenté pour stabilité)
       
       // Fonction pour attendre
       const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
       
       // Afficher un message de progression UNIQUEMENT pour les grandes réservations (10+)
       if (reservationsToCreate.length >= 10) {
-        alert(`⏳ Création de ${reservationsToCreate.length} réservations en cours...\n\nCela peut prendre ${Math.ceil(reservationsToCreate.length / BATCH_SIZE) * 2} secondes.\n\nMerci de patienter.`);
+        alert(`⏳ Création de ${reservationsToCreate.length} réservations en cours...\n\nCela peut prendre environ ${Math.ceil(reservationsToCreate.length / BATCH_SIZE) * 3} secondes.\n\nNe fermez pas cette fenêtre.\n\nMerci de patienter.`);
       }
       
       // Traiter par lots
@@ -427,6 +428,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         message: `${results.length} réservation${results.length > 1 ? 's' : ''} créée${results.length > 1 ? 's' : ''} avec succès !`
       });
 
+      // Recharger les réservations pour afficher les nouvelles sur la grille
+      await loadReservations();
+
       // Réinitialiser le formulaire
       setSelections([]);
       setCurrentSelection(null);
@@ -434,10 +438,12 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         nom: '',
         prenom: '',
         email: '',
+        telephone: '',
         service: '',
         objet: '',
         recurrence: false,
-        recurrenceJusquau: ''
+        recurrenceJusquau: '',
+        recurrenceType: 'weekly'
       });
 
       // onSuccess() sera appelé à la fermeture de la modale
@@ -572,10 +578,10 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         <div className="date-navigation">
           <button 
             onClick={() => {
-              const prevDay = new Date(selectedDate);
+              const prevDay = new Date(currentDate);
               prevDay.setDate(prevDay.getDate() - 1);
-              window.location.hash = `#reservation/${prevDay.toISOString().split('T')[0]}`;
-              window.location.reload();
+              setCurrentDate(prevDay);
+              setLoading(true);
             }}
             className="nav-day-button"
             title="Jour précédent"
@@ -583,7 +589,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
             ◀ Jour précédent
           </button>
           <h2>
-            Réservation pour le {selectedDate.toLocaleDateString('fr-FR', {
+            Réservation pour le {currentDate.toLocaleDateString('fr-FR', {
               weekday: 'long',
               year: 'numeric',
               month: 'long',
@@ -592,10 +598,10 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
           </h2>
           <button 
             onClick={() => {
-              const nextDay = new Date(selectedDate);
+              const nextDay = new Date(currentDate);
               nextDay.setDate(nextDay.getDate() + 1);
-              window.location.hash = `#reservation/${nextDay.toISOString().split('T')[0]}`;
-              window.location.reload();
+              setCurrentDate(nextDay);
+              setLoading(true);
             }}
             className="nav-day-button"
             title="Jour suivant"
@@ -660,7 +666,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
             ))}
             
             <div className="selection-date">
-              <p><strong>📅 Date :</strong> {selectedDate.toLocaleDateString('fr-FR', {
+              <p><strong>📅 Date :</strong> {currentDate.toLocaleDateString('fr-FR', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -768,9 +774,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
                     type="date"
                     value={formData.recurrenceJusquau}
                     onChange={(e) => setFormData({ ...formData, recurrenceJusquau: e.target.value })}
-                    min={googleSheetsService.formatDate(selectedDate)}
+                    min={googleSheetsService.formatDate(currentDate)}
                     max={(() => {
-                      const maxDate = new Date(selectedDate);
+                      const maxDate = new Date(currentDate);
                       maxDate.setFullYear(maxDate.getFullYear() + 2);
                       return googleSheetsService.formatDate(maxDate);
                     })()}
