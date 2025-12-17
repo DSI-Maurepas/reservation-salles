@@ -170,17 +170,27 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
   const handleMouseUp = () => {
     if (isDragging && currentSelection) {
-      // Vérifier si ce créneau exact n'existe pas déjà dans selections
-      const isDuplicate = selections.some(sel => 
-        sel.salle === currentSelection.salle &&
-        sel.startHour === currentSelection.startHour &&
-        sel.endHour === currentSelection.endHour
-      );
+      // Vérifier s'il y a un chevauchement avec une sélection existante dans la même salle
+      const hasOverlap = selections.some(sel => {
+        // Seulement pour la même salle
+        if (sel.salle !== currentSelection.salle) return false;
+        
+        // Vérifier le chevauchement d'horaires
+        // Chevauchement si : (début1 < fin2) ET (fin1 > début2)
+        const overlap = (currentSelection.startHour < sel.endHour) && 
+                       (currentSelection.endHour > sel.startHour);
+        
+        return overlap;
+      });
       
-      if (!isDuplicate) {
+      if (hasOverlap) {
+        // Afficher un message d'alerte
+        alert(`⚠️ Chevauchement détecté !\n\nVous avez déjà une réservation pour "${currentSelection.salle}" qui chevauche cet horaire.\n\nVeuillez sélectionner un autre créneau.`);
+      } else {
         // Ajouter la sélection actuelle à la liste des sélections
         setSelections([...selections, currentSelection]);
       }
+      
       setCurrentSelection(null);
     }
     setIsDragging(false);
@@ -460,16 +470,16 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       } else if (typeof error === 'string') {
         errorMessage += `: ${error}`;
       } else if (error.status === 429) {
-        errorMessage = 'Trop de requêtes simultanées. Veuillez patienter 30 secondes et réessayer avec moins de créneaux à la fois (maximum 10 recommandé).';
+        errorMessage = 'Trop de requêtes simultanées. L\'API Google a besoin d\'un moment de repos. Veuillez patienter 1 minute et réessayer.';
       } else if (error.status === 403) {
         errorMessage = 'Erreur d\'authentification. Veuillez rafraîchir la page et vous reconnecter.';
       } else if (!navigator.onLine) {
         errorMessage = 'Pas de connexion internet. Vérifiez votre connexion et réessayez.';
       } else {
-        errorMessage = 'Erreur réseau ou timeout. Essayez avec moins de créneaux à la fois (5-10 maximum recommandé) ou réessayez dans quelques minutes.';
+        errorMessage = 'Erreur réseau ou timeout. Veuillez patienter quelques instants puis réessayer.';
       }
       
-      alert(`❌ ${errorMessage}\n\n💡 Conseil : Pour de grandes réservations (10+ créneaux), faites plusieurs groupes de 5-10 créneaux.`);
+      alert(`❌ ${errorMessage}`);
       
       // Rafraîchir les réservations pour voir celles qui ont été créées
       loadReservations();
@@ -638,11 +648,13 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
                 <span className="form-title-line2">({selections.length} créneau{selections.length > 1 ? 'x' : ''})</span>
               </h3>
           
-          {selections.length > 10 && (
+          {selections.length > 20 && (
             <div className="warning-message">
-              <strong>⚠️ Attention :</strong> Vous avez sélectionné {selections.length} créneaux. 
-              Pour des raisons de performance, il est recommandé de limiter à 10 créneaux par réservation. 
-              Le traitement prendra environ {Math.ceil(selections.length / 5) * 2} secondes.
+              <strong>⏳ Information :</strong> Vous avez sélectionné {selections.length} créneaux. 
+              Le traitement prendra environ {Math.ceil(selections.length / 10) * 3} secondes.
+              {selections.length > 60 && (
+                <><br /><strong style={{color: '#d32f2f'}}>⚠️ Maximum recommandé : 60 créneaux par réservation.</strong></>
+              )}
             </div>
           )}
           
