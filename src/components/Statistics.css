@@ -322,30 +322,28 @@
   animation: fadeInUp 0.5s ease;
 }
 
-/* Alignement ligne 4 : Service s'aligne sur Top 10 */
+/* Alignement ligne 4 : Service s'aligne sur Top 10 avec scroll forcé */
 .chart-card.align-row-4 {
   display: flex;
   flex-direction: column;
-  /* Pas de min-height, le Grid force automatiquement la même hauteur */
+  /* Top 10 garde sa hauteur naturelle */
 }
 
-/* Top 10 : hauteur naturelle du contenu */
+/* Top 10 : hauteur naturelle (c'est le maître) */
 .chart-card.align-row-4 .top-users-list {
-  /* Pas de flex: 1, hauteur naturelle */
+  /* Aucune contrainte, hauteur naturelle */
 }
 
-/* Service : s'étire pour remplir */
+/* Service : forcer scroll avec max-height fixe */
 .chart-card.align-row-4 .chart-content {
-  flex: 1;
   display: flex;
   align-items: flex-start;
   gap: 2rem;
 }
 
-/* La légende scrollable remplit l'espace disponible */
+/* La légende Service a une hauteur max fixe pour forcer le scroll */
 .chart-card.align-row-4 .chart-legend.scrollable {
-  flex: 1;
-  max-height: none;
+  max-height: 280px; /* Hauteur fixe pour s'aligner sur Top 10 compact */
   overflow-y: auto;
 }
 
