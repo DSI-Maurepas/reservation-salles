@@ -169,8 +169,17 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
   const handleMouseUp = () => {
     if (isDragging && currentSelection) {
-      // Ajouter la sélection actuelle à la liste des sélections
-      setSelections([...selections, currentSelection]);
+      // Vérifier si ce créneau exact n'existe pas déjà dans selections
+      const isDuplicate = selections.some(sel => 
+        sel.salle === currentSelection.salle &&
+        sel.startHour === currentSelection.startHour &&
+        sel.endHour === currentSelection.endHour
+      );
+      
+      if (!isDuplicate) {
+        // Ajouter la sélection actuelle à la liste des sélections
+        setSelections([...selections, currentSelection]);
+      }
       setCurrentSelection(null);
     }
     setIsDragging(false);
@@ -278,8 +287,8 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       return;
     }
 
-    if (!formData.nom || !formData.prenom || !formData.email || !formData.service || !formData.objet) {
-      alert('Veuillez remplir tous les champs obligatoires');
+    if (!formData.nom || !formData.email || !formData.service || !formData.objet) {
+      alert('Veuillez remplir tous les champs obligatoires (Nom, Email, Service, Objet)');
       return;
     }
 
@@ -362,7 +371,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
 
       // Ajouter toutes les réservations avec traitement par lots
       const results = [];
-      const BATCH_SIZE = 5; // Traiter 5 réservations à la fois
+      const BATCH_SIZE = 60; // Traiter 60 réservations à la fois (augmenté pour performance)
       const DELAY_MS = 1000; // 1 seconde de délai entre chaque lot
       
       // Fonction pour attendre
@@ -560,14 +569,40 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         <button onClick={onBack} className="back-button">
           ◀ Retour au calendrier
         </button>
-        <h2>
-          Réservation pour le {selectedDate.toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
-        </h2>
+        <div className="date-navigation">
+          <button 
+            onClick={() => {
+              const prevDay = new Date(selectedDate);
+              prevDay.setDate(prevDay.getDate() - 1);
+              window.location.hash = `#reservation/${prevDay.toISOString().split('T')[0]}`;
+              window.location.reload();
+            }}
+            className="nav-day-button"
+            title="Jour précédent"
+          >
+            ◀ Jour précédent
+          </button>
+          <h2>
+            Réservation pour le {selectedDate.toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </h2>
+          <button 
+            onClick={() => {
+              const nextDay = new Date(selectedDate);
+              nextDay.setDate(nextDay.getDate() + 1);
+              window.location.hash = `#reservation/${nextDay.toISOString().split('T')[0]}`;
+              window.location.reload();
+            }}
+            className="nav-day-button"
+            title="Jour suivant"
+          >
+            Jour suivant ▶
+          </button>
+        </div>
       </div>
 
       <div className="grid-instructions">
@@ -734,7 +769,13 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
                     value={formData.recurrenceJusquau}
                     onChange={(e) => setFormData({ ...formData, recurrenceJusquau: e.target.value })}
                     min={googleSheetsService.formatDate(selectedDate)}
+                    max={(() => {
+                      const maxDate = new Date(selectedDate);
+                      maxDate.setFullYear(maxDate.getFullYear() + 2);
+                      return googleSheetsService.formatDate(maxDate);
+                    })()}
                   />
+                  <small style={{color: '#666', fontSize: '0.85rem'}}>Maximum 2 ans à l'avance</small>
                 </div>
               </>
             )}
