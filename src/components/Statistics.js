@@ -321,7 +321,7 @@ function Statistics({ reservations }) {
         </div>
         
         {/* LIGNE 4 : Top 10 utilisateurs + Service */}
-        <div className="chart-card">
+        <div className="chart-card align-row-4">
           <h3>👥 Top 10 utilisateurs</h3>
           <div className="top-users-list">
             {stats.topUtilisateurs.map(([nom, count], i) => (
@@ -334,12 +334,57 @@ function Statistics({ reservations }) {
           </div>
         </div>
 
-        <PieChart 
-          data={stats.parService} 
-          title="🏛️ Répartition par service"
-          colors={colors3}
-          scrollable={true}
-        />
+        <div className="chart-card align-row-4">
+          <h3>🏛️ Répartition par service</h3>
+          <div className="chart-content">
+            <svg viewBox="0 0 100 100" className="pie-chart">
+              {(() => {
+                const entries = Object.entries(stats.parService);
+                const total = entries.reduce((sum, [, value]) => sum + value, 0);
+                let currentAngle = 0;
+                
+                return entries.map(([label, value], index) => {
+                  const percentage = (value / total) * 100;
+                  const angle = (value / total) * 360;
+                  const startAngle = currentAngle;
+                  const endAngle = currentAngle + angle;
+                  currentAngle = endAngle;
+                  
+                  const startX = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
+                  const startY = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
+                  const endX = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
+                  const endY = 50 + 40 * Math.sin((endAngle - 90) * Math.PI / 180);
+                  const largeArc = angle > 180 ? 1 : 0;
+                  
+                  return (
+                    <path
+                      key={index}
+                      d={`M 50 50 L ${startX} ${startY} A 40 40 0 ${largeArc} 1 ${endX} ${endY} Z`}
+                      fill={colors3[index % colors3.length]}
+                      stroke="white"
+                      strokeWidth="0.5"
+                    >
+                      <title>{`${label}: ${value} (${percentage.toFixed(1)}%)`}</title>
+                    </path>
+                  );
+                });
+              })()}
+            </svg>
+            <div className="chart-legend scrollable">
+              {Object.entries(stats.parService).map(([label, value], i) => {
+                const total = Object.values(stats.parService).reduce((sum, v) => sum + v, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return (
+                  <div key={i} className="legend-item">
+                    <span className="legend-color" style={{ backgroundColor: colors3[i % colors3.length] }}></span>
+                    <span className="legend-label">{label}</span>
+                    <span className="legend-value">{value} ({percentage}%)</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
