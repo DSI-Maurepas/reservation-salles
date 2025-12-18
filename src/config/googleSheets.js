@@ -113,15 +113,19 @@ export const OBJETS_RESERVATION = [
 
 // Couleurs douces pour chaque objet (demande 1)
 export const COULEURS_OBJETS = {
-  'Réunion': '#B3E5FC',        // Bleu clair doux
-  'Formation': '#C8E6C9',      // Vert clair doux
-  'Événement': '#FFE0B2',      // Orange clair doux
-  'CODIR': '#F8BBD0',          // Rose clair doux
-  'COPIL': '#E1BEE7',          // Violet clair doux
-  'COTECH': '#FFCCBC',         // Corail clair doux
-  'Présentation': '#FFF9C4',   // Jaune clair doux
-  'Convivialité': '#D1C4E9',   // Lavande clair doux
-  'Prioritaire': '#FFCDD2'     // Rouge clair doux
+  'Réunion de service': '#B3E5FC',
+  'Réunion interservices': '#B3E5FC',
+  'Réunion Élus / Commissions': '#F8BBD0',
+  'Réunion avec prestataire': '#B3E5FC',
+  'Formation interne': '#C8E6C9',
+  'Formation externe (prestataires)': '#C8E6C9',
+  'Atelier culturel / social': '#D1C4E9',
+  'Événement municipal / public': '#FFE0B2',
+  'Entretien RH': '#FFCCBC',
+  'Activité associative': '#FFF9C4',
+  'Usage logistique / technique': '#E1BEE7',
+  'Permanence (élus ou services)': '#F8BBD0',
+  'Autre': '#E8E8E8'
 };
 
 // Horaires d'ouverture
