@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
-import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS } from '../config/googleSheets';
+import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS, COULEURS_OBJETS } from '../config/googleSheets';
 import './ReservationGrid.css';
 
 function ReservationGrid({ selectedDate, onBack, onSuccess }) {
@@ -99,6 +99,16 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       return hour >= startHour && hour < endHour;
     });
     return reservation ? reservation.email : '';
+  };
+
+  // Obtenir la réservation complète (Correction 1 - pour couleurs)
+  const getReservation = (salle, hour) => {
+    return reservations.find(res => {
+      if (res.salle !== salle) return false;
+      const startHour = parseInt(res.heureDebut.split(':')[0]);
+      const endHour = parseInt(res.heureFin.split(':')[0]);
+      return hour >= startHour && hour < endHour;
+    });
   };
 
   const handleMouseDown = (salle, hour) => {
@@ -313,16 +323,24 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       const generateRecurrenceDates = (startDate, endDate, type = 'weekly') => {
         const dates = [];
         const current = new Date(startDate);
-        current.setHours(0, 0, 0, 0); // Normaliser à minuit
+        current.setHours(0, 0, 0, 0);
         
         const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999); // Fin de journée pour inclure la date finale
+        end.setHours(23, 59, 59, 999);
         
-        const increment = type === 'biweekly' ? 14 : 7; // 14 jours si bi-hebdomadaire, sinon 7
-        
-        while (current <= end) {
-          dates.push(new Date(current));
-          current.setDate(current.getDate() + increment);
+        if (type === 'monthly') {
+          // Récurrence mensuelle (Correction 4)
+          while (current <= end) {
+            dates.push(new Date(current));
+            current.setMonth(current.getMonth() + 1);
+          }
+        } else {
+          // Hebdomadaire ou bi-hebdomadaire
+          const increment = type === 'biweekly' ? 14 : 7;
+          while (current <= end) {
+            dates.push(new Date(current));
+            current.setDate(current.getDate() + increment);
+          }
         }
         
         return dates;
@@ -543,7 +561,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         const reserved = isSlotReserved(salle, hour);
         const selected = isSlotSelected(salle, hour);
         const reservationEmail = reserved ? getReservationEmail(salle, hour) : '';
-        const isLunchBreak = hour === 12 || hour === 13; // 12h-13h et 13h-14h
+        const reservation = reserved ? getReservation(salle, hour) : null; // Correction 1
+        const backgroundColor = reservation ? (COULEURS_OBJETS[reservation.objet] || '#e0e0e0') : 'white'; // Correction 1
+        const isLunchBreak = hour === 12 || hour === 13;
         const isAdminRoom = isAdminOnlyRoom(salle);
         const canBook = canUserBookRoom(salle, formData.email);
         
@@ -556,7 +576,8 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
             title={isAdminRoom && !isAdminUnlocked ? `🔒 Salle réservée - Mot de passe requis` : ''}
             style={{ 
               gridColumn: salleIndex + 2,
-              gridRow: rowNumber
+              gridRow: rowNumber,
+              backgroundColor: reserved ? backgroundColor : 'white' // Correction 1
             }}
             onMouseDown={() => handleMouseDown(salle, hour)}
             onMouseEnter={() => handleMouseEnter(salle, hour)}
@@ -649,6 +670,17 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
               ◀
             </button>
           </div>
+          
+          <button 
+            onClick={() => {
+              setCurrentDate(new Date());
+              setLoading(true);
+            }}
+            className="nav-today-button"
+            title="Revenir à aujourd'hui"
+          >
+            📅 Aujourd'hui
+          </button>
           
           <h2>
             {currentDate.toLocaleDateString('fr-FR', {
@@ -845,10 +877,22 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
                   >
                     <option value="weekly">Chaque semaine</option>
                     <option value="biweekly">Une semaine sur 2</option>
+                    <option value="monthly">Chaque mois</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Récurrence jusqu'au</label>
+                  <label>
+                    Récurrence jusqu'au
+                    {formData.recurrenceJusquau && (
+                      <span style={{marginLeft: '0.5rem', color: '#666', fontSize: '0.9rem'}}>
+                        ({new Date(formData.recurrenceJusquau).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })})
+                      </span>
+                    )}
+                  </label>
                   <input
                     type="date"
                     value={formData.recurrenceJusquau}

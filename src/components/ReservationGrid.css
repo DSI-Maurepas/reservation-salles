@@ -1180,3 +1180,36 @@
     justify-content: center;
   }
 }
+
+/* ===== CORRECTIONS AJOUTÉES ===== */
+
+/* Bouton Aujourd'hui (Correction 6) */
+.nav-today-button {
+  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.nav-today-button:hover {
+  background: linear-gradient(135deg, #66bb6a 0%, #81c784 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.nav-today-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .nav-today-button {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+}
