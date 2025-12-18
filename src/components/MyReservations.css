@@ -1,5 +1,5 @@
 /* src/components/MyReservations.css */
-.my-reservations {
+.my-reservations-container {
   background: white;
   border-radius: 16px;
   padding: 1rem;
@@ -10,7 +10,7 @@
   max-height: none; /* Pas de limite de hauteur */
 }
 
-.my-reservations h2 {
+.my-reservations-container h2 {
   color: var(--primary-color);
   margin-bottom: 0.8rem; /* Encore plus réduit */
   font-size: 1.3rem; /* Encore plus réduit */
@@ -231,11 +231,11 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .my-reservations {
+  .my-reservations-container {
     padding: 1rem;
   }
 
-  .my-reservations h2 {
+  .my-reservations-container h2 {
     font-size: 1.4rem;
   }
 
@@ -281,7 +281,7 @@
 
 /* Styles pour l'impression PDF */
 @media print {
-  .my-reservations {
+  .my-reservations-container {
     padding: 1rem;
     box-shadow: none;
   }
