@@ -6,6 +6,9 @@ import icalService from '../services/icalService';
 import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS, COULEURS_OBJETS } from '../config/googleSheets';
 import './ReservationGrid.css';
 
+// Debug: Forcer l'inclusion de COULEURS_OBJETS dans le build
+console.log('COULEURS_OBJETS chargé:', Object.keys(COULEURS_OBJETS).length, 'couleurs');
+
 function ReservationGrid({ selectedDate, onBack, onSuccess }) {
   const [currentDate, setCurrentDate] = useState(selectedDate);
   const [reservations, setReservations] = useState([]);
@@ -562,7 +565,8 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         const selected = isSlotSelected(salle, hour);
         const reservationEmail = reserved ? getReservationEmail(salle, hour) : '';
         const reservation = reserved ? getReservation(salle, hour) : null; // Correction 1
-		const backgroundColor = reservation && reservation.objet && COULEURS_OBJETS[reservation.objet] ? COULEURS_OBJETS[reservation.objet] : (reserved ? '#e8e8e8' : 'white');
+		const backgroundColor = reservation && reservation.objet && COULEURS_OBJETS[reservation.objet] ? COULEURS_OBJETS[reservation.objet]
+ : (reserved ? '#e8e8e8' : 'white');
         const isLunchBreak = hour === 12 || hour === 13;
         const isAdminRoom = isAdminOnlyRoom(salle);
         const canBook = canUserBookRoom(salle, formData.email);
