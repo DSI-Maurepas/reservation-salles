@@ -562,7 +562,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         const selected = isSlotSelected(salle, hour);
         const reservationEmail = reserved ? getReservationEmail(salle, hour) : '';
         const reservation = reserved ? getReservation(salle, hour) : null; // Correction 1
-        const backgroundColor = reservation ? (COULEURS_OBJETS[reservation.objet] || '#e0e0e0') : 'white'; // Correction 1
+		const backgroundColor = reservation && reservation.objet && COULEURS_OBJETS[reservation.objet] ? COULEURS_OBJETS[reservation.objet] : (reserved ? '#e8e8e8' : 'white');
         const isLunchBreak = hour === 12 || hour === 13;
         const isAdminRoom = isAdminOnlyRoom(salle);
         const canBook = canUserBookRoom(salle, formData.email);
