@@ -223,8 +223,8 @@
 }
 
 /* 7. Heures de pause méridienne (12h-14h) en évidence légère */
-.time-slot.lunch-break {
-  background: #fff9e6 !important; /* Jaune très clair */
+.time-slot.lunch-break:not(.reserved) {
+  background: #fff9e6 !important;
 }
 
 .time-slot.lunch-break:hover:not(.reserved) {
@@ -235,8 +235,17 @@
   background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%) !important;
 }
 
-.time-slot.lunch-break.reserved {
+/* SUPPRIMER CETTE LIGNE QUI ÉCRASE LES COULEURS : */
+/* .time-slot.lunch-break.reserved {
   background: linear-gradient(135deg, #f5f3e0 0%, #e8e6d0 100%) !important;
+} */
+
+/* ET AJOUTER À LA FIN DU FICHIER : */
+
+/* Correction 1 : S'assurer que les couleurs inline ne sont PAS écrasées */
+.time-slot.reserved:not(.lunch-break):not(.admin-only-locked) {
+  /* Les couleurs viennent du style inline (backgroundColor) */
+  /* NE PAS mettre de background ici */
 }
 
 /* Salles réservées aux administrateurs (verrouillées pour non-admins) */
