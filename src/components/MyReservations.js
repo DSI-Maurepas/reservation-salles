@@ -1,8 +1,9 @@
 // src/components/MyReservations.js
+// VERSION AVEC CORRECTIONS 1, 7, 8, 9, 11
 import React, { useState, useEffect } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
-import { MOTIFS_ANNULATION } from '../config/googleSheets';
+import { MOTIFS_ANNULATION, COULEURS_OBJETS } from '../config/googleSheets';
 import './MyReservations.css';
 
 function MyReservations({ userEmail, setUserEmail }) {
@@ -11,6 +12,18 @@ function MyReservations({ userEmail, setUserEmail }) {
   const [loading, setLoading] = useState(false);
   const [searchEmail, setSearchEmail] = useState(userEmail);
   const [exportFormat, setExportFormat] = useState('ical');
+  
+  // Correction 7 : États pour le tri
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
+  
+  // Correction 11 : État pour modal de confirmation
+  const [confirmModal, setConfirmModal] = useState({
+    show: false,
+    type: '', // 'cancel' ou 'modify'
+    reservation: null,
+    motif: ''
+  });
 
   useEffect(() => {
     if (userEmail) {
@@ -48,104 +61,159 @@ function MyReservations({ userEmail, setUserEmail }) {
     localStorage.setItem('userEmail', searchEmail);
   };
 
-  const handleCancelReservation = async (reservation) => {
-    // Créer une fenêtre modale pour le choix du motif
-    const modalHtml = `
-      <div style="font-family: Arial, sans-serif;">
-        <p style="margin-bottom: 15px; font-weight: bold;">
-          Êtes-vous sûr de vouloir annuler cette réservation ?
-        </p>
-        <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-          <p style="margin: 5px 0;"><strong>Salle :</strong> ${reservation.salle}</p>
-          <p style="margin: 5px 0;"><strong>Date :</strong> ${reservation.dateDebut}</p>
-          <p style="margin: 5px 0;"><strong>Horaire :</strong> ${reservation.heureDebut} - ${reservation.heureFin}</p>
-        </div>
-        <p style="margin-bottom: 10px; color: #d32f2f; font-weight: bold;">
-          ⚠️ Motif d'annulation obligatoire
-        </p>
-        <select id="motif-annulation" style="width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 5px; font-size: 14px;">
-          <option value="">-- Sélectionner un motif --</option>
-          ${MOTIFS_ANNULATION.map(motif => `<option value="${motif}">${motif}</option>`).join('')}
-        </select>
-      </div>
-    `;
+  const filterReservations = (filter) => {
+    const now = new Date();
+    let filtered = [...reservations];
 
-    // Créer un conteneur temporaire
-    const container = document.createElement('div');
-    container.innerHTML = modalHtml;
-    
-    // Afficher avec une confirmation personnalisée
-    const proceed = window.confirm(
-      `ANNULATION DE RÉSERVATION\n\n` +
-      `Salle: ${reservation.salle}\n` +
-      `Date: ${reservation.dateDebut}\n` +
-      `Horaire: ${reservation.heureDebut} - ${reservation.heureFin}\n\n` +
-      `⚠️ ATTENTION: Un motif d'annulation est obligatoire.\n\n` +
-      `Cliquez sur OK pour continuer.`
-    );
-
-    if (!proceed) return;
-
-    // Demander le motif via prompt
-    let motifIndex = null;
-    let motifTexte = '';
-    
-    while (!motifTexte) {
-      const choix = window.prompt(
-        `MOTIF D'ANNULATION OBLIGATOIRE\n\n` +
-        `Sélectionnez le numéro du motif :\n\n` +
-        MOTIFS_ANNULATION.map((motif, index) => `${index + 1}. ${motif}`).join('\n') +
-        `\n\nEntrez le numéro (1-${MOTIFS_ANNULATION.length}) :`
-      );
-
-      if (choix === null) {
-        // Annulation
-        return;
-      }
-
-      motifIndex = parseInt(choix);
-      
-      if (motifIndex >= 1 && motifIndex <= MOTIFS_ANNULATION.length) {
-        motifTexte = MOTIFS_ANNULATION[motifIndex - 1];
-      } else {
-        alert(`❌ Numéro invalide. Veuillez entrer un numéro entre 1 et ${MOTIFS_ANNULATION.length}.`);
-      }
+    switch(filter) {
+      case 'upcoming':
+        filtered = filtered.filter(res => {
+          const resDate = new Date(`${res.dateDebut}T${res.heureDebut}`);
+          return resDate >= now;
+        });
+        break;
+      case 'past':
+        filtered = filtered.filter(res => {
+          const resDate = new Date(`${res.dateDebut}T${res.heureDebut}`);
+          return resDate < now;
+        });
+        break;
+      default:
+        // 'all' - tous les résultats
+        break;
     }
+
+    setFilteredReservations(filtered);
+  };
+
+  // Correction 7 : Fonction de tri
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      // Inverser la direction si même colonne
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Nouvelle colonne, tri ascendant par défaut
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Correction 7 : Appliquer le tri
+  const getSortedReservations = () => {
+    if (!sortColumn) return filteredReservations;
+
+    return [...filteredReservations].sort((a, b) => {
+      let aVal = a[sortColumn] || '';
+      let bVal = b[sortColumn] || '';
+
+      // Pour les dates, comparer comme dates
+      if (sortColumn === 'dateDebut') {
+        aVal = new Date(`${a.dateDebut}T${a.heureDebut}`);
+        bVal = new Date(`${b.dateDebut}T${b.heureDebut}`);
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+
+      // Pour le reste, comparer comme strings
+      if (sortDirection === 'asc') {
+        return aVal.toString().localeCompare(bVal.toString(), 'fr');
+      } else {
+        return bVal.toString().localeCompare(aVal.toString(), 'fr');
+      }
+    });
+  };
+
+  // Correction 7 : Rendu icône tri
+  const renderSortIcon = (column) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === 'asc' ? ' ▲' : ' ▼';
+  };
+
+  // Correction 8 : Modifier une réservation
+  const handleEdit = (reservation) => {
+    // Rediriger vers la page de réservation en mode édition
+    const editUrl = `#reservation/${reservation.dateDebut}?edit=${reservation.id}`;
+    window.location.href = editUrl;
+  };
+
+  // Correction 10 & 11 : Annuler avec modal de confirmation
+  const handleDelete = async (reservation) => {
+    const motif = prompt('Motif de l\'annulation (optionnel) :');
+    if (motif === null) return; // Annulation
 
     try {
       await googleSheetsService.deleteReservation(reservation.id);
       
-      // Envoyer email d'annulation avec le motif
+      // Correction 11 : Afficher modal au lieu d'alert
+      setConfirmModal({
+        show: true,
+        type: 'cancel',
+        reservation: reservation,
+        motif: motif || 'Aucun motif fourni'
+      });
+
+      // Envoyer email d'annulation
       try {
-        await emailService.sendCancellation(reservation, motifTexte);
+        await emailService.sendCancellationEmail({
+          ...reservation,
+          motif: motif || 'Aucun motif fourni'
+        });
       } catch (emailError) {
-        console.error('Erreur email:', emailError);
+        console.error('Email non envoyé:', emailError);
       }
 
-      alert(`✅ Réservation annulée avec succès\n\nMotif : ${motifTexte}`);
-      loadUserReservations();
+      // Recharger les réservations
+      await loadUserReservations();
     } catch (error) {
-      alert(`❌ Erreur lors de l'annulation: ${error.message}`);
+      console.error('Erreur lors de l\'annulation:', error);
+      alert('Erreur lors de l\'annulation de la réservation');
     }
+  };
+
+  const handleExport = () => {
+    if (exportFormat === 'csv') {
+      exportToCSV();
+    } else {
+      exportToICalendar();
+    }
+  };
+
+  const exportToCSV = () => {
+    const headers = ['Date', 'Heure Début', 'Heure Fin', 'Salle', 'Service', 'Objet'];
+    const rows = filteredReservations.map(res => [
+      res.dateDebut,
+      res.heureDebut,
+      res.heureFin,
+      res.salle,
+      res.service,
+      res.objet
+    ]);
+
+    let csvContent = headers.join(',') + '\n';
+    rows.forEach(row => {
+      csvContent += row.join(',') + '\n';
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `mes-reservations-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
   };
 
   const exportToICalendar = () => {
     let icalContent = 'BEGIN:VCALENDAR\n';
     icalContent += 'VERSION:2.0\n';
-    icalContent += 'PRODID:-//Mairie//Réservation Salles//FR\n';
-    icalContent += 'CALSCALE:GREGORIAN\n';
-    icalContent += 'METHOD:PUBLISH\n';
+    icalContent += 'PRODID:-//Mairie//Réservations//FR\n';
 
     filteredReservations.forEach(res => {
       const startDateTime = `${res.dateDebut.replace(/-/g, '')}T${res.heureDebut.replace(':', '')}00`;
-      const endDateTime = `${res.dateFin.replace(/-/g, '')}T${res.heureFin.replace(':', '')}00`;
+      const endDateTime = `${res.dateDebut.replace(/-/g, '')}T${res.heureFin.replace(':', '')}00`;
       
       icalContent += 'BEGIN:VEVENT\n';
       icalContent += `UID:${res.id}@mairie.fr\n`;
-      icalContent += `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z\n`;
       icalContent += `DTSTART:${startDateTime}\n`;
       icalContent += `DTEND:${endDateTime}\n`;
-      icalContent += `SUMMARY:Réservation ${res.salle}\n`;
+      icalContent += `SUMMARY:${res.salle}\n`;
       icalContent += `DESCRIPTION:${res.objet} - ${res.service}\n`;
       icalContent += `LOCATION:${res.salle}\n`;
       icalContent += 'END:VEVENT\n';
@@ -153,147 +221,175 @@ function MyReservations({ userEmail, setUserEmail }) {
 
     icalContent += 'END:VCALENDAR';
 
-    // Télécharger le fichier
-    const blob = new Blob([icalContent], { type: 'text/calendar' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reservations_${userEmail.split('@')[0]}.ics`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+    const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `mes-reservations-${new Date().toISOString().split('T')[0]}.ics`;
+    link.click();
   };
 
-  const exportToPDF = () => {
-    window.print();
-  };
-
-  const filterByPeriod = (period) => {
-    const now = new Date();
-    let filtered = [];
-
-    switch (period) {
-      case 'all':
-        filtered = reservations;
-        break;
-      case 'future':
-        filtered = reservations.filter(res => {
-          const resDate = new Date(`${res.dateDebut}T${res.heureDebut}`);
-          return resDate >= now;
-        });
-        break;
-      case 'past':
-        filtered = reservations.filter(res => {
-          const resDate = new Date(`${res.dateFin}T${res.heureFin}`);
-          return resDate < now;
-        });
-        break;
-      default:
-        filtered = reservations;
-    }
-
-    setFilteredReservations(filtered);
-  };
+  if (loading) {
+    return (
+      <div className="my-reservations-container">
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Chargement de vos réservations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="my-reservations">
-      <h2>📋 Mes Réservations</h2>
+    <div className="my-reservations-container">
+      {/* Correction 11 : Modal de confirmation */}
+      {confirmModal.show && (
+        <div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
+          <div className="confirmation-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>
+              {confirmModal.type === 'cancel' ? '✅ Annulation confirmée' : '✅ Modification confirmée'}
+            </h3>
+            
+            <div className="reservation-details">
+              <p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })}</p>
+              <p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p>
+              <p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>
+              <p><strong>📝 Objet :</strong> {confirmModal.reservation.objet}</p>
+              {confirmModal.motif && (
+                <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>
+              )}
+            </div>
+            
+            <button onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
+      <h1>📋 Mes Réservations</h1>
 
       <div className="search-section">
         <form onSubmit={handleSearch}>
-          <label>Entrez votre adresse email :</label>
-          <div className="search-input-group">
-            <input
-              type="email"
-              value={searchEmail}
-              onChange={(e) => setSearchEmail(e.target.value)}
-              placeholder="votre.email@mairie.fr"
-              required
-            />
-            <button type="submit">🔍 Rechercher</button>
-          </div>
+          <input
+            type="email"
+            placeholder="Entrez votre email"
+            value={searchEmail}
+            onChange={(e) => setSearchEmail(e.target.value)}
+            required
+          />
+          <button type="submit">🔍 Rechercher</button>
         </form>
       </div>
+
+      {!userEmail && (
+        <div className="info-message">
+          <p>👆 Entrez votre adresse email pour voir vos réservations</p>
+        </div>
+      )}
 
       {userEmail && (
         <>
           <div className="filter-section">
-            <div className="filter-buttons">
-              <button onClick={() => filterByPeriod('all')}>Toutes</button>
-              <button onClick={() => filterByPeriod('future')}>À venir</button>
-              <button onClick={() => filterByPeriod('past')}>Passées</button>
-            </div>
-            
-            <div className="export-buttons">
-              <button onClick={exportToICalendar} className="export-btn">
-                📅 Exporter iCal
-              </button>
-              <button onClick={exportToPDF} className="export-btn">
-                📄 Imprimer PDF
-              </button>
-            </div>
+            <button onClick={() => filterReservations('all')} className="filter-btn">
+              📅 Toutes ({reservations.length})
+            </button>
+            <button onClick={() => filterReservations('upcoming')} className="filter-btn">
+              ⏭️ À venir ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) >= new Date()).length})
+            </button>
+            <button onClick={() => filterReservations('past')} className="filter-btn">
+              ⏮️ Passées ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) < new Date()).length})
+            </button>
           </div>
 
-          {loading ? (
-            <div className="loading-container">
-              <div className="spinner"></div>
-              <p>Chargement...</p>
-            </div>
-          ) : filteredReservations.length === 0 ? (
+          <div className="export-section">
+            <select 
+              value={exportFormat} 
+              onChange={(e) => setExportFormat(e.target.value)}
+            >
+              <option value="ical">📅 iCalendar (.ics)</option>
+              <option value="csv">📊 CSV</option>
+            </select>
+            <button onClick={handleExport} className="export-btn">
+              ⬇️ Exporter
+            </button>
+            {/* Correction 9 : Bouton PDF SUPPRIMÉ */}
+          </div>
+
+          {filteredReservations.length === 0 ? (
             <div className="no-reservations">
-              <p>Aucune réservation trouvée pour cette adresse email.</p>
+              <p>Aucune réservation trouvée</p>
             </div>
           ) : (
-            <div className="reservations-list">
-              {filteredReservations.map(res => {
-                const isUpcoming = new Date(`${res.dateDebut}T${res.heureDebut}`) > new Date();
-                
-                return (
-                  <div key={res.id} className={`reservation-card ${!isUpcoming ? 'past' : ''}`}>
-                    <div className="reservation-header">
-                      <h3>{res.salle}</h3>
-                      {isUpcoming && (
-                        <button
-                          onClick={() => handleCancelReservation(res)}
-                          className="cancel-btn"
-                        >
-                          ❌ Annuler
-                        </button>
-                      )}
-                    </div>
+            <div className="table-container">
+              <table className="reservations-table">
+                <thead>
+                  <tr>
+                    {/* Correction 7 : Colonnes cliquables pour tri */}
+                    <th onClick={() => handleSort('salle')} style={{cursor: 'pointer'}}>
+                      Salle{renderSortIcon('salle')}
+                    </th>
+                    <th onClick={() => handleSort('dateDebut')} style={{cursor: 'pointer'}}>
+                      Date{renderSortIcon('dateDebut')}
+                    </th>
+                    <th onClick={() => handleSort('heureDebut')} style={{cursor: 'pointer'}}>
+                      Heure{renderSortIcon('heureDebut')}
+                    </th>
+                    <th onClick={() => handleSort('service')} style={{cursor: 'pointer'}}>
+                      Service{renderSortIcon('service')}
+                    </th>
+                    <th onClick={() => handleSort('objet')} style={{cursor: 'pointer'}}>
+                      Objet{renderSortIcon('objet')}
+                    </th>
+                    <th onClick={() => handleSort('statut')} style={{cursor: 'pointer'}}>
+                      Statut{renderSortIcon('statut')}
+                    </th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {getSortedReservations().map((reservation, index) => {
+                    // Correction 1 : Obtenir la couleur selon l'objet
+                    const backgroundColor = COULEURS_OBJETS[reservation.objet] || '#f9f9f9';
                     
-                    <div className="reservation-details">
-                      <div className="detail-row">
-                        <span className="label">📅 Date:</span>
-                        <span>{new Date(res.dateDebut).toLocaleDateString('fr-FR')}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="label">🕐 Horaire:</span>
-                        <span>{res.heureDebut} - {res.heureFin}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="label">👤 Nom:</span>
-                        <span>{res.prenom} {res.nom}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="label">🏢 Service:</span>
-                        <span>{res.service}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="label">📝 Objet:</span>
-                        <span>{res.objet}</span>
-                      </div>
-                      {res.recurrence && (
-                        <div className="detail-row">
-                          <span className="label">🔄 Récurrence:</span>
-                          <span>Chaque semaine jusqu'au {res.recurrenceJusquau}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                    return (
+                      <tr key={index} style={{ backgroundColor }}>
+                        <td>{reservation.salle}</td>
+                        <td>{new Date(reservation.dateDebut).toLocaleDateString('fr-FR')}</td>
+                        <td>{reservation.heureDebut} - {reservation.heureFin}</td>
+                        <td>{reservation.service}</td>
+                        <td>{reservation.objet}</td>
+                        <td>
+                          <span className={`status-badge ${reservation.statut?.toLowerCase()}`}>
+                            {reservation.statut || 'Confirmée'}
+                          </span>
+                        </td>
+                        <td className="actions-cell">
+                          {/* Correction 8 : Bouton Modifier */}
+                          <button 
+                            onClick={() => handleEdit(reservation)}
+                            className="edit-button"
+                            title="Modifier cette réservation"
+                          >
+                            ✏️ Modifier
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(reservation)}
+                            className="delete-button"
+                            title="Annuler cette réservation"
+                          >
+                            🗑️ Annuler
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </>

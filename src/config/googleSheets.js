@@ -2,21 +2,30 @@
 // Configuration pour l'API Google Sheets
 
 export const GOOGLE_CONFIG = {
+  // API Key Google (pour la lecture publique)
   API_KEY: 'AIzaSyAfpo4O0YkzjG8AaRl9tz9JMcAdQW3b8nY',
+  
+  // Client ID OAuth 2.0 (pour l'écriture avec authentification)
   CLIENT_ID: '175113424020-t2ootm4m0v08kkn1vbadmd2qeqt5cv27.apps.googleusercontent.com',
+  
+  // ID de votre Google Sheet
   SPREADSHEET_ID: '1SNkHpAXIzu3GNQxFX3csCRv_4rz9M52xO6ov0LCed7Q',
   
+  // Noms des onglets dans votre Google Sheet
   SHEETS: {
     RESERVATIONS: 'Réservations',
     SALLES: 'Salles',
     CONFIG: 'Configuration'
   },
   
+  // Portée de l'API (lecture et écriture)
   DISCOVERY_DOCS: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
   SCOPES: 'https://www.googleapis.com/auth/spreadsheets'
 };
 
+// Configuration EmailJS pour les notifications
 export const EMAIL_CONFIG = {
+  // À REMPLACER : Vos identifiants EmailJS (voir guide d'installation)
   SERVICE_ID: 'VOTRE_SERVICE_ID',
   TEMPLATE_ID_CONFIRMATION: 'VOTRE_TEMPLATE_CONFIRMATION',
   TEMPLATE_ID_ANNULATION: 'VOTRE_TEMPLATE_ANNULATION',
@@ -102,12 +111,25 @@ export const OBJETS_RESERVATION = [
   'Autre'
 ];
 
+// Couleurs douces pour chaque objet (demande 1)
+export const COULEURS_OBJETS = {
+  'Réunion': '#B3E5FC',        // Bleu clair doux
+  'Formation': '#C8E6C9',      // Vert clair doux
+  'Événement': '#FFE0B2',      // Orange clair doux
+  'CODIR': '#F8BBD0',          // Rose clair doux
+  'COPIL': '#E1BEE7',          // Violet clair doux
+  'COTECH': '#FFCCBC',         // Corail clair doux
+  'Présentation': '#FFF9C4',   // Jaune clair doux
+  'Convivialité': '#D1C4E9',   // Lavande clair doux
+  'Prioritaire': '#FFCDD2'     // Rouge clair doux
+};
+
 // Horaires d'ouverture
 export const HORAIRES = {
   HEURE_DEBUT: 8,
   HEURE_FIN: 22,
-  JOURS_OUVRES: [1, 2, 3, 4, 5, 6],
-  DUREE_CRENEAU: 1
+  JOURS_OUVRES: [1, 2, 3, 4, 5, 6], // Lundi à Samedi (0 = Dimanche)
+  DUREE_CRENEAU: 1 // en heures
 };
 
 // Jours fériés français 2024-2032
@@ -156,7 +178,7 @@ export const SALLES_ADMIN_ONLY = [
   'Salle Mariages - 40 Personnes'
 ];
 
-// Motifs d'annulation obligatoires
+// Motifs d'annulation obligatoires pour toute suppression
 export const MOTIFS_ANNULATION = [
   "Réquisition par la Direction / Cabinet du Maire",
   "Évènement institutionnel prioritaire",

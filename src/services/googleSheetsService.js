@@ -260,14 +260,65 @@ class GoogleSheetsService {
   }
 
   // Supprimer une réservation
+  // Correction 10 : Supprimer réservation (gère récurrence)
   async deleteReservation(reservationId) {
     try {
-      // IMPORTANT : Demander l'authentification OAuth avant de supprimer
       if (!this.isAuthenticated()) {
-        console.log('Authentification requise pour supprimer une réservation...');
+        console.log('Authentification requise pour supprimer...');
         await this.requestAccessToken();
       }
 
+      // 1. Récupérer la réservation à supprimer
+      const reservation = await this.getReservationById(reservationId);
+      
+      if (!reservation) {
+        throw new Error('Réservation non trouvée');
+      }
+
+      // 2. Si récurrence, supprimer toutes les occurrences
+      if (reservation.recurrence && reservation.recurrenceJusquau) {
+        console.log('Suppression récurrence détectée...');
+        const allReservations = await this.getAllReservations();
+        
+        // Trouver toutes les occurrences de cette récurrence
+        const toDelete = allReservations.filter(res => 
+          res.email === reservation.email &&
+          res.salle === reservation.salle &&
+          res.heureDebut === reservation.heureDebut &&
+          res.heureFin === reservation.heureFin &&
+          res.objet === reservation.objet &&
+          res.service === reservation.service &&
+          res.recurrence === true
+        );
+
+        console.log(`${toDelete.length} occurrences à supprimer`);
+
+        // Supprimer chaque occurrence (de la plus récente à la plus ancienne pour préserver les index)
+        const sortedToDelete = toDelete.sort((a, b) => {
+          const dateA = new Date(a.dateDebut);
+          const dateB = new Date(b.dateDebut);
+          return dateB - dateA;
+        });
+
+        for (const res of sortedToDelete) {
+          await this.deleteReservationById(res.id);
+        }
+
+        return { success: true, count: toDelete.length };
+      } else {
+        // Réservation simple
+        await this.deleteReservationById(reservationId);
+        return { success: true, count: 1 };
+      }
+    } catch (error) {
+      console.error('Erreur deleteReservation:', error);
+      throw error;
+    }
+  }
+
+  // Fonction helper pour supprimer par ID
+  async deleteReservationById(reservationId) {
+    try {
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
         range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A:A`,
@@ -277,19 +328,17 @@ class GoogleSheetsService {
       const rowIndex = rows.findIndex(row => row[0] === reservationId);
 
       if (rowIndex === -1) {
-        throw new Error('Réservation non trouvée');
+        console.warn(`Réservation ${reservationId} déjà supprimée`);
+        return;
       }
 
-      // Supprimer la ligne
-      // rowIndex correspond déjà à la position correcte car rows inclut l'en-tête
-      // deleteDimension utilise des index 0-based où 0 = première ligne (en-tête)
       await window.gapi.client.sheets.spreadsheets.batchUpdate({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
         resource: {
           requests: [{
             deleteDimension: {
               range: {
-                sheetId: 0, // ID de l'onglet Réservations
+                sheetId: 0,
                 dimension: 'ROWS',
                 startIndex: rowIndex,
                 endIndex: rowIndex + 1
@@ -301,7 +350,7 @@ class GoogleSheetsService {
 
       return { success: true };
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
+      console.error('Erreur deleteReservationById:', error);
       throw error;
     }
   }
@@ -363,6 +412,75 @@ class GoogleSheetsService {
   // Utilitaire: formater une heure en HH:00
   formatTime(hour) {
     return `${String(hour).padStart(2, '0')}:00`;
+  }
+
+  // Correction 8 : Obtenir une réservation par ID
+  async getReservationById(id) {
+    try {
+      const allReservations = await this.getAllReservations();
+      return allReservations.find(res => res.id === id);
+    } catch (error) {
+      console.error('Erreur getReservationById:', error);
+      throw error;
+    }
+  }
+
+  // Correction 8 : Modifier une réservation
+  async updateReservation(reservationId, updateData) {
+    try {
+      if (!this.isAuthenticated()) {
+        console.log('Authentification requise pour modifier...');
+        await this.requestAccessToken();
+      }
+
+      // 1. Trouver la ligne à mettre à jour
+      const response = await window.gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
+        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A:P`,
+      });
+
+      const rows = response.result.values || [];
+      const rowIndex = rows.findIndex(row => row[0] === reservationId);
+
+      if (rowIndex === -1) {
+        throw new Error('Réservation non trouvée');
+      }
+
+      // 2. Construire la nouvelle ligne
+      const updatedRow = [
+        reservationId, // A - ID inchangé
+        updateData.salle, // B
+        updateData.dateDebut, // C
+        updateData.heureDebut, // D
+        updateData.dateFin, // E
+        updateData.heureFin, // F
+        updateData.nom, // G
+        updateData.prenom || '', // H
+        updateData.email, // I
+        updateData.telephone || '', // J
+        updateData.service, // K
+        updateData.objet, // L
+        updateData.recurrence ? 'true' : 'false', // M
+        updateData.recurrenceJusquau || '', // N
+        'Confirmée', // O - Statut
+        new Date().toISOString() // P - Date modification
+      ];
+
+      // 3. Mettre à jour la ligne
+      await window.gapi.client.sheets.spreadsheets.values.update({
+        spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
+        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A${rowIndex + 1}:P${rowIndex + 1}`,
+        valueInputOption: 'USER_ENTERED',
+        resource: {
+          values: [updatedRow]
+        }
+      });
+
+      return { success: true, id: reservationId };
+    } catch (error) {
+      console.error('Erreur updateReservation:', error);
+      throw error;
+    }
   }
 }
 

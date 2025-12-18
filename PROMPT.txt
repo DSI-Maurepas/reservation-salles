@@ -1,0 +1,122 @@
+Sur la seconde page, il manque un bouton qui permette d’avancer ou de reculer de jour en jour quand on est sur le tableau des réservations. 
+Je te demande de créer ces deux boutons. 
+
+Impossible de récupérer les réservations dès lors ou l'itération est supérieure à 5. Conseil Pour de grandes réservations (10+ créneaux), faire plusieurs groupes de 5-10 créneaux.
+Trouve une solution, car je ne veux pas faire comme le demande l'application des groupe de 4. L'application doit permettre des réservations sur 2 ans à l'avance (conseil municipal).
+
+Le champ prénom est obligatoire alors que j'ai demandé à ce qu'il soit libre ! 
+Corrige de nouveau ce problème.
+
+Attention BUG, lors d'une réservation, il est possible de sélectionner plusieurs fois la même réservation. 
+Crée moi un script qui une fois le drag and drop effectué, un nouveau drag and drop sur le même créneau ne s'affiche pas comme une nouvelle réservation. Car là il est possible de réserver (avant validation) plusieurs fois un créneau (exemple sélection 4 fois de la salle du conseil de 10h à 11h donne 4 réservations listées dans le formulaire. Je n'en veux qu'une !
+
+Attention, ne touche à rien d'autre. tout les reste fonctionne correctement !
+
+
+/////////////////////////////
+
+Les boutons "jour précédent" et "jour suivant" ne doivent pas renvoyer sur le calendrier, mais bien sur la même page (le tableau des créneaux) avec un jour de moins ou un jour de plus.
+Je te demande de corriger cette erreur.
+
+J'ai tenté de réserver sur 52 semaines. Un message indique que la réservation peut durer jusqu'à 2 secondes, mais quand on clique sur OK on ne voit pas la réservation s'affiche. Il faut rafraichir la page pour voir les créneaux itératifs choisis. 
+Attention j'ai demandé la possibilité de réserver de manière itérative 60 créneaux et seuls 25 sont présents. A corriger également
+Je te demande de corriger cela. Il faut qu'après avoir cliquer sur OK, l'information de réservation soit visible comme si j'avais réservé 1 créneau.
+
+////////////////////////////
+
+1) J'avais demandé à ne pas pouvoir faire plusieurs sélection du même créneau. Or c'est toujours possible je viens de tester ! 
+Je reprends: je suis sur le tableau des réservations avant de remplir mon formulaire. 
+Je sélection la salle N°1 de 15h à 17h.
+Puis je recommence une seconde réservation de la salle N°1 de 14h à 17. Elle apparaît elle aussi dans le formulaire alors que des horaires se chevauchent!
+Je sélectionne de nouveau la salle N°1 de 14h à 16h. Un 3eme créneau s'affiche dans le formulaire en affichant encore une fois un chevauchement d'horaire.
+Alors, même si une fois le formulaire rempli, un message apparaît en disant que 2 des 3 créneaux ne peuvent être réservés, on ne doit pas aller jusqu'à valider le formulaire pour avoir cette information. C'est avant cela que la réservation ne doit pas être possible. On ne doit pas pourvoir sélectionner une seconde fois un créneau qui est déjà positionné dans le formulaire avant son remplissage !
+Je te demande donc de corriger définitivement ce problème majeur
+Voilà l'exemple :
+Salle N°1 - 2 Personnes
+
+15:00 - 17:00 (2h)
+
+✕
+Salle N°1 - 2 Personnes
+
+14:00 - 17:00 (3h)
+
+✕
+Salle N°1 - 2 Personnes
+
+14:00 - 16:00 (2h)
+
+✕
+📅 Date : lundi 22 décembre 2025
+
+
+2) Conseil : Pour de grandes réservations (10+ créneaux), faites plusieurs groupes de 5-10 créneaux. Je n'en veux pas. Tu me trouves une solution pour permettre à l'agent lamda de créer jusqu'à un an de réservation d'avance (environ 55 à 60 créneaux). Tu me modifies donc ce texte !
+
+/////////////////////
+
+Tout d'abord, très bien pour le chevauchement de créneau, cela fonctionne impeccablement !
+
+Mais,
+1) Lors d'une réservation itérative de plusieurs créneau, un message apparaît, c'est bien, mais il met trop longtemps à arriver et cela peut être confusant. l'agent peut recliquer sur réserver, ou dire que ca ne fonctionne pas. Le message doit apparaitre immédiatement après le clic sur le bouton Valider la réservation.
+2) D'autre part, il faut toujours rafraichir la page pour voir le créneau apparaître. J'avais demandé que dès que les créneaux itératifs étaient posés, que la première réservation du lot apparaisse immédiatement
+3) Enfin, toutes les réservations demandées ne sont pas présentes et ça c'est toujours un gros bug!
+
+4) d'autre part, je veux que tu rajoutes les boutons "semaine précédente" et "semaine suivante". pour ce faire tu trouves une solution. Les bouton devront être moins imposants et de couleur légèrement différent pour jour et mois.
+
+5) Tu peux également revoir la taille ou l'emplacement du bouton "retour calendrier"
+
+Je te demande donc une dernière fois et en une seule fois de corriger cela … attention, sans rien toucher d'autre !
+Tu peux réfléchir le temps voulu mais ça doit être corrigé !
+
+
+////////////////////
+
+
+On avance !
+1) Je veux maintenant amener plus de clarté dans l'affichage des réservations. Pour cela, il faudrait ajouter un couleur pour chaque objet de réservation.
+Attention, fais en sorte que les couleurs ne soient pas trop agressives !
+
+2) A chaque réservation sur le fichier iCal Outlook me génère un calendrier. Ce n'est pas tenable car si je réserve 10 fois, je vais avoir 10 calendriers !
+Tu vas donc me créer un seul fichier ical qui va s'intégrer directement à Outlook sans ajout de calendrier mais simplement en ajoutant le ou les créneaux choisis.
+3) Tu en profites pour faire en sorte que ce fichier puisse être intégré à Outlook web Outlook mobile et à google agenda.
+
+XX 4) Ajouter une récurrence mensuelle en plus de la récurrence hebdomadaire et tous les 15 jours.
+
+XX 5) dans ce même bloc, je veux que tu passe la date au format à la française (ex: chaque semaine jusqu'au 2027-01-29)
+
+XX 6) je veux que sur la seconde page où l'on peut sélectionner les jours/semaines suivantes mais aussi les jours et les semaines précédentes, tu ajoute un bouton aujourd'hui afin que l'on puisse revenir à la date du jour en 1 clic.
+
+XX 7) je veux que tu fasses en sorte que la grille qui liste les réservations (toutes, à venir ou passées) puissent être sur chaque colonne triée A-Z et Z-A.
+Toutes les colonnes doivent présenter un tri.
+=> Mais mis en forme a été détruite des blocs carrés apparaissent pour le champ adresse mail + le bouton recherche + les boutons toutes, a veinr et passées + iCalendar ou CSV.
+La mis en forme les 163 lignes de réservation est totalement absente. 
+Mais les filtres fonctionnent !
+
+
+8) Une chose que j'ai omis depuis le début...la modification ! Car à ce stade, seul l'annulation puis une nouvelle réservation peut être fait.
+Je veux que soit possible la modification de ses propres créneaux en respectant bien entendu l'ensemble des consignes que je t'ai fixées jusqu'ici !
+c'est à dire, sans chevauchement sans jour fériés, etc.
+
+9) Je veux que tu supprimes l'option d'imprimer en PDF. Nous sommes une génération qui doit limiter le papier !
+
+10) Bug Très important => Lorsque j'annule une récurrence, seule la première date s'annule mais pas les autres dates
+
+11)  le cas d'une annulation ou modification : Une fenêtre apparait, indiquant que la réservation a été annulée avec succès. je veux que tu intègres la même phrase pour la modification !
+D'autre part, en plus du motif, je veux que tu ajoutes une information de rappel de la date et de l'heure du rendez-vous qui a été annulé ou déplacé.
+Important => Je veux que ce message apparaisse dans une fenêtre mais pas dans un popup car le navigateur pourrait le bloquer.
+
+Tout cela devra être amélioré et corrigé en une seule fois et surtout SANS TOUCHER AU RESTE QUI FONCTIONNE !
+Pour cela prends ton temps, réfléchi et donne moi les fichiers propres des le premier coup !
+
+
+///////////////////////////
+
+
+Serait-il possible de faire un filtre sur une salle plutôt que de toutes les avoir ? 
+
+Dans les motifs, ne faudrait-il pas ajouter Conseil Municipal et Mariage ? 
+
+Il faudrait supprimer la possibilité de réserver sur des dates passées afin de limiter les erreurs.
+
+Sur le planning des réservations, il serait bien de voir l’objet de la réservation, car il arrive parfois de rechercher une date ou dans quelle salle a lieu tel ou tel évènement.
+
