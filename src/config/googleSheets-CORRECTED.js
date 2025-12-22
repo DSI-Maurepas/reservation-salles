@@ -156,15 +156,6 @@ export const SALLES_ADMIN_ONLY = [
   'Salle Mariages - 40 Personnes'
 ];
 
-// Motifs d'annulation obligatoires
-export const MOTIFS_ANNULATION = [
-  "Réquisition par la Direction / Cabinet du Maire",
-  "Évènement institutionnel prioritaire",
-  "Indisponibilité exceptionnelle de la salle",
-  "Réorganisation interne / besoin de service",
-  "Annulation à la demande de l'agent"
-];
-
 // Motifs d'annulation standardisés
 export const MOTIFS_ANNULATION = [
   'Changement de date',
