@@ -1,0 +1,343 @@
+/* src/components/ColorLegend.css */
+/* LÉGENDE MODERNE AVEC EFFETS DE SURVOL */
+
+.color-legend-container {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  border: 2px solid #e0e0e0;
+  animation: slideInFromRight 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Effet de brillance subtil en arrière-plan */
+.color-legend-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(33, 150, 243, 0.03) 0%, transparent 70%);
+  animation: rotateGlow 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotateGlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Header de la légende */
+.legend-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+  position: relative;
+}
+
+.legend-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  animation: float 3s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.legend-header h3 {
+  color: #2196f3;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.legend-subtitle {
+  color: #757575;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Liste des items */
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.5rem;
+  max-height: 450px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+/* Scrollbar personnalisée */
+.legend-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.legend-items::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 10px;
+}
+
+.legend-items::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2196f3 0%, #1976d2 100%);
+  border-radius: 10px;
+}
+
+.legend-items::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #1976d2 0%, #1565c0 100%);
+}
+
+/* Item de légende */
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.legend-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.legend-item:hover {
+  transform: translateX(5px) scale(1.03);
+  border-color: #2196f3;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 0 0 3px rgba(33, 150, 243, 0.1);
+  z-index: 10;
+}
+
+.legend-item:hover::before {
+  background: linear-gradient(180deg, #2196f3 0%, #1976d2 100%);
+}
+
+.legend-item.hovered {
+  transform: translateX(5px) scale(1.05);
+  border-color: #2196f3;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 30%, white 100%);
+  box-shadow: 
+    0 12px 32px rgba(33, 150, 243, 0.25),
+    0 0 0 4px rgba(33, 150, 243, 0.15);
+  z-index: 20;
+}
+
+.legend-item.hovered::before {
+  width: 6px;
+  background: linear-gradient(180deg, #2196f3 0%, #1976d2 100%);
+}
+
+/* Boîte de couleur */
+.legend-color-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  position: relative;
+}
+
+.legend-item:hover .legend-color-box {
+  transform: rotate(5deg) scale(1.15);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.legend-item.hovered .legend-color-box {
+  transform: rotate(-5deg) scale(1.25);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: rotate(-5deg) scale(1.25); }
+  50% { transform: rotate(-5deg) scale(1.3); }
+}
+
+/* Texte de la légende */
+.legend-text {
+  flex: 1;
+  color: #424242;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.legend-item:hover .legend-text {
+  color: #2196f3;
+  font-weight: 700;
+}
+
+.legend-item.hovered .legend-text {
+  color: #1565c0;
+  font-weight: 700;
+  transform: translateX(3px);
+}
+
+/* Effet de lueur au survol */
+.legend-glow {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  opacity: 0;
+  filter: blur(15px);
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+
+.legend-item.hovered .legend-glow {
+  opacity: 0.4;
+  right: -10px;
+  width: 60px;
+  height: 60px;
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; transform: translateY(-50%) scale(1); }
+  50% { opacity: 0.5; transform: translateY(-50%) scale(1.1); }
+}
+
+/* Footer avec astuce */
+.legend-footer {
+  padding-top: 1rem;
+  border-top: 2px solid #e0e0e0;
+}
+
+.legend-tip {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 1rem;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 10px;
+  border-left: 4px solid #ff9800;
+  animation: tipGlow 3s ease-in-out infinite;
+}
+
+@keyframes tipGlow {
+  0%, 100% { box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2); }
+  50% { box-shadow: 0 4px 16px rgba(255, 152, 0, 0.4); }
+}
+
+.tip-icon {
+  font-size: 1.3rem;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.tip-text {
+  color: #e65100;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .color-legend-container {
+    padding: 1rem;
+  }
+
+  .legend-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .legend-items {
+    max-height: 300px;
+    gap: 0.5rem;
+  }
+
+  .legend-item {
+    padding: 0.6rem 0.8rem;
+  }
+
+  .legend-color-box {
+    width: 28px;
+    height: 28px;
+  }
+
+  .legend-text {
+    font-size: 0.85rem;
+  }
+}
+
+/* Animation d'entrée échelonnée pour les items */
+.legend-item {
+  animation: slideInItem 0.4s ease backwards;
+}
+
+.legend-item:nth-child(1) { animation-delay: 0.05s; }
+.legend-item:nth-child(2) { animation-delay: 0.1s; }
+.legend-item:nth-child(3) { animation-delay: 0.15s; }
+.legend-item:nth-child(4) { animation-delay: 0.2s; }
+.legend-item:nth-child(5) { animation-delay: 0.25s; }
+.legend-item:nth-child(6) { animation-delay: 0.3s; }
+.legend-item:nth-child(7) { animation-delay: 0.35s; }
+.legend-item:nth-child(8) { animation-delay: 0.4s; }
+.legend-item:nth-child(9) { animation-delay: 0.45s; }
+.legend-item:nth-child(10) { animation-delay: 0.5s; }
+.legend-item:nth-child(11) { animation-delay: 0.55s; }
+.legend-item:nth-child(12) { animation-delay: 0.6s; }
+.legend-item:nth-child(13) { animation-delay: 0.65s; }
+
+@keyframes slideInItem {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
