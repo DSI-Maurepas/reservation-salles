@@ -163,22 +163,24 @@ function MyReservations({ userEmail, setUserEmail }) {
     const reservation = cancelModal.reservation;
     const motif = selectedMotif || 'Aucun motif fourni';
     
-    // Fermer le modal de sélection
+    // Fermer le modal de sélection immédiatement
     setCancelModal({ show: false, reservation: null });
 
     try {
-      // Suppression immédiate sans attendre l'email
+      // Suppression de la réservation
       await googleSheetsService.deleteReservation(reservation.id);
       
-      // Recharger les réservations IMMÉDIATEMENT
-      await loadUserReservations();
-      
-      // Afficher modal de confirmation
+      // Afficher modal de confirmation IMMÉDIATEMENT (avant le reload)
       setConfirmModal({
         show: true,
         type: 'cancel',
         reservation: reservation,
         motif: motif
+      });
+
+      // Recharger les réservations en arrière-plan
+      loadUserReservations().catch(err => {
+        console.error('Erreur rechargement:', err);
       });
 
       // Envoyer email en arrière-plan (ne pas attendre)
@@ -191,7 +193,15 @@ function MyReservations({ userEmail, setUserEmail }) {
 
     } catch (error) {
       console.error('Erreur lors de l\'annulation:', error);
-      alert('Erreur lors de l\'annulation de la réservation');
+      // Afficher quand même le modal avec un message d'avertissement
+      setConfirmModal({
+        show: true,
+        type: 'cancel',
+        reservation: reservation,
+        motif: motif + ' (Erreur lors de la suppression - veuillez vérifier)'
+      });
+      // Recharger pour vérifier l'état réel
+      loadUserReservations().catch(err => console.error('Erreur rechargement:', err));
     }
   };
 
