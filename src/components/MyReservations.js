@@ -25,6 +25,14 @@ function MyReservations({ userEmail, setUserEmail }) {
     motif: ''
   });
 
+  // État pour le modal d'annulation avec sélection de motif
+  const [cancelModal, setCancelModal] = useState({
+    show: false,
+    reservation: null
+  });
+  
+  const [selectedMotif, setSelectedMotif] = useState('');
+
   useEffect(() => {
     if (userEmail) {
       loadUserReservations();
@@ -130,39 +138,57 @@ function MyReservations({ userEmail, setUserEmail }) {
 
   // Correction 8 : Modifier une réservation
   const handleEdit = (reservation) => {
-    // Rediriger vers la page de réservation en mode édition
-    const editUrl = `#reservation/${reservation.dateDebut}?edit=${reservation.id}`;
-    window.location.href = editUrl;
+    // Construire l'URL avec le hash pour la navigation React
+    const date = reservation.dateDebut;
+    const params = new URLSearchParams({
+      edit: reservation.id,
+      salle: reservation.salle,
+      heure: reservation.heureDebut
+    });
+    
+    // Utiliser window.location.hash au lieu de href pour la navigation SPA
+    window.location.hash = `reservation/${date}?${params.toString()}`;
   };
 
-  // Correction 10 & 11 : Annuler avec modal de confirmation
-  const handleDelete = async (reservation) => {
-    const motif = prompt('Motif de l\'annulation (optionnel) :');
-    if (motif === null) return; // Annulation
+  // Correction 10 & 11 : Annuler avec modal de sélection de motif
+  const handleDeleteClick = (reservation) => {
+    setCancelModal({
+      show: true,
+      reservation: reservation
+    });
+    setSelectedMotif(''); // Réinitialiser la sélection
+  };
+
+  const handleDeleteConfirm = async () => {
+    const reservation = cancelModal.reservation;
+    const motif = selectedMotif || 'Aucun motif fourni';
+    
+    // Fermer le modal de sélection
+    setCancelModal({ show: false, reservation: null });
 
     try {
+      // Suppression immédiate sans attendre l'email
       await googleSheetsService.deleteReservation(reservation.id);
       
-      // Correction 11 : Afficher modal au lieu d'alert
+      // Recharger les réservations IMMÉDIATEMENT
+      await loadUserReservations();
+      
+      // Afficher modal de confirmation
       setConfirmModal({
         show: true,
         type: 'cancel',
         reservation: reservation,
-        motif: motif || 'Aucun motif fourni'
+        motif: motif
       });
 
-      // Envoyer email d'annulation
-      try {
-        await emailService.sendCancellationEmail({
-          ...reservation,
-          motif: motif || 'Aucun motif fourni'
-        });
-      } catch (emailError) {
+      // Envoyer email en arrière-plan (ne pas attendre)
+      emailService.sendCancellationEmail({
+        ...reservation,
+        motif: motif
+      }).catch(emailError => {
         console.error('Email non envoyé:', emailError);
-      }
+      });
 
-      // Recharger les réservations
-      await loadUserReservations();
     } catch (error) {
       console.error('Erreur lors de l\'annulation:', error);
       alert('Erreur lors de l\'annulation de la réservation');
@@ -241,6 +267,57 @@ function MyReservations({ userEmail, setUserEmail }) {
 
   return (
     <div className="my-reservations-container">
+      {/* Modal d'annulation avec sélection de motif */}
+      {cancelModal.show && (
+        <div className="confirmation-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}>
+          <div className="confirmation-modal cancel-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>⚠️ Confirmer l'annulation</h3>
+            
+            <div className="reservation-details">
+              <p><strong>📅 Date :</strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              })}</p>
+              <p><strong>🕐 Horaire :</strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p>
+              <p><strong>🏢 Salle :</strong> {cancelModal.reservation.salle}</p>
+              <p><strong>📝 Objet :</strong> {cancelModal.reservation.objet}</p>
+            </div>
+
+            <div className="motif-selection">
+              <label><strong>💬 Motif de l'annulation :</strong></label>
+              <select 
+                value={selectedMotif} 
+                onChange={(e) => setSelectedMotif(e.target.value)}
+                className="motif-select"
+              >
+                <option value="">-- Sélectionnez un motif --</option>
+                {MOTIFS_ANNULATION.map((motif, index) => (
+                  <option key={index} value={motif}>{motif}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="modal-actions">
+              <button 
+                onClick={() => setCancelModal({ show: false, reservation: null })}
+                className="cancel-action-btn"
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={handleDeleteConfirm}
+                className="confirm-action-btn"
+                disabled={!selectedMotif}
+              >
+                Confirmer l'annulation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Correction 11 : Modal de confirmation */}
       {confirmModal.show && (
         <div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
@@ -378,7 +455,7 @@ function MyReservations({ userEmail, setUserEmail }) {
                             ✏️ Modifier
                           </button>
                           <button 
-                            onClick={() => handleDelete(reservation)}
+                            onClick={() => handleDeleteClick(reservation)}
                             className="delete-button"
                             title="Annuler cette réservation"
                           >
