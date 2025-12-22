@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
 import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS, COULEURS_OBJETS } from '../config/googleSheets';
+import ColorLegend from './ColorLegend';
 import './ReservationGrid.css';
 
 // Debug: Forcer l'inclusion de COULEURS_OBJETS dans le build
@@ -15,6 +16,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
   const [selections, setSelections] = useState([]); // Array de sélections validées
   const [currentSelection, setCurrentSelection] = useState(null); // Sélection en cours de drag
   const [isDragging, setIsDragging] = useState(false);
+  const [hoveredObjet, setHoveredObjet] = useState(null); // Pour l'effet de survol de la légende
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -567,6 +569,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
         const reservation = reserved ? getReservation(salle, hour) : null; // Correction 1
 		const backgroundColor = reservation && reservation.objet && COULEURS_OBJETS[reservation.objet] ? COULEURS_OBJETS[reservation.objet]
  : (reserved ? '#e8e8e8' : 'white');
+        const isHighlighted = hoveredObjet && reservation && reservation.objet === hoveredObjet;
         const isLunchBreak = hour === 12 || hour === 13;
         const isAdminRoom = isAdminOnlyRoom(salle);
         const canBook = canUserBookRoom(salle, formData.email);
@@ -581,7 +584,11 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
             style={{ 
               gridColumn: salleIndex + 2,
               gridRow: rowNumber,
-              backgroundColor: reserved ? backgroundColor : 'white' // Correction 1
+              backgroundColor: reserved ? backgroundColor : 'white', // Correction 1
+              transform: isHighlighted ? 'scale(1.08)' : 'scale(1)',
+              boxShadow: isHighlighted ? '0 8px 24px rgba(33, 150, 243, 0.5), 0 0 0 3px rgba(33, 150, 243, 0.3)' : 'none',
+              zIndex: isHighlighted ? 100 : 'auto',
+              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
             onMouseDown={() => handleMouseDown(salle, hour)}
             onMouseEnter={() => handleMouseEnter(salle, hour)}
@@ -743,8 +750,8 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
           </div>
         </div>
 
-        {selections.length > 0 && (
-          <div className="form-column">
+        <div className="form-column">
+          {selections.length > 0 ? (
             <div className="reservation-form">
               <h3>
                 <span className="form-title-line1">📝 Confirmer la réservation</span>
@@ -923,8 +930,10 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
             </div>
           </form>
             </div>
-          </div>
-        )}
+          ) : (
+            <ColorLegend onHoverColor={setHoveredObjet} />
+          )}
+        </div>
       </div>
 
       {/* Modale de succès avec téléchargement iCal */}
