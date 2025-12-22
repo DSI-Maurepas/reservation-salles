@@ -9,9 +9,8 @@ import googleSheetsService from './services/googleSheetsService';
 import emailService from './services/emailService';
 
 function App() {
-  const [currentView, setCurrentView] = useState('calendar');
+  const [currentView, setCurrentView] = useState('calendar'); // calendar, reservation, myreservations, admin
   const [selectedDate, setSelectedDate] = useState(null);
-  const [editReservationId, setEditReservationId] = useState(null);
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -31,71 +30,20 @@ function App() {
     init();
   }, []);
 
-  // Détecter les changements de hash pour la modification de réservation
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash;
-      console.log('📍 Hash changé:', hash);
-      
-      // Format: #?date=2026-02-16&edit=RES_123456
-      if (hash.includes('?') && hash.includes('date=') && hash.includes('edit=')) {
-        const params = new URLSearchParams(hash.split('?')[1]);
-        const dateParam = params.get('date');
-        const editId = params.get('edit');
-        
-        console.log('📝 Paramètres édition détectés:', { dateParam, editId });
-        
-        if (dateParam && editId) {
-          const date = new Date(dateParam);
-          console.log('✅ Ouverture en mode édition:', { date: date.toLocaleDateString(), editId });
-          
-          setSelectedDate(date);
-          setEditReservationId(editId);
-          setCurrentView('reservation');
-          
-          // Nettoyer le hash après traitement
-          setTimeout(() => {
-            window.history.replaceState(null, '', window.location.pathname);
-          }, 500);
-        }
-      }
-    };
-
-    // Écouter les changements de hash
-    window.addEventListener('hashchange', handleHashChange);
-    
-    // Vérifier au chargement initial
-    handleHashChange();
-
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
-
   const handleDateSelect = (date) => {
     setSelectedDate(date);
-    setEditReservationId(null); // Pas d'édition, nouvelle réservation
     setCurrentView('reservation');
   };
 
   const handleBackToCalendar = () => {
     setCurrentView('calendar');
     setSelectedDate(null);
-    setEditReservationId(null);
   };
 
   const handleReservationSuccess = () => {
+    // Le message de succès est déjà affiché dans ReservationGrid.js
+    // Pas d'email envoyé lors de la création (seulement lors de suppression admin)
     setCurrentView('calendar');
-    setEditReservationId(null);
-  };
-
-  // Callback pour MyReservations quand on clique sur Modifier
-  const handleEditReservation = (reservation) => {
-    console.log('🔧 handleEditReservation appelé:', reservation);
-    const date = new Date(reservation.dateDebut);
-    setSelectedDate(date);
-    setEditReservationId(reservation.id);
-    setCurrentView('reservation');
   };
 
   if (loading) {
@@ -150,18 +98,13 @@ function App() {
         {currentView === 'reservation' && selectedDate && (
           <ReservationGrid 
             selectedDate={selectedDate}
-            editReservationId={editReservationId}
             onBack={handleBackToCalendar}
             onSuccess={handleReservationSuccess}
           />
         )}
 
         {currentView === 'myreservations' && (
-          <MyReservations 
-            userEmail={userEmail} 
-            setUserEmail={setUserEmail}
-            onEditReservation={handleEditReservation}
-          />
+          <MyReservations userEmail={userEmail} setUserEmail={setUserEmail} />
         )}
 
         {currentView === 'admin' && (
