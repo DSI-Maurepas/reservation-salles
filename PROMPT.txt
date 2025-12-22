@@ -110,13 +110,15 @@ Pour cela prends ton temps, réfléchi et donne moi les fichiers propres des le 
 
 
 ///////////////////////////
+sur la page du tableau (grille) où l'on sélectionne les créneaux de réservation, tant qu'il n'y a pas de créneau sélectionné, un grand espace blanc est présent avant que le formulaire n'apparaisse. Je veux qu'a cet endroit - et avant que le formulaire n'apparaisse - avoir un bloc qui liste tous les objets possibles des réservations avec leur code couleur
 
+
+Il faudrait supprimer la possibilité de réserver sur des dates passées afin de limiter les erreurs.
 
 Serait-il possible de faire un filtre sur une salle plutôt que de toutes les avoir ? 
 
 Dans les motifs, ne faudrait-il pas ajouter Conseil Municipal et Mariage ? 
 
-Il faudrait supprimer la possibilité de réserver sur des dates passées afin de limiter les erreurs.
 
 Sur le planning des réservations, il serait bien de voir l’objet de la réservation, car il arrive parfois de rechercher une date ou dans quelle salle a lieu tel ou tel évènement.
 
