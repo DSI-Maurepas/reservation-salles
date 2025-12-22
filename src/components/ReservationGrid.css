@@ -115,8 +115,9 @@
   width: 100%;
   position: sticky;
   top: 2rem;
-  max-height: calc(100vh - 4rem);
-  overflow-y: auto;
+  height: 630px;
+  max-height: 630px;
+  overflow: hidden;
 }
 
 /* Grille de réservation */
