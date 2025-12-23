@@ -1,17 +1,16 @@
 /* src/App.css */
+/* FOND MODERNE ET DYNAMIQUE */
+
 :root {
-  --primary-color: #0066B3; /* Bleu de Maurepas */
-  --secondary-color: #004d87; /* Bleu foncé de Maurepas */
-  --accent-color: #e63946;
-  --success-color: #2a9d8f;
-  --warning-color: #f4a261;
-  --danger-color: #e76f51;
-  --light-bg: #f8f9fa;
-  --border-color: #dee2e6;
-  --text-dark: #212529;
-  --text-light: #6c757d;
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --primary-color: #2196f3;
+  --primary-dark: #1976d2;
+  --secondary-color: #667eea;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --text-dark: #1e293b;
+  --text-light: #64748b;
+  --border-color: #e2e8f0;
 }
 
 * {
@@ -21,27 +20,56 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f5f7fa; /* Gris très clair moderne au lieu du dégradé mauve */
-  min-height: 100vh;
-  color: var(--text-dark);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
 }
 
+/* FOND DÉGRADÉ MODERNE ET DYNAMIQUE - BLEU ROI */
 .App {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  background: linear-gradient(135deg, 
+    #0a1e4a 0%, 
+    #1e3a8a 25%, 
+    #2563eb 50%, 
+    #3b82f6 75%, 
+    #60a5fa 100%
+  );
+  background-attachment: fixed;
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* Header avec couleur du blason de Maurepas */
+/* Effet de texture subtile */
+.App::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(37, 99, 235, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 40% 20%, rgba(96, 165, 250, 0.15) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Header moderne - BLEU BLASON MAUREPAS */
 .app-header {
-  background: var(--primary-color); /* Bleu uni du blason */
-  color: white;
-  padding: 0.8rem 1.5rem; /* Réduit de 1.5rem 2rem */
-  box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  padding: 1rem 2rem;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
+  border-bottom: 2px solid rgba(96, 165, 250, 0.3);
 }
 
 .header-content {
@@ -50,120 +78,118 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.8rem; /* Réduit de 1rem */
+  gap: 2rem;
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 0.8rem; /* Réduit de 1rem */
+  gap: 1rem;
 }
 
 .blason-maurepas {
-  height: 45px; /* Réduit de 60px */
+  height: 50px;
   width: auto;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.1));
 }
 
-.app-header h1 {
-  font-size: 1.4rem; /* Réduit de 1.8rem */
+.header-title h1 {
+  color: white;
+  font-size: 1.5rem;
   font-weight: 700;
   margin: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
+/* Navigation */
 .main-nav {
   display: flex;
-  gap: 0.6rem; /* Réduit de 1rem */
+  gap: 1rem;
 }
 
 .main-nav button {
   background: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  padding: 0.5rem 1rem; /* Réduit de 0.6rem 1.2rem */
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem; /* Réduit de 1rem */
-  font-weight: 500;
-  transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.7rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .main-nav button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(37, 99, 235, 0.4);
+  border-color: rgba(37, 99, 235, 0.6);
   transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.5);
 }
 
 .main-nav button.active {
-  background: white;
-  color: var(--primary-color);
-  border-color: white;
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  border-color: #2563eb;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.6);
 }
 
-/* Main Content */
+/* Contenu principal */
 .app-main {
-  flex: 1;
   max-width: 1400px;
-  width: 100%;
-  margin: 1rem auto; /* Réduit de 2rem */
-  padding: 0 1.5rem; /* Réduit de 2rem */
+  margin: 2rem auto;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 1;
 }
 
-/* Footer */
+/* Footer moderne - BLEU ROI */
 .app-footer {
-  background: rgba(0, 0, 0, 0.05); /* Plus subtil sur fond clair */
-  color: #424242; /* Texte foncé au lieu de blanc */
+  background: linear-gradient(135deg, #0a1e4a 0%, #1e3a8a 100%);
+  backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.7);
   text-align: center;
-  padding: 1rem; /* Réduit */
-  margin-top: auto;
+  padding: 1.5rem;
+  margin-top: 3rem;
+  border-top: 2px solid rgba(37, 99, 235, 0.4);
+  position: relative;
+  z-index: 1;
 }
 
-/* Loading States */
-.app-loading,
-.loading-container {
+.app-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Loading state - BLEU ROI */
+.app-loading {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  gap: 1rem;
+  background: linear-gradient(135deg, #0a1e4a 0%, #1e3a8a 50%, #2563eb 100%);
+  color: white;
 }
 
 .spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #60a5fa;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-.app-loading p,
-.loading-container p {
-  color: white;
+.app-loading p {
   font-size: 1.1rem;
   font-weight: 500;
-}
-
-/* Buttons */
-button {
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  opacity: 0.9;
 }
 
 /* Responsive */
@@ -171,32 +197,76 @@ button:disabled {
   .header-content {
     flex-direction: column;
     align-items: flex-start;
+    gap: 1rem;
   }
-
-  .header-title {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .blason-maurepas {
-    height: 50px;
-  }
-
-  .app-header h1 {
+  
+  .header-title h1 {
     font-size: 1.2rem;
-    text-align: center;
   }
-
+  
   .main-nav {
     width: 100%;
     flex-direction: column;
   }
-
+  
   .main-nav button {
     width: 100%;
+    text-align: left;
   }
-
+  
   .app-main {
     padding: 0 1rem;
+    margin: 1rem auto;
   }
+}
+
+/* Animations d'entrée pour les pages */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.calendar-view,
+.reservation-grid-container,
+.my-reservations-container,
+.admin-panel {
+  animation: fadeIn 0.5s ease;
+}
+
+/* Scrollbar personnalisée - BLEU ROI */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(10, 30, 74, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #1e40af 0%, #1e3a8a 100%);
+}
+
+/* Amélioration du contraste des cartes */
+.reservation-grid-container,
+.my-reservations-container,
+.admin-panel,
+.calendar-view {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
 }

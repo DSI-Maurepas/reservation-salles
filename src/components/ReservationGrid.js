@@ -662,11 +662,12 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
             {isAdminRoom && !isAdminUnlocked && !reserved && (
               <span className="lock-icon">🔒</span>
             )}
-            {reserved && (
-              <span className="reserved-indicator" title={reservationEmail}>
-                {reservationEmail.split('@')[0]}
-                <br />
-                @{reservationEmail.split('@')[1]}
+            {reserved && reservation && (
+              <span className="reserved-indicator" title={`${reservation.prenom || ''} ${reservation.nom || ''} - ${reservation.service || ''}`}>
+                {reservation.prenom && reservation.nom 
+                  ? `${reservation.prenom.charAt(0)}. ${reservation.nom}`
+                  : reservation.nom || reservationEmail.split('@')[0]
+                }
               </span>
             )}
           </div>

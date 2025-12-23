@@ -1,0 +1,144 @@
+=== MODIFICATIONS ADMINPANEL.JS - 5 POINTS ===
+
+INSTRUCTIONS : Ajoutez ces éléments à AdminPanel.js
+
+1. IMPORT COULEURS (ligne 5)
+Remplacer:
+import { ADMINISTRATEURS, SALLES, MOTIFS_ANNULATION } from '../config/googleSheets';
+
+Par:
+import { ADMINISTRATEURS, SALLES, MOTIFS_ANNULATION, COULEURS_OBJETS } from '../config/googleSheets';
+
+
+2. ÉTATS TRI (après ligne 17)
+Ajouter:
+const [sortColumn, setSortColumn] = useState(null);
+const [sortDirection, setSortDirection] = useState('asc');
+
+
+3. FONCTIONS TRI (après applyFilters, vers ligne 130)
+Ajouter:
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const renderSortIcon = (column) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === 'asc' ? ' ▲' : ' ▼';
+  };
+
+  const getObjetColor = (objet) => {
+    return COULEURS_OBJETS[objet] || '#e0e0e0';
+  };
+
+
+4. TRI DANS applyFilters (fin de fonction applyFilters)
+Avant:
+    setFilteredReservations(filtered);
+  };
+
+Remplacer par:
+    // Tri
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let aVal = a[sortColumn];
+        let bVal = b[sortColumn];
+        
+        if (sortColumn === 'dateDebut') {
+          aVal = new Date(aVal);
+          bVal = new Date(bVal);
+        }
+        
+        if (sortDirection === 'asc') {
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+        } else {
+          return bVal > aVal ? 1 : bVal < aVal ? -1 : 0;
+        }
+      });
+    }
+
+    setFilteredReservations(filtered);
+  };
+
+
+5. useEffect TRI (ligne 34)
+Remplacer:
+  useEffect(() => {
+    applyFilters();
+  }, [reservations, filterSalle, filterDate, searchTerm]);
+
+Par:
+  useEffect(() => {
+    applyFilters();
+  }, [reservations, filterSalle, filterDate, searchTerm, sortColumn, sortDirection]);
+
+
+6. TABLEAU avec TRI + COULEURS (vers ligne 306)
+Remplacer tout le <thead> et <tbody>:
+
+              <thead>
+                <tr>
+                  <th onClick={() => handleSort('salle')} style={{cursor: 'pointer'}}>
+                    Salle{renderSortIcon('salle')}
+                  </th>
+                  <th onClick={() => handleSort('dateDebut')} style={{cursor: 'pointer'}}>
+                    Date{renderSortIcon('dateDebut')}
+                  </th>
+                  <th onClick={() => handleSort('heureDebut')} style={{cursor: 'pointer'}}>
+                    Horaire{renderSortIcon('heureDebut')}
+                  </th>
+                  <th onClick={() => handleSort('nom')} style={{cursor: 'pointer'}}>
+                    Agent{renderSortIcon('nom')}
+                  </th>
+                  <th onClick={() => handleSort('service')} style={{cursor: 'pointer'}}>
+                    Service{renderSortIcon('service')}
+                  </th>
+                  <th onClick={() => handleSort('objet')} style={{cursor: 'pointer'}}>
+                    Objet{renderSortIcon('objet')}
+                  </th>
+                  <th onClick={() => handleSort('email')} style={{cursor: 'pointer'}}>
+                    Email{renderSortIcon('email')}
+                  </th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredReservations.map(res => (
+                  <tr key={res.id} style={{backgroundColor: `${getObjetColor(res.objet)}40`}}>
+                    <td>{res.salle}</td>
+                    <td>{new Date(res.dateDebut).toLocaleDateString('fr-FR')}</td>
+                    <td>{res.heureDebut} - {res.heureFin}</td>
+                    <td>{res.prenom} {res.nom}</td>
+                    <td>{res.service}</td>
+                    <td>
+                      <span style={{
+                        backgroundColor: getObjetColor(res.objet),
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '6px',
+                        color: 'white',
+                        fontWeight: '600',
+                        fontSize: '0.85rem'
+                      }}>
+                        {res.objet}
+                      </span>
+                    </td>
+                    <td>{res.email}</td>
+                    <td>
+                      <button
+                        onClick={() => handleDeleteReservation(res)}
+                        className="delete-btn"
+                        title="Annuler cette réservation"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+
+TERMINÉ ! Toutes les colonnes sont triables et les couleurs par objet sont appliquées.

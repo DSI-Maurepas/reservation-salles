@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
-import { ADMINISTRATEURS, SALLES, MOTIFS_ANNULATION } from '../config/googleSheets';
+import { ADMINISTRATEURS, SALLES, MOTIFS_ANNULATION, COULEURS_OBJETS } from '../config/googleSheets';
 import Statistics from './Statistics';
 import './AdminPanel.css';
 
@@ -15,6 +15,8 @@ function AdminPanel() {
   const [filterSalle, setFilterSalle] = useState('all');
   const [filterDate, setFilterDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortColumn, setSortColumn] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
   const [stats, setStats] = useState({
     total: 0,
     parSalle: {},
@@ -30,7 +32,8 @@ function AdminPanel() {
 
   useEffect(() => {
     applyFilters();
-  }, [reservations, filterSalle, filterDate, searchTerm]);
+  }, [reservations, filterSalle, filterDate, searchTerm, sortColumn, sortDirection]);
+
 
   const handleAuthenticate = (e) => {
     e.preventDefault();
@@ -110,8 +113,46 @@ function AdminPanel() {
       );
     }
 
+   // Tri
+    if (sortColumn) {
+      filtered.sort((a, b) => {
+        let aVal = a[sortColumn];
+        let bVal = b[sortColumn];
+        
+        if (sortColumn === 'dateDebut') {
+          aVal = new Date(aVal);
+          bVal = new Date(bVal);
+        }
+        
+        if (sortDirection === 'asc') {
+          return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+        } else {
+          return bVal > aVal ? 1 : bVal < aVal ? -1 : 0;
+        }
+      });
+    }
+
     setFilteredReservations(filtered);
   };
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const renderSortIcon = (column) => {
+    if (sortColumn !== column) return null;
+    return sortDirection === 'asc' ? ' ▲' : ' ▼';
+  };
+
+  const getObjetColor = (objet) => {
+    return COULEURS_OBJETS[objet] || '#e0e0e0';
+  };
+
 
   const handleDeleteReservation = async (reservation) => {
     // Demander le motif d'annulation (obligatoire) depuis la liste prédéfinie
@@ -302,27 +343,52 @@ function AdminPanel() {
         ) : (
           <div className="admin-table-container">
             <table className="admin-table">
-              <thead>
+<thead>
                 <tr>
-                  <th>Salle</th>
-                  <th>Date</th>
-                  <th>Horaire</th>
-                  <th>Agent</th>
-                  <th>Service</th>
-                  <th>Objet</th>
-                  <th>Email</th>
+                  <th onClick={() => handleSort('salle')} style={{cursor: 'pointer'}}>
+                    Salle{renderSortIcon('salle')}
+                  </th>
+                  <th onClick={() => handleSort('dateDebut')} style={{cursor: 'pointer'}}>
+                    Date{renderSortIcon('dateDebut')}
+                  </th>
+                  <th onClick={() => handleSort('heureDebut')} style={{cursor: 'pointer'}}>
+                    Horaire{renderSortIcon('heureDebut')}
+                  </th>
+                  <th onClick={() => handleSort('nom')} style={{cursor: 'pointer'}}>
+                    Agent{renderSortIcon('nom')}
+                  </th>
+                  <th onClick={() => handleSort('service')} style={{cursor: 'pointer'}}>
+                    Service{renderSortIcon('service')}
+                  </th>
+                  <th onClick={() => handleSort('objet')} style={{cursor: 'pointer'}}>
+                    Objet{renderSortIcon('objet')}
+                  </th>
+                  <th onClick={() => handleSort('email')} style={{cursor: 'pointer'}}>
+                    Email{renderSortIcon('email')}
+                  </th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredReservations.map(res => (
-                  <tr key={res.id}>
+                  <tr key={res.id} style={{backgroundColor: `${getObjetColor(res.objet)}40`}}>
                     <td>{res.salle}</td>
                     <td>{new Date(res.dateDebut).toLocaleDateString('fr-FR')}</td>
                     <td>{res.heureDebut} - {res.heureFin}</td>
                     <td>{res.prenom} {res.nom}</td>
                     <td>{res.service}</td>
-                    <td>{res.objet}</td>
+                    <td>
+                      <span style={{
+                        backgroundColor: getObjetColor(res.objet),
+                        padding: '0.3rem 0.6rem',
+                        borderRadius: '6px',
+                        color: '#1a1a1a',
+                        fontWeight: '600',
+                        fontSize: '0.85rem'
+                      }}>
+                        {res.objet}
+                      </span>
+                    </td>
                     <td>{res.email}</td>
                     <td>
                       <button
