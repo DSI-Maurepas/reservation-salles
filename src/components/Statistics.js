@@ -242,17 +242,21 @@ function Statistics({ reservations }) {
           </div>
         </div>
         <div className="summary-card">
-          <div className="summary-icon">🏆</div>
+          <div className="summary-icon">📅</div>
           <div className="summary-content">
-            <div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div>
-            <div className="summary-label">Top utilisateur</div>
+            <div className="summary-value">
+              {Object.entries(stats.parJour).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
+            </div>
+            <div className="summary-label">Journée la + réservée ({Object.entries(stats.parJour).sort((a, b) => b[1] - a[1])[0]?.[1] || 0} rés.)</div>
           </div>
         </div>
         <div className="summary-card">
-          <div className="summary-icon">🏢</div>
+          <div className="summary-icon">🏆</div>
           <div className="summary-content">
-            <div className="summary-value">{Object.keys(stats.parSalle).length}</div>
-            <div className="summary-label">Salles utilisées</div>
+            <div className="summary-value">
+              {Object.entries(stats.parSalle).sort((a, b) => b[1] - a[1])[0]?.[0]?.split(' - ')[0] || 'N/A'}
+            </div>
+            <div className="summary-label">Top salle ({Object.entries(stats.parSalle).sort((a, b) => b[1] - a[1])[0]?.[1] || 0} rés.)</div>
           </div>
         </div>
       </div>
@@ -293,7 +297,7 @@ function Statistics({ reservations }) {
           data={stats.parObjet} 
           title="📝 Répartition par objet"
           colors={colors1}
-          scrollable={true}
+          scrollable={false}
         />
         
         <div className="chart-card">
