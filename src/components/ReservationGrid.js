@@ -10,13 +10,15 @@ import './ReservationGrid.css';
 // Debug: Forcer l'inclusion de COULEURS_OBJETS dans le build
 console.log('COULEURS_OBJETS chargé:', Object.keys(COULEURS_OBJETS).length, 'couleurs');
 
-function ReservationGrid({ selectedDate, onBack, onSuccess }) {
+function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess }) {
   const [currentDate, setCurrentDate] = useState(selectedDate);
   const [reservations, setReservations] = useState([]);
   const [selections, setSelections] = useState([]); // Array de sélections validées
   const [currentSelection, setCurrentSelection] = useState(null); // Sélection en cours de drag
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredObjet, setHoveredObjet] = useState(null); // Pour l'effet de survol de la légende
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingReservation, setEditingReservation] = useState(null);
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -85,10 +87,57 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
   useEffect(() => {
     loadReservations();
   }, [loadReservations]);
+  // Charger la réservation à éditer si editReservationId est fourni
+  useEffect(() => {
+    const loadEditReservation = async () => {
+      if (editReservationId) {
+        console.log('🔧 Mode édition - Chargement réservation:', editReservationId);
+        try {
+          const allReservations = await googleSheetsService.getAllReservations();
+          const reservation = allReservations.find(r => r.id === editReservationId);
+          
+          if (reservation) {
+            console.log('✅ Réservation trouvée:', reservation);
+            setEditingReservation(reservation);
+            setIsEditMode(true);
+            
+            // Pré-remplir le formulaire
+            setFormData({
+              nom: reservation.nom || '',
+              prenom: reservation.prenom || '',
+              email: reservation.email || '',
+              telephone: reservation.telephone || '',
+              service: reservation.service || '',
+              objet: reservation.objet || '',
+              recurrence: false,
+              recurrenceJusquau: '',
+              recurrenceType: 'weekly'
+            });
+            
+            // Sélectionner automatiquement le créneau
+            setSelections([{
+              salle: reservation.salle,
+              hour: parseInt(reservation.heureDebut.split(':')[0])
+            }]);
+            
+          } else {
+            console.error('❌ Réservation non trouvée:', editReservationId);
+            alert('Réservation introuvable');
+          }
+        } catch (error) {
+          console.error('❌ Erreur chargement réservation:', error);
+          alert('Erreur lors du chargement de la réservation');
+        }
+      }
+    };
+        loadEditReservation();
+  }, [editReservationId]);
+
 
   const isSlotReserved = (salle, hour) => {
     return reservations.some(res => {
       if (res.salle !== salle) return false;
+      if (res.id === editingReservation?.id) return false; // Exclure la réservation en cours d'édition
       const startHour = parseInt(res.heureDebut.split(':')[0]);
       const endHour = parseInt(res.heureFin.split(':')[0]);
       return hour >= startHour && hour < endHour;
@@ -310,7 +359,17 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (selections.length === 0) {
+    // Mode édition : supprimer l'ancienne réservation
+    if (isEditMode && editingReservation) {
+      console.log('🔧 Mode édition - Suppression ancienne réservation:', editingReservation.id);
+      try {
+        await googleSheetsService.deleteReservation(editingReservation.id);
+      } catch (error) {
+        console.error('Erreur suppression ancienne réservation:', error);
+      }
+    }
+	
+	if (selections.length === 0) {
       alert('Veuillez sélectionner au moins un créneau');
       return;
     }
@@ -466,7 +525,9 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
       setSuccessModal({
         show: true,
         reservations: results,
-        message: `${results.length} réservation${results.length > 1 ? 's' : ''} créée${results.length > 1 ? 's' : ''} avec succès !`
+        message: isEditMode 
+          ? 'Réservation modifiée avec succès !'
+          : `${results.length} réservation${results.length > 1 ? 's' : ''} créée${results.length > 1 ? 's' : ''} avec succès !`
       });
 
       // Recharger les réservations pour afficher les nouvelles sur la grille
@@ -754,7 +815,7 @@ function ReservationGrid({ selectedDate, onBack, onSuccess }) {
           {selections.length > 0 ? (
             <div className="reservation-form">
               <h3>
-                <span className="form-title-line1">📝 Confirmer la réservation</span>
+                <span className="form-title-line1">{isEditMode ? '✏️ Modifier la réservation' : '📝 Confirmer la réservation'}</span>
                 <span className="form-title-line2">({selections.length} créneau{selections.length > 1 ? 'x' : ''})</span>
               </h3>
           
