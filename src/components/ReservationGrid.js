@@ -87,6 +87,14 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   useEffect(() => {
     loadReservations();
   }, [loadReservations]);
+  
+  // SURVEILLANCE: Observer les changements de selections
+  useEffect(() => {
+    console.log('🔔 useEffect selections déclenché !');
+    console.log('📊 selections.length =', selections.length);
+    console.log('📋 selections =', selections);
+  }, [selections]);
+  
   // Charger la réservation à éditer si editReservationId est fourni
   useEffect(() => {
     const loadEditReservation = async () => {
@@ -101,6 +109,10 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
             setEditingReservation(reservation);
             setIsEditMode(true);
             
+            // IMPORTANT : Vider les sélections pour éviter les doublons avec undefined
+            setSelections([]);
+            setCurrentSelection(null);
+            
             // Pré-remplir le formulaire
             setFormData({
               nom: reservation.nom || '',
@@ -114,11 +126,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
               recurrenceType: 'weekly'
             });
             
-            // Sélectionner automatiquement le créneau
-            setSelections([{
-              salle: reservation.salle,
-              hour: parseInt(reservation.heureDebut.split(':')[0])
-            }]);
+            // NE PAS pré-sélectionner l'ancien créneau car ça crée un undefined
+            // L'utilisateur va sélectionner manuellement le nouveau créneau
             
           } else {
             console.error('❌ Réservation non trouvée:', editReservationId);
@@ -235,7 +244,27 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   };
 
   const handleMouseUp = () => {
+    console.log('═══════════════════════════════════════');
+    console.log('🖱️ MOUSEUP APPELÉ !');
+    console.log('isDragging:', isDragging);
+    console.log('currentSelection:', currentSelection);
+    console.log('selections AVANT:', selections);
+    console.log('═══════════════════════════════════════');
+    
     if (isDragging && currentSelection) {
+      console.log('✅ Condition IF validée (isDragging ET currentSelection)');
+      
+      // INTERDIRE sélection de 0 heure (ex: 17h à 17h)
+      if (currentSelection.startHour === currentSelection.endHour) {
+        console.log('❌ Sélection 0h détectée - ANNULATION');
+        alert('⚠️ Sélection invalide !\n\nVous ne pouvez pas réserver un créneau de 0 heure.\nVeuillez sélectionner au minimum 1 heure.');
+        setCurrentSelection(null);
+        setIsDragging(false);
+        return;
+      }
+      
+      console.log('✅ Sélection valide (pas 0h)');
+      
       // Vérifier s'il y a un chevauchement avec une sélection existante dans la même salle
       const hasOverlap = selections.some(sel => {
         // Seulement pour la même salle
@@ -250,16 +279,32 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       });
       
       if (hasOverlap) {
+        console.log('⚠️ Chevauchement détecté - ANNULATION');
         // Afficher un message d'alerte
         alert(`⚠️ Chevauchement détecté !\n\nVous avez déjà une réservation pour "${currentSelection.salle}" qui chevauche cet horaire.\n\nVeuillez sélectionner un autre créneau.`);
       } else {
+        console.log('✅ PAS de chevauchement - AJOUT À LA LISTE');
+        console.log('Avant setSelections, selections =', selections);
+        console.log('Ajout de:', currentSelection);
+        
         // Ajouter la sélection actuelle à la liste des sélections
         setSelections([...selections, currentSelection]);
+        
+        console.log('setSelections APPELÉ !');
+        console.log('Nouvelle liste DEVRAIT être:', [...selections, currentSelection]);
       }
       
       setCurrentSelection(null);
+      console.log('currentSelection remis à null');
+    } else {
+      console.log('❌ Condition IF NON validée');
+      if (!isDragging) console.log('  → isDragging est FALSE');
+      if (!currentSelection) console.log('  → currentSelection est NULL/undefined');
     }
+    
     setIsDragging(false);
+    console.log('isDragging remis à false');
+    console.log('═══════════════════════════════════════');
   };
 
   // Support tactile pour mobile - Version améliorée
@@ -356,6 +401,128 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     setSelections(selections.filter((_, i) => i !== index));
   };
 
+  // Fonction pour pré-fusionner les selections AVANT création
+  const preMergeSelections = (selections) => {
+    console.log('🔗 PRÉ-FUSION des sélections avant création...');
+    console.log(`📋 ${selections.length} sélections à fusionner`);
+    
+    // Grouper par salle
+    const bySalle = {};
+    selections.forEach(sel => {
+      if (!bySalle[sel.salle]) bySalle[sel.salle] = [];
+      bySalle[sel.salle].push(sel);
+    });
+    
+    const merged = [];
+    
+    // Pour chaque salle, fusionner les créneaux contigus
+    for (const salle in bySalle) {
+      const slots = bySalle[salle].sort((a, b) => a.startHour - b.startHour);
+      
+      console.log(`\n🔍 Analyse ${salle}: ${slots.length} créneaux`);
+      slots.forEach(s => console.log(`  - ${s.startHour}h → ${s.endHour}h`));
+      
+      let i = 0;
+      while (i < slots.length) {
+        const current = { ...slots[i] };
+        
+        // Fusionner tous les créneaux contigus suivants
+        while (i + 1 < slots.length && current.endHour === slots[i + 1].startHour) {
+          console.log(`  ✅ Fusion: ${current.startHour}h-${current.endHour}h + ${slots[i + 1].startHour}h-${slots[i + 1].endHour}h`);
+          current.endHour = slots[i + 1].endHour;
+          i++;
+        }
+        
+        console.log(`  → Résultat: ${current.salle} ${current.startHour}h-${current.endHour}h`);
+        merged.push(current);
+        i++;
+      }
+    }
+    
+    console.log(`\n🎉 PRÉ-FUSION TERMINÉE ! ${selections.length} → ${merged.length} créneaux`);
+    return merged;
+  };
+
+  // Fonction pour fusionner les créneaux contigus d'une même personne
+  const mergeContiguousSlots = async (createdReservations, userEmail) => {
+    console.log('🔗 DÉBUT FUSION des créneaux contigus...');
+    console.log(`📋 ${createdReservations.length} réservations à analyser`);
+
+    // Grouper par salle (SEULEMENT les réservations créées maintenant)
+    const bySalle = {};
+    createdReservations.forEach(res => {
+      if (!bySalle[res.salle]) bySalle[res.salle] = [];
+      bySalle[res.salle].push(res);
+    });
+
+    console.log(`🏛️ Salles concernées: ${Object.keys(bySalle).join(', ')}`);
+
+    // Pour chaque salle, fusionner les créneaux contigus
+    for (const salle in bySalle) {
+      const slots = bySalle[salle].sort((a, b) => {
+        const hourA = parseInt(a.heureDebut.split(':')[0]);
+        const hourB = parseInt(b.heureDebut.split(':')[0]);
+        return hourA - hourB;
+      });
+
+      console.log(`\n🔍 Analyse ${salle}: ${slots.length} créneaux`);
+      slots.forEach(s => console.log(`  - ${s.heureDebut} → ${s.heureFin} (${s.objet})`));
+
+      let i = 0;
+      while (i < slots.length - 1) {
+        const current = slots[i];
+        const next = slots[i + 1];
+        
+        const currentEnd = parseInt(current.heureFin.split(':')[0]);
+        const nextStart = parseInt(next.heureDebut.split(':')[0]);
+
+        console.log(`\n🔎 Compare: ${current.heureDebut}-${current.heureFin} vs ${next.heureDebut}-${next.heureFin}`);
+        console.log(`   currentEnd=${currentEnd}, nextStart=${nextStart}`);
+        console.log(`   Même objet? ${current.objet === next.objet}`);
+        console.log(`   Même service? ${current.service === next.service}`);
+
+        // Si contigus ET mêmes attributs (objet, service)
+        if (currentEnd === nextStart && 
+            current.objet === next.objet && 
+            current.service === next.service) {
+          
+          console.log(`✅ FUSION POSSIBLE !`);
+          console.log(`🔗 Fusion : ${salle} ${current.heureDebut}-${current.heureFin} + ${next.heureDebut}-${next.heureFin} → ${current.heureDebut}-${next.heureFin}`);
+          
+          // Créer un nouveau créneau fusionné
+          const merged = {
+            ...current,
+            heureFin: next.heureFin
+          };
+          
+          // Supprimer les 2 anciens
+          console.log(`🗑️ Suppression ${current.id} et ${next.id}`);
+          await googleSheetsService.deleteReservation(current.id);
+          await googleSheetsService.deleteReservation(next.id);
+          
+          // Créer le nouveau
+          console.log(`➕ Création créneau fusionné ${merged.heureDebut}-${merged.heureFin}`);
+          const newReservation = await googleSheetsService.addReservation(merged);
+          
+          // Remplacer dans le tableau
+          slots[i] = { ...merged, id: newReservation.id };
+          slots.splice(i + 1, 1);
+          
+          console.log(`✅ Fusion terminée ! Nouveau ID: ${newReservation.id}`);
+          
+          // Ne pas incrémenter i, car on a fusionné et il peut y avoir d'autres fusions
+        } else {
+          console.log(`❌ Pas de fusion (pas contigus OU attributs différents)`);
+          i++;
+        }
+      }
+    }
+
+    console.log(`\n🎉 FUSION TERMINÉE !`);
+    // Retourner juste le nombre de réservations fusionnées au lieu de tout récupérer
+    return { nbFusions: 0 }; // On retournera le compte plus tard
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -383,6 +550,10 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     setIsSubmitting(true);
 
     try {
+      // PRÉ-FUSIONNER les selections contigues AVANT de créer les réservations
+      const mergedSelections = preMergeSelections(selections);
+      console.log(`📊 Sélections fusionnées: ${selections.length} → ${mergedSelections.length}`);
+      
       // Fonction pour générer les dates de récurrence
       const generateRecurrenceDates = (startDate, endDate, type = 'weekly') => {
         const dates = [];
@@ -422,7 +593,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         );
         
         for (const date of recurrenceDates) {
-          for (const sel of selections) {
+          for (const sel of mergedSelections) {
             reservationsToCreate.push({
               salle: sel.salle,
               dateDebut: googleSheetsService.formatDate(date),
@@ -440,8 +611,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
           }
         }
       } else {
-        // Pour les réservations simples : une réservation par sélection
-        reservationsToCreate = selections.map(sel => ({
+        // Pour les réservations simples : une réservation par sélection (FUSIONNÉE)
+        reservationsToCreate = mergedSelections.map(sel => ({
           salle: sel.salle,
           dateDebut: googleSheetsService.formatDate(currentDate),
           heureDebut: googleSheetsService.formatTime(sel.startHour),
@@ -470,7 +641,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       // Ajouter toutes les réservations avec traitement par lots
       const results = [];
       const BATCH_SIZE = 10;
-      const DELAY_MS = 2000;
+      const DELAY_MS = 200; // Réduit à 200ms pour plus de rapidité
       
       // Fonction pour attendre
       const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -514,20 +685,40 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         }
       }
 
+      // La fusion a été faite AVANT la création (preMergeSelections)
+      const nbCreated = results.length;
+      console.log(`✅ ${nbCreated} réservation${nbCreated > 1 ? 's' : ''} créée${nbCreated > 1 ? 's' : ''} avec succès !`);
+
       // Email de confirmation désactivé pour économiser le quota EmailJS
       // Seuls les emails d'annulation seront envoyés
 
       // Afficher une modale de succès avec bouton de téléchargement iCal
-      const summary = selections.map(sel => 
+      const summary = mergedSelections.map(sel => 
         `${sel.salle} : ${googleSheetsService.formatTime(sel.startHour)} - ${googleSheetsService.formatTime(sel.endHour)}`
       ).join(', ');
 
+      // En mode édition : retirer les réservations avec heures undefined et ajouter l'ancienne complète
+      let reservationsToShow;
+      if (isEditMode && editingReservation) {
+        // Filtrer toutes les réservations qui ont undefined dans heureDebut ou heureFin
+        const validNewReservations = results.filter(r => 
+          r.heureDebut !== undefined && 
+          r.heureFin !== undefined &&
+          r.heureDebut !== 'undefined' &&
+          r.heureFin !== 'undefined'
+        );
+        // Mettre l'ancienne en premier, puis les nouvelles
+        reservationsToShow = [editingReservation, ...validNewReservations];
+      } else {
+        reservationsToShow = results;
+      }
+
       setSuccessModal({
         show: true,
-        reservations: results,
+        reservations: reservationsToShow,
         message: isEditMode 
           ? 'Réservation modifiée avec succès !'
-          : `${results.length} réservation${results.length > 1 ? 's' : ''} créée${results.length > 1 ? 's' : ''} avec succès !`
+          : `${nbCreated} réservation${nbCreated > 1 ? 's' : ''} créée${nbCreated > 1 ? 's' : ''} avec succès !`
       });
 
       // Recharger les réservations pour afficher les nouvelles sur la grille
@@ -581,6 +772,31 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       
       // Rafraîchir les réservations pour voir celles qui ont été créées
       loadReservations();
+    }
+  };
+
+  // Fonction pour générer le tooltip de disponibilité
+  const getAvailabilityTooltip = (salle, hour) => {
+    // Compter le nombre de réservations pour ce créneau
+    const reservationsCount = reservations.filter(res => {
+      const sameDate = res.dateDebut === googleSheetsService.formatDate(currentDate);
+      const sameSalle = res.salle === salle;
+      const reservationStart = parseInt(res.heureDebut.split(':')[0]);
+      const reservationEnd = parseInt(res.heureFin.split(':')[0]);
+      return sameDate && sameSalle && hour >= reservationStart && hour < reservationEnd;
+    }).length;
+
+    // Déterminer le statut et le texte
+    if (hour < HORAIRES.HEURE_DEBUT || hour >= HORAIRES.HEURE_FIN) {
+      return '⚫ Fermé (hors plages horaires)';
+    } else if (reservationsCount === 0) {
+      return '🟢 Disponible (0 réservation)';
+    } else if (reservationsCount >= 1 && reservationsCount <= 3) {
+      return `🟡 Partiellement occupé (${reservationsCount} réservation${reservationsCount > 1 ? 's' : ''})`;
+    } else if (reservationsCount >= 4 && reservationsCount <= 6) {
+      return `🟠 Très occupé (${reservationsCount} réservations)`;
+    } else {
+      return `🔴 Complet (${reservationsCount} réservations)`;
     }
   };
 
@@ -641,7 +857,13 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
             className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''} ${isLunchBreak ? 'lunch-break' : ''} ${isAdminRoom && !isAdminUnlocked ? 'admin-only-locked' : ''}`}
             data-salle={salle}
             data-hour={hour}
-            title={isAdminRoom && !isAdminUnlocked ? `🔒 Salle réservée - Mot de passe requis` : ''}
+            title={
+              isAdminRoom && !isAdminUnlocked 
+                ? `🔒 Salle réservée - Mot de passe requis`
+                : reserved && reservationEmail
+                  ? `Réservé par: ${reservationEmail}\n${getAvailabilityTooltip(salle, hour)}`
+                  : getAvailabilityTooltip(salle, hour)
+            }
             style={{ 
               gridColumn: salleIndex + 2,
               gridRow: rowNumber,
@@ -653,7 +875,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
             }}
             onMouseDown={() => handleMouseDown(salle, hour)}
             onMouseEnter={() => handleMouseEnter(salle, hour)}
-            onMouseUp={handleMouseUp}
             onTouchStart={(e) => {
               e.stopPropagation();
               handleTouchStart(salle, hour);
@@ -688,6 +909,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   }
 
   return (
+    <>
     <div className="reservation-grid-container">
       {/* Modal de progression */}
       {isSubmitting && (
@@ -796,7 +1018,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       <div className="grid-instructions">
         <p>
           <strong>Instructions:</strong> Cliquez et glissez pour sélectionner un ou plusieurs créneaux dans différentes salles.
-          Les cases grises sont déjà réservées et affichent l'email de l'agent.
+          Les cases de couleur sont déjà réservées et affichent le nom de l'agent.
         </p>
       </div>
 
@@ -805,9 +1027,12 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         Cliquez et maintenez pour sélectionner plusieurs créneaux. Relâchez pour valider chaque sélection.
       </div>
 
-      <div className="reservation-content">
+      <div className="reservation-content" onMouseUp={handleMouseUp}>
         <div className="grid-column">
-          <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>
+          <div 
+            className="reservation-grid" 
+            onMouseLeave={() => setIsDragging(false)}
+          >
             {renderGrid()}
           </div>
         </div>
@@ -815,6 +1040,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         <div className="form-column">
           {selections.length > 0 ? (
             <div className="reservation-form">
+              {console.log('🎨 RENDU DU FORMULAIRE ! selections.length =', selections.length)}
               <h3>
                 <span className="form-title-line1">{isEditMode ? '✏️ Modifier la réservation' : '📝 Confirmer la réservation'}</span>
                 <span className="form-title-line2">({selections.length} créneau{selections.length > 1 ? 'x' : ''})</span>
@@ -993,7 +1219,12 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
           </form>
             </div>
           ) : (
-            <ColorLegend onHoverColor={setHoveredObjet} />
+            <>
+              <ColorLegend onHoverColor={setHoveredObjet} />
+              <div className="no-selection-message">
+                <p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -1011,20 +1242,56 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
             </div>
             
             <div className="success-modal-body">
-              <p className="success-subtitle">
-                📅 {successModal.reservations.length} créneau{successModal.reservations.length > 1 ? 'x' : ''} confirmé{successModal.reservations.length > 1 ? 's' : ''}
-              </p>
-              
-              <div className="reservations-list">
-                {successModal.reservations.map((res, index) => (
-                  <div key={index} className="reservation-item-success">
-                    <span className="room-badge">{res.salle}</span>
-                    <span className="time-info">
-                      {res.dateDebut} · {res.heureDebut} - {res.heureFin}
-                    </span>
+              {isEditMode ? (
+                <>
+                  <p className="success-subtitle">
+                    📅 {successModal.reservations.length - 1} nouveau{successModal.reservations.length - 1 > 1 ? 'x' : ''} créneau{successModal.reservations.length - 1 > 1 ? 'x' : ''} confirmé{successModal.reservations.length - 1 > 1 ? 's' : ''}
+                  </p>
+                  
+                  <div className="reservations-list">
+                    {/* Ancien créneau */}
+                    <div className="old-reservation-header">
+                      <span className="old-label">❌ Ancien créneau annulé</span>
+                    </div>
+                    <div className="reservation-item-success old-reservation">
+                      <span className="room-badge">{successModal.reservations[0].salle}</span>
+                      <span className="time-info">
+                        {successModal.reservations[0].dateDebut} · {successModal.reservations[0].heureDebut} - {successModal.reservations[0].heureFin}
+                      </span>
+                    </div>
+                    
+                    {/* Nouveau(x) créneau(x) */}
+                    <div className="new-reservation-header">
+                      <span className="new-label">✅ Nouveau{successModal.reservations.length - 1 > 1 ? 'x' : ''} créneau{successModal.reservations.length - 1 > 1 ? 'x' : ''}</span>
+                    </div>
+                    {successModal.reservations.slice(1).map((res, index) => (
+                      <div key={index} className="reservation-item-success new-reservation">
+                        <span className="room-badge">{res.salle}</span>
+                        <span className="time-info">
+                          {res.dateDebut} · {res.heureDebut} - {res.heureFin}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </>
+              ) : (
+                <>
+                  <p className="success-subtitle">
+                    📅 {successModal.reservations.length} créneau{successModal.reservations.length > 1 ? 'x' : ''} confirmé{successModal.reservations.length > 1 ? 's' : ''}
+                  </p>
+                  
+                  <div className="reservations-list">
+                    {successModal.reservations.map((res, index) => (
+                      <div key={index} className="reservation-item-success">
+                        <span className="room-badge">{res.salle}</span>
+                        <span className="time-info">
+                          {res.dateDebut} · {res.heureDebut} - {res.heureFin}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
 
               <div className="ical-download-section">
                 <p className="ical-info">
@@ -1061,53 +1328,55 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         </div>
       )}
 
-      {/* Modal mot de passe admin */}
-      {adminPasswordModal.show && (
-        <div className="modal-overlay" onClick={() => setAdminPasswordModal({ show: false, salle: null, hour: null, password: '' })}>
-          <div className="modal-content admin-password-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>🔒 Accès Salle Réservée</h2>
-            </div>
-            
-            <div className="modal-body">
-              <p className="admin-warning">
-                La salle <strong>{adminPasswordModal.salle}</strong> est réservée aux administrateurs.
-              </p>
-              <p className="admin-instruction">
-                Veuillez saisir le mot de passe administrateur pour accéder à cette salle.
-              </p>
-              
-              <div className="password-input-group">
-                <label>Mot de passe</label>
-                <input
-                  type="password"
-                  value={adminPasswordModal.password}
-                  onChange={(e) => setAdminPasswordModal({ ...adminPasswordModal, password: e.target.value })}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAdminPasswordSubmit()}
-                  placeholder="Entrez le mot de passe"
-                  autoFocus
-                />
-              </div>
-            </div>
+    </div>
 
-            <div className="modal-footer">
-              <button 
-                className="cancel-button"
-                onClick={() => setAdminPasswordModal({ show: false, salle: null, hour: null, password: '' })}
-              >
-                Annuler
-              </button>
-              <button 
-                className="submit-button"
-                onClick={handleAdminPasswordSubmit}
-              >
-                Valider
-              </button>
+    {/* Modal mot de passe admin */}
+    {adminPasswordModal.show && (
+      <div className="modal-overlay" onClick={() => setAdminPasswordModal({ show: false, salle: null, hour: null, password: '' })}>
+        <div className="modal-content admin-password-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2>🔒 Accès Salle Réservée</h2>
+          </div>
+          
+          <div className="modal-body">
+            <p className="admin-warning">
+              La salle <strong>{adminPasswordModal.salle}</strong> est réservée aux administrateurs.
+            </p>
+            <p className="admin-instruction">
+              Veuillez saisir le mot de passe administrateur pour accéder à cette salle.
+            </p>
+            
+            <div className="password-input-group">
+              <label>Mot de passe</label>
+              <input
+                type="password"
+                value={adminPasswordModal.password}
+                onChange={(e) => setAdminPasswordModal({ ...adminPasswordModal, password: e.target.value })}
+                onKeyPress={(e) => e.key === 'Enter' && handleAdminPasswordSubmit()}
+                placeholder="Entrez le mot de passe"
+                autoFocus
+              />
             </div>
           </div>
+
+          <div className="modal-footer">
+            <button 
+              className="cancel-button"
+              onClick={() => setAdminPasswordModal({ show: false, salle: null, hour: null, password: '' })}
+            >
+              Annuler
+            </button>
+            <button 
+              className="submit-button"
+              onClick={handleAdminPasswordSubmit}
+            >
+              Valider
+            </button>
+          </div>
         </div>
-      )}
-    </div>
+      </div>
+    )}
+    </>
   );
 }
 

@@ -95,21 +95,33 @@
   transform: scale(1.05);
 }
 
-/* Legend */
+/* Legend - Discrète */
 .calendar-legend {
   display: flex;
-  justify-content: center;
   gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  align-items: center;
+  margin: 1rem 0;
   flex-wrap: wrap;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  color: var(--text-light);
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: help;
+  transition: all 0.3s ease;
+  padding: 0.3rem 0.5rem;
+  border-radius: 6px;
+}
+
+.legend-item:hover {
+  background: rgba(33, 150, 243, 0.1);
+  transform: translateY(-2px);
 }
 
 .legend-color {
@@ -117,26 +129,33 @@
   height: 20px;
   border-radius: 4px;
   border: 2px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.legend-item:hover .legend-color {
+  transform: scale(1.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .legend-color.available {
-  background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+  background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
 }
 
 .legend-color.partial {
-  background: linear-gradient(135deg, #faad14 0%, #ffc53d 100%);
+  background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%);
 }
 
 .legend-color.busy {
-  background: linear-gradient(135deg, #ff7a45 0%, #ff9c6e 100%);
+  background: linear-gradient(135deg, #ffcc80 0%, #ffb74d 100%);
 }
 
 .legend-color.full {
-  background: linear-gradient(135deg, #f5222d 0%, #ff4d4f 100%);
+  background: linear-gradient(135deg, #ef9a9a 0%, #e57373 100%);
 }
 
 .legend-color.closed {
-  background: linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%);
+  background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%);
 }
 
 /* Calendar Grid */
@@ -399,5 +418,22 @@
   .legend-color {
     width: 14px;
     height: 14px;
+  }
+}
+
+/* Responsive légende */
+@media (max-width: 768px) {
+  .calendar-legend .legend-items {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+  
+  .calendar-legend {
+    padding: 1rem;
+  }
+  
+  .calendar-legend h4 {
+    font-size: 1rem;
   }
 }

@@ -211,23 +211,23 @@ function CalendarView({ onDateSelect }) {
       </div>
 
       <div className="calendar-legend">
-        <div className="legend-item">
+        <div className="legend-item" title="🟢 Disponible (0 réservation)">
           <span className="legend-color available"></span>
           <span>Disponible</span>
         </div>
-        <div className="legend-item">
+        <div className="legend-item" title="🟡 Partiellement occupé (1-3 réservations)">
           <span className="legend-color partial"></span>
           <span>Partiellement occupé</span>
         </div>
-        <div className="legend-item">
+        <div className="legend-item" title="🟠 Très occupé (4-6 réservations)">
           <span className="legend-color busy"></span>
           <span>Très occupé</span>
         </div>
-        <div className="legend-item">
+        <div className="legend-item" title="🔴 Complet (7+ réservations)">
           <span className="legend-color full"></span>
           <span>Complet</span>
         </div>
-        <div className="legend-item">
+        <div className="legend-item" title="⚫ Fermé (hors plages horaires)">
           <span className="legend-color closed"></span>
           <span>Fermé</span>
         </div>

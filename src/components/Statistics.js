@@ -1,40 +1,19 @@
 // src/components/Statistics.js
 import React, { useMemo } from 'react';
-import { SALLES } from '../config/googleSheets';
 import './Statistics.css';
-
-// Mapping des anciens noms vers les nouveaux noms
-const SALLE_MAPPING = {
-  'Salle du Conseil': 'Salle Conseil - 80 Personnes',
-  'Salle des Mariages': 'Salle Mariages - 40 Personnes',
-  'Salle du 16eme A': 'Salle 16e A - 20 Personnes',
-  'Salle du 16eme B': 'Salle 16e B - 19 Personnes',
-  'Salle rdc N°1': 'Salle N°1 - 2 Personnes',
-  'Salle rdc N°2': 'Salle N°2 - 12 Personnes',
-  'Salle rdc N°3': 'Salle N°3 - 8 Personnes',
-  'Salle rdc N°4': 'Salle N°4 - 4 Personnes',
-  'Salle CCAS': 'Salle CCAS',
-  'Salle CTM': 'Salle CCAS'
-};
-
-const normalizeSalleName = (salle) => {
-  if (!salle) return 'Salle inconnue';
-  if (SALLE_MAPPING[salle]) return SALLE_MAPPING[salle];
-  return salle;
-};
 
 function Statistics({ reservations }) {
   
+  // Calcul des statistiques
   const stats = useMemo(() => {
     if (!reservations || reservations.length === 0) {
       return null;
     }
 
-    // 1. Répartition par salle (avec normalisation)
+    // 1. Répartition par salle
     const parSalle = {};
     reservations.forEach(res => {
-      const salleNormalisee = normalizeSalleName(res.salle);
-      parSalle[salleNormalisee] = (parSalle[salleNormalisee] || 0) + 1;
+      parSalle[res.salle] = (parSalle[res.salle] || 0) + 1;
     });
 
     // 2. Répartition par jour de la semaine
@@ -54,7 +33,30 @@ function Statistics({ reservations }) {
       parJour[jour]++;
     });
 
-    // 2b. Répartition par mois
+    // 3. Top 5 utilisateurs
+    const parUtilisateur = {};
+    reservations.forEach(res => {
+      const key = `${res.nom} ${res.prenom}`.trim();
+      parUtilisateur[key] = (parUtilisateur[key] || 0) + 1;
+    });
+    const topUtilisateurs = Object.entries(parUtilisateur)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    // 4. Répartition par objet
+    const parObjet = {};
+    reservations.forEach(res => {
+      const objet = res.objet || 'Non spécifié';
+      parObjet[objet] = (parObjet[objet] || 0) + 1;
+    });
+
+    // 5. Répartition par service
+    const parService = {};
+    reservations.forEach(res => {
+      parService[res.service] = (parService[res.service] || 0) + 1;
+    });
+
+    // 6. Répartition par mois
     const parMois = {
       'Janvier': 0,
       'Février': 0,
@@ -76,30 +78,7 @@ function Statistics({ reservations }) {
       parMois[mois]++;
     });
 
-    // 3. Top 10 utilisateurs
-    const parUtilisateur = {};
-    reservations.forEach(res => {
-      const key = `${res.nom} ${res.prenom}`.trim();
-      parUtilisateur[key] = (parUtilisateur[key] || 0) + 1;
-    });
-    const topUtilisateurs = Object.entries(parUtilisateur)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
-
-    // 4. Répartition par objet
-    const parObjet = {};
-    reservations.forEach(res => {
-      const objet = res.objet || 'Non spécifié';
-      parObjet[objet] = (parObjet[objet] || 0) + 1;
-    });
-
-    // 5. Répartition par service
-    const parService = {};
-    reservations.forEach(res => {
-      parService[res.service] = (parService[res.service] || 0) + 1;
-    });
-
-    // 6. Répartition par horaire
+    // 7. Répartition par horaire (plages de 2h)
     const parHoraire = {
       '08h-10h': 0,
       '10h-12h': 0,
@@ -118,7 +97,7 @@ function Statistics({ reservations }) {
       else if (heure >= 18) parHoraire['18h-19h']++;
     });
 
-    // 7. Durée moyenne
+    // 7. Durée moyenne des réservations
     let dureeTotale = 0;
     reservations.forEach(res => {
       const debut = parseInt(res.heureDebut.split(':')[0]);
@@ -127,7 +106,7 @@ function Statistics({ reservations }) {
     });
     const dureeMoyenne = (dureeTotale / reservations.length).toFixed(1);
 
-    // 8. Taux d'occupation par salle
+    // 8. Taux d'occupation par salle (estimé sur 11h x 5 jours = 55h/semaine)
     const tauxOccupation = {};
     Object.keys(parSalle).forEach(salle => {
       const nbRes = parSalle[salle];
@@ -139,10 +118,10 @@ function Statistics({ reservations }) {
       total: reservations.length,
       parSalle,
       parJour,
-      parMois,
       topUtilisateurs,
       parObjet,
       parService,
+      parMois,
       parHoraire,
       dureeMoyenne,
       tauxOccupation
@@ -157,9 +136,29 @@ function Statistics({ reservations }) {
     );
   }
 
-  // Graphique en camembert avec option scrollable
-  const PieChart = ({ data, title, colors, scrollable = false }) => {
-    const entries = Object.entries(data);
+  // Fonction pour générer un graphique en camembert
+  const PieChart = ({ data, title, colors, sortOrder = 'alpha' }) => {
+    let entries = Object.entries(data);
+    
+    // Ordres de référence
+    const jourOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    const moisOrder = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    
+    // Tri selon le type demandé
+    if (sortOrder === 'alpha') {
+      entries = entries.sort(([a], [b]) => a.localeCompare(b)); // Alphabétique
+    } else if (sortOrder === 'asc') {
+      entries = entries.sort(([, a], [, b]) => a - b); // Croissant (nombre)
+    } else if (sortOrder === 'desc') {
+      entries = entries.sort(([, a], [, b]) => b - a); // Décroissant (nombre)
+    } else if (sortOrder === 'jours') {
+      // Tri par ordre des jours de la semaine
+      entries = entries.sort(([a], [b]) => jourOrder.indexOf(a) - jourOrder.indexOf(b));
+    } else if (sortOrder === 'mois') {
+      // Tri par ordre des mois de l'année
+      entries = entries.sort(([a], [b]) => moisOrder.indexOf(a) - moisOrder.indexOf(b));
+    }
+    
     const total = entries.reduce((sum, [, value]) => sum + value, 0);
     
     if (total === 0) return null;
@@ -172,6 +171,7 @@ function Statistics({ reservations }) {
       const endAngle = currentAngle + angle;
       currentAngle = endAngle;
 
+      // Calcul du chemin SVG
       const startX = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
       const startY = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
       const endX = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
@@ -204,7 +204,7 @@ function Statistics({ reservations }) {
               </path>
             ))}
           </svg>
-          <div className={`chart-legend ${scrollable ? 'scrollable' : ''}`}>
+          <div className="chart-legend">
             {segments.map((segment, i) => (
               <div key={i} className="legend-item">
                 <span className="legend-color" style={{ backgroundColor: segment.color }}></span>
@@ -218,6 +218,7 @@ function Statistics({ reservations }) {
     );
   };
 
+  // Palettes de couleurs
   const colors1 = ['#2196f3', '#4caf50', '#ff9800', '#e91e63', '#9c27b0', '#00bcd4', '#cddc39', '#795548', '#607d8b'];
   const colors2 = ['#3f51b5', '#009688', '#ffc107', '#f44336', '#673ab7', '#03a9f4', '#8bc34a', '#ff5722', '#9e9e9e'];
   const colors3 = ['#1976d2', '#388e3c', '#f57c00', '#c2185b', '#7b1fa2', '#0097a7', '#afb42b', '#5d4037', '#455a64'];
@@ -242,69 +243,79 @@ function Statistics({ reservations }) {
           </div>
         </div>
         <div className="summary-card">
-          <div className="summary-icon">📅</div>
+          <div className="summary-icon">🏆</div>
           <div className="summary-content">
-            <div className="summary-value">
-              {Object.entries(stats.parJour).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
-            </div>
-            <div className="summary-label">Journée la + réservée ({Object.entries(stats.parJour).sort((a, b) => b[1] - a[1])[0]?.[1] || 0} rés.)</div>
+            <div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div>
+            <div className="summary-label">Top utilisateur</div>
           </div>
         </div>
         <div className="summary-card">
-          <div className="summary-icon">🏆</div>
+          <div className="summary-icon">🏢</div>
           <div className="summary-content">
-            <div className="summary-value">
-              {Object.entries(stats.parSalle).sort((a, b) => b[1] - a[1])[0]?.[0]?.split(' - ')[0] || 'N/A'}
-            </div>
-            <div className="summary-label">Top salle ({Object.entries(stats.parSalle).sort((a, b) => b[1] - a[1])[0]?.[1] || 0} rés.)</div>
+            <div className="summary-value">{Object.keys(stats.parSalle).length}</div>
+            <div className="summary-label">Salles utilisées</div>
           </div>
         </div>
       </div>
 
       <div className="charts-grid">
-        {/* LIGNE 1 : Horaire + Jour */}
         <PieChart 
-          data={stats.parHoraire} 
-          title="🕐 Répartition par horaire"
-          colors={colors2}
-          scrollable={false}
+          data={stats.parSalle} 
+          title="📍 Répartition par salle"
+          colors={colors1}
         />
         
         <PieChart 
           data={stats.parJour} 
           title="📆 Répartition par jour"
           colors={colors2}
-          scrollable={false}
+          sortOrder="jours"
         />
         
-        {/* LIGNE 2 : Mois + Salle */}
         <PieChart 
-          data={stats.parMois} 
-          title="📅 Répartition par mois"
+          data={stats.parService} 
+          title="🏛️ Répartition par service"
           colors={colors3}
-          scrollable={false}
+          sortOrder="alpha"
         />
         
-        <PieChart 
-          data={stats.parSalle} 
-          title="📍 Répartition par salle"
-          colors={colors1}
-          scrollable={false}
-        />
-        
-        {/* LIGNE 3 : Objet + Taux occupation */}
         <PieChart 
           data={stats.parObjet} 
           title="📝 Répartition par objet"
           colors={colors1}
-          scrollable={false}
+          sortOrder="alpha"
         />
+        
+        <PieChart 
+          data={stats.parMois} 
+          title="📅 Répartition par mois"
+          colors={colors3}
+          sortOrder="mois"
+        />
+        
+        <PieChart 
+          data={stats.parHoraire} 
+          title="🕐 Répartition par horaire"
+          colors={colors2}
+        />
+        
+        <div className="chart-card">
+          <h3>👥 Top 5 utilisateurs</h3>
+          <div className="top-users-list">
+            {stats.topUtilisateurs.map(([nom, count], i) => (
+              <div key={i} className="top-user-item">
+                <span className="user-rank">{i + 1}</span>
+                <span className="user-name">{nom}</span>
+                <span className="user-count">{count} réservations</span>
+              </div>
+            ))}
+          </div>
+        </div>
         
         <div className="chart-card">
           <h3>📊 Taux d'occupation</h3>
           <div className="occupation-bars">
             {Object.entries(stats.tauxOccupation)
-              .filter(([salle]) => SALLES.includes(salle))
               .sort((a, b) => b[1] - a[1])
               .map(([salle, taux], i) => (
                 <div key={i} className="occupation-item">
@@ -321,72 +332,6 @@ function Statistics({ reservations }) {
                   <div className="occupation-value">{taux}%</div>
                 </div>
             ))}
-          </div>
-        </div>
-        
-        {/* LIGNE 4 : Top 10 utilisateurs + Service */}
-        <div className="chart-card align-row-4">
-          <h3>👥 Top 10 utilisateurs</h3>
-          <div className="top-users-list">
-            {stats.topUtilisateurs.map(([nom, count], i) => (
-              <div key={i} className="top-user-item">
-                <span className="user-rank">{i + 1}</span>
-                <span className="user-name">{nom}</span>
-                <span className="user-count">{count} réservations</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="chart-card align-row-4">
-          <h3>🏛️ Répartition par service</h3>
-          <div className="chart-content">
-            <svg viewBox="0 0 100 100" className="pie-chart">
-              {(() => {
-                const entries = Object.entries(stats.parService);
-                const total = entries.reduce((sum, [, value]) => sum + value, 0);
-                let currentAngle = 0;
-                
-                return entries.map(([label, value], index) => {
-                  const percentage = (value / total) * 100;
-                  const angle = (value / total) * 360;
-                  const startAngle = currentAngle;
-                  const endAngle = currentAngle + angle;
-                  currentAngle = endAngle;
-                  
-                  const startX = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
-                  const startY = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
-                  const endX = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
-                  const endY = 50 + 40 * Math.sin((endAngle - 90) * Math.PI / 180);
-                  const largeArc = angle > 180 ? 1 : 0;
-                  
-                  return (
-                    <path
-                      key={index}
-                      d={`M 50 50 L ${startX} ${startY} A 40 40 0 ${largeArc} 1 ${endX} ${endY} Z`}
-                      fill={colors3[index % colors3.length]}
-                      stroke="white"
-                      strokeWidth="0.5"
-                    >
-                      <title>{`${label}: ${value} (${percentage.toFixed(1)}%)`}</title>
-                    </path>
-                  );
-                });
-              })()}
-            </svg>
-            <div className="chart-legend scrollable">
-              {Object.entries(stats.parService).map(([label, value], i) => {
-                const total = Object.values(stats.parService).reduce((sum, v) => sum + v, 0);
-                const percentage = ((value / total) * 100).toFixed(1);
-                return (
-                  <div key={i} className="legend-item">
-                    <span className="legend-color" style={{ backgroundColor: colors3[i % colors3.length] }}></span>
-                    <span className="legend-label">{label}</span>
-                    <span className="legend-value">{value} ({percentage}%)</span>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>
