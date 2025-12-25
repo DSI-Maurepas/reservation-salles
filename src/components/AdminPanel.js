@@ -1,5 +1,6 @@
 // src/components/AdminPanel.js
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
 import { ADMINISTRATEURS, SALLES, MOTIFS_ANNULATION, COULEURS_OBJETS } from '../config/googleSheets';
@@ -17,6 +18,12 @@ function AdminPanel() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
+  
+  // États pour les modals
+  const [cancelModal, setCancelModal] = useState({ show: false, reservation: null });
+  const [confirmModal, setConfirmModal] = useState({ show: false, reservation: null, motif: '', type: '' });
+  const [selectedMotif, setSelectedMotif] = useState('');
+  
   const [stats, setStats] = useState({
     total: 0,
     parSalle: {},
@@ -153,6 +160,126 @@ function AdminPanel() {
     return COULEURS_OBJETS[objet] || '#e0e0e0';
   };
 
+  // Fonction pour télécharger toutes les réservations en Excel
+  const handleDownloadExcel = async () => {
+    try {
+      // Récupérer toutes les réservations
+      const allReservations = await googleSheetsService.getAllReservations();
+      
+      if (allReservations.length === 0) {
+        alert('Aucune réservation à exporter');
+        return;
+      }
+
+      // Préparer les données pour Excel
+      const excelData = allReservations.map(res => ({
+        'ID': res.id,
+        'Salle': res.salle,
+        'Date début': res.dateDebut,
+        'Heure début': res.heureDebut,
+        'Date fin': res.dateFin,
+        'Heure fin': res.heureFin,
+        'Nom': res.nom,
+        'Prénom': res.prenom,
+        'Email': res.email,
+        'Téléphone': res.telephone,
+        'Service': res.service,
+        'Objet': res.objet,
+        'Statut': res.statut || 'Confirmée'
+      }));
+
+      // Créer le workbook et la feuille
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Réservations');
+
+      // Définir les largeurs de colonnes
+      const colWidths = [
+        { wch: 25 }, // ID
+        { wch: 30 }, // Salle
+        { wch: 12 }, // Date début
+        { wch: 10 }, // Heure début
+        { wch: 12 }, // Date fin
+        { wch: 10 }, // Heure fin
+        { wch: 20 }, // Nom
+        { wch: 20 }, // Prénom
+        { wch: 30 }, // Email
+        { wch: 15 }, // Téléphone
+        { wch: 25 }, // Service
+        { wch: 30 }, // Objet
+        { wch: 12 }  // Statut
+      ];
+      ws['!cols'] = colWidths;
+
+      // Télécharger le fichier
+      const fileName = `reservations_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+
+      alert(`✅ Fichier téléchargé : ${fileName}`);
+    } catch (error) {
+      console.error('Erreur téléchargement Excel:', error);
+      alert('❌ Erreur lors du téléchargement du fichier Excel');
+    }
+  };
+
+
+  // Ouvrir le modal d'annulation
+  const handleDeleteClick = (reservation) => {
+    setCancelModal({
+      show: true,
+      reservation: reservation
+    });
+    setSelectedMotif('');
+  };
+
+  // Confirmer la suppression avec motif
+  const handleDeleteConfirm = async () => {
+    const reservation = cancelModal.reservation;
+    const motif = selectedMotif || 'Aucun motif fourni';
+    
+    setCancelModal({ show: false, reservation: null });
+
+    try {
+      // Supprimer la réservation
+      await googleSheetsService.deleteReservation(reservation.id);
+      console.log('✅ Réservation supprimée');
+      
+      // Afficher confirmation
+      setConfirmModal({
+        show: true,
+        type: 'cancel',
+        reservation: reservation,
+        motif: motif
+      });
+
+      // Recharger
+      await loadAllReservations();
+
+      // Envoyer email
+      try {
+        await emailService.sendCancellationEmail({
+          ...reservation,
+          motif: motif
+        });
+        console.log('✅ Email envoyé');
+      } catch (emailError) {
+        console.error('⚠️ Email non envoyé:', emailError);
+      }
+
+    } catch (error) {
+      console.error('❌ Erreur suppression:', error);
+      alert('❌ Erreur lors de la suppression');
+      await loadAllReservations();
+    }
+  };
+
+  // Fonction pour modifier une réservation (redirection vers calendrier)
+  const handleEdit = (reservation) => {
+    const dateStr = reservation.dateDebut;
+    const newHash = `#?date=${dateStr}&edit=${reservation.id}`;
+    window.location.hash = newHash;
+  };
+
 
   const handleDeleteReservation = async (reservation) => {
     // Demander le motif d'annulation (obligatoire) depuis la liste prédéfinie
@@ -280,15 +407,21 @@ function AdminPanel() {
   }
 
   return (
+    <>
     <div className="admin-panel">
       <div className="admin-header">
         <h2>⚙️ Panel d'Administration</h2>
-        <button onClick={() => {
-          setIsAuthenticated(false);
-          localStorage.removeItem('adminEmail');
-        }} className="logout-btn">
-          Déconnexion
-        </button>
+        <div className="admin-header-actions">
+          <button onClick={handleDownloadExcel} className="download-excel-btn" title="Télécharger toutes les réservations en Excel">
+            📥 Télécharger Excel
+          </button>
+          <button onClick={() => {
+            setIsAuthenticated(false);
+            localStorage.removeItem('adminEmail');
+          }} className="logout-btn">
+            Déconnexion
+          </button>
+        </div>
       </div>
 
       {/* Nouveau composant Statistics avec graphiques */}
@@ -372,7 +505,12 @@ function AdminPanel() {
               <tbody>
                 {filteredReservations.map(res => (
                   <tr key={res.id} style={{backgroundColor: `${getObjetColor(res.objet)}40`}}>
-                    <td>{res.salle}</td>
+                    <td>
+                      <div className="salle-cell">
+                        <div className="salle-name">{res.salle.split(' - ')[0]}</div>
+                        <div className="salle-capacity">{res.salle.split(' - ')[1] || ''}</div>
+                      </div>
+                    </td>
                     <td>{new Date(res.dateDebut).toLocaleDateString('fr-FR')}</td>
                     <td>{res.heureDebut} - {res.heureFin}</td>
                     <td>{res.prenom} {res.nom}</td>
@@ -382,7 +520,7 @@ function AdminPanel() {
                         backgroundColor: getObjetColor(res.objet),
                         padding: '0.3rem 0.6rem',
                         borderRadius: '6px',
-                        color: '#1a1a1a',
+                        color: 'white',
                         fontWeight: '600',
                         fontSize: '0.85rem'
                       }}>
@@ -390,13 +528,20 @@ function AdminPanel() {
                       </span>
                     </td>
                     <td>{res.email}</td>
-                    <td>
+                    <td className="actions-cell">
                       <button
-                        onClick={() => handleDeleteReservation(res)}
-                        className="delete-btn"
-                        title="Annuler cette réservation"
+                        onClick={() => handleEdit(res)}
+                        className="edit-button"
+                        title="Modifier cette réservation"
                       >
-                        🗑️
+                        ✏️ Modifier
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(res)}
+                        className="delete-button"
+                        title="Supprimer cette réservation"
+                      >
+                        🗑️ Supprimer
                       </button>
                     </td>
                   </tr>
@@ -407,6 +552,87 @@ function AdminPanel() {
         )}
       </div>
     </div>
+
+    {/* Modal d'annulation avec motif */}
+    {cancelModal.show && (
+      <div className="cancel-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}>
+        <div className="cancel-modal" onClick={(e) => e.stopPropagation()}>
+          <h3>⚠️ Confirmer la suppression</h3>
+          
+          <div className="reservation-details">
+            <p><strong>📅 Date :</strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })}</p>
+            <p><strong>🕐 Horaire :</strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p>
+            <p><strong>🏢 Salle :</strong> {cancelModal.reservation.salle}</p>
+            <p><strong>📝 Objet :</strong> {cancelModal.reservation.objet}</p>
+            <p><strong>👤 Agent :</strong> {cancelModal.reservation.prenom} {cancelModal.reservation.nom}</p>
+          </div>
+
+          <div className="motif-selection">
+            <label><strong>💬 Motif de la suppression :</strong></label>
+            <select 
+              value={selectedMotif} 
+              onChange={(e) => setSelectedMotif(e.target.value)}
+              className="motif-select"
+            >
+              <option value="">-- Sélectionnez un motif --</option>
+              {MOTIFS_ANNULATION.map((motif, index) => (
+                <option key={index} value={motif}>{motif}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="modal-actions">
+            <button 
+              onClick={() => setCancelModal({ show: false, reservation: null })}
+              className="cancel-action-btn"
+            >
+              Annuler
+            </button>
+            <button 
+              onClick={handleDeleteConfirm}
+              className="confirm-action-btn"
+              disabled={!selectedMotif}
+            >
+              Confirmer la suppression
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Modal de confirmation */}
+    {confirmModal.show && (
+      <div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ show: false, reservation: null, motif: '', type: '' })}>
+        <div className="confirmation-modal" onClick={(e) => e.stopPropagation()}>
+          <h3>✅ Suppression confirmée</h3>
+          
+          <div className="reservation-details">
+            <p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })}</p>
+            <p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p>
+            <p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>
+            <p><strong>📝 Objet :</strong> {confirmModal.reservation.objet}</p>
+            {confirmModal.motif && (
+              <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>
+            )}
+          </div>
+          
+          <button onClick={() => setConfirmModal({ show: false, reservation: null, motif: '', type: '' })}>
+            Fermer
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

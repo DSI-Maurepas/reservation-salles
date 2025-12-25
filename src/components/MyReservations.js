@@ -9,6 +9,7 @@ import './MyReservations.css';
 function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const [reservations, setReservations] = useState([]);
   const [filteredReservations, setFilteredReservations] = useState([]);
+  const [filter, setFilter] = useState('all'); // État pour le filtre actif
   const [loading, setLoading] = useState(false);
   const [searchEmail, setSearchEmail] = useState(userEmail);
   const [exportFormat, setExportFormat] = useState('ical');
@@ -70,23 +71,31 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     setUserEmail(searchEmail);
   };
 
-  const filterReservations = (filter) => {
+  const filterReservations = (filterType) => {
     const now = new Date();
+    setFilter(filterType); // Mettre à jour l'état du filtre actif
     
-    if (filter === 'all') {
+    if (filterType === 'all') {
       setFilteredReservations(reservations);
-    } else if (filter === 'upcoming') {
+    } else if (filterType === 'upcoming') {
       const upcoming = reservations.filter(res => {
         const resDate = new Date(`${res.dateDebut}T${res.heureDebut}`);
-        return resDate >= now;
+        return resDate > now;
       });
       setFilteredReservations(upcoming);
-    } else if (filter === 'past') {
+    } else if (filterType === 'past') {
       const past = reservations.filter(res => {
         const resDate = new Date(`${res.dateDebut}T${res.heureFin || res.heureDebut}`);
         return resDate < now;
       });
       setFilteredReservations(past);
+    } else if (filterType === 'today') {
+      const today = reservations.filter(res => {
+        const resDate = new Date(res.dateDebut);
+        const todayDate = new Date();
+        return resDate.toDateString() === todayDate.toDateString();
+      });
+      setFilteredReservations(today);
     }
   };
 
@@ -122,6 +131,27 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const renderSortIcon = (column) => {
     if (sortColumn !== column) return null;
     return sortDirection === 'asc' ? ' ▲' : ' ▼';
+  };
+
+  // Calculer le statut d'une réservation
+  const getReservationStatus = (reservation) => {
+    // Si statut explicite "Annulé" ou "Modifié", le garder
+    if (reservation.statut === 'Annulé' || reservation.statut === 'Annulée') {
+      return 'Annulé';
+    }
+    if (reservation.statut === 'Modifié' || reservation.statut === 'Modifiée') {
+      return 'Modifié';
+    }
+
+    // Sinon calculer si passé ou à venir
+    const now = new Date();
+    const reservationDateTime = new Date(`${reservation.dateDebut}T${reservation.heureFin}`);
+    
+    if (reservationDateTime < now) {
+      return 'Passé';
+    } else {
+      return 'À venir';
+    }
   };
 
   // CORRECTION DÉFINITIVE DU BOUTON MODIFIER
@@ -168,11 +198,13 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   };
 
   const handleDeleteClick = (reservation) => {
+    console.log('🔴 BOUTON ANNULER CLIQUÉ !', reservation);
     setCancelModal({
       show: true,
       reservation: reservation
     });
     setSelectedMotif('');
+    console.log('🟢 Modal devrait s\'afficher maintenant');
   };
 
   const handleDeleteConfirm = async () => {
@@ -182,8 +214,11 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     setCancelModal({ show: false, reservation: null });
 
     try {
+      // Étape 1 : Supprimer la réservation
       await googleSheetsService.deleteReservation(reservation.id);
+      console.log('✅ Réservation supprimée avec succès');
       
+      // Étape 2 : Afficher le message de succès
       setConfirmModal({
         show: true,
         type: 'cancel',
@@ -191,26 +226,40 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
         motif: motif
       });
 
-      loadUserReservations().catch(err => {
-        console.error('Erreur rechargement:', err);
-      });
+      // Étape 3 : Recharger les réservations (en arrière-plan)
+      try {
+        await loadUserReservations();
+        console.log('✅ Liste rechargée');
+      } catch (reloadError) {
+        console.error('⚠️ Erreur rechargement (pas grave):', reloadError);
+      }
 
-      emailService.sendCancellationEmail({
-        ...reservation,
-        motif: motif
-      }).catch(emailError => {
-        console.error('Email non envoyé:', emailError);
-      });
+      // Étape 4 : Envoyer l'email (en arrière-plan)
+      try {
+        await emailService.sendCancellationEmail({
+          ...reservation,
+          motif: motif
+        });
+        console.log('✅ Email envoyé');
+      } catch (emailError) {
+        console.error('⚠️ Email non envoyé (pas grave):', emailError);
+      }
 
     } catch (error) {
-      console.error('Erreur lors de l\'annulation:', error);
+      console.error('❌ ERREUR lors de la suppression:', error);
       setConfirmModal({
         show: true,
         type: 'cancel',
         reservation: reservation,
         motif: motif + ' (Erreur lors de la suppression - veuillez vérifier)'
       });
-      loadUserReservations().catch(err => console.error('Erreur rechargement:', err));
+      
+      // Recharger quand même pour voir si ça a marché
+      try {
+        await loadUserReservations();
+      } catch (err) {
+        console.error('Erreur rechargement:', err);
+      }
     }
   };
 
@@ -223,15 +272,14 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   };
 
   const exportToCSV = () => {
-    const headers = ['Salle', 'Date', 'Heure Début', 'Heure Fin', 'Service', 'Objet', 'Statut'];
+    const headers = ['Salle', 'Date', 'Heure Début', 'Heure Fin', 'Service', 'Objet'];
     const rows = filteredReservations.map(res => [
       res.salle,
       new Date(res.dateDebut).toLocaleDateString('fr-FR'),
       res.heureDebut,
       res.heureFin,
       res.service,
-      res.objet,
-      res.statut || 'Confirmée'
+      res.objet
     ]);
 
     const csvContent = [
@@ -293,87 +341,8 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   }
 
   return (
-    <div className="my-reservations-container">
-      {/* Modal d'annulation avec sélection de motif */}
-      {cancelModal.show && (
-        <div className="confirmation-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}>
-          <div className="confirmation-modal cancel-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>⚠️ Confirmer l'annulation</h3>
-            
-            <div className="reservation-details">
-              <p><strong>📅 Date :</strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              })}</p>
-              <p><strong>🕐 Horaire :</strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p>
-              <p><strong>🏢 Salle :</strong> {cancelModal.reservation.salle}</p>
-              <p><strong>📝 Objet :</strong> {cancelModal.reservation.objet}</p>
-            </div>
-
-            <div className="motif-selection">
-              <label><strong>💬 Motif de l'annulation :</strong></label>
-              <select 
-                value={selectedMotif} 
-                onChange={(e) => setSelectedMotif(e.target.value)}
-                className="motif-select"
-              >
-                <option value="">-- Sélectionnez un motif --</option>
-                {MOTIFS_ANNULATION.map((motif, index) => (
-                  <option key={index} value={motif}>{motif}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="modal-actions">
-              <button 
-                onClick={() => setCancelModal({ show: false, reservation: null })}
-                className="cancel-action-btn"
-              >
-                Annuler
-              </button>
-              <button 
-                onClick={handleDeleteConfirm}
-                className="confirm-action-btn"
-                disabled={!selectedMotif}
-              >
-                Confirmer l'annulation
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de confirmation */}
-      {confirmModal.show && (
-        <div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-          <div className="confirmation-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              {confirmModal.type === 'cancel' ? '✅ Annulation confirmée' : '✅ Modification confirmée'}
-            </h3>
-            
-            <div className="reservation-details">
-              <p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              })}</p>
-              <p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p>
-              <p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>
-              <p><strong>📝 Objet :</strong> {confirmModal.reservation.objet}</p>
-              {confirmModal.motif && (
-                <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>
-              )}
-            </div>
-            
-            <button onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
-              Fermer
-            </button>
-          </div>
-        </div>
-      )}
+    <>
+      <div className="my-reservations-container">
 
       <h1>📋 Mes Réservations</h1>
 
@@ -391,14 +360,21 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
       </div>
 
       <div className="filter-buttons">
-        <button onClick={() => filterReservations('all')} className="filter-btn">
+        <button onClick={() => filterReservations('all')} className={`filter-btn ${filter === 'all' ? 'active' : ''}`}>
           📅 Toutes ({reservations.length})
         </button>
-        <button onClick={() => filterReservations('upcoming')} className="filter-btn">
-          📆 À venir ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) >= new Date()).length})
-        </button>
-        <button onClick={() => filterReservations('past')} className="filter-btn">
+        <button onClick={() => filterReservations('past')} className={`filter-btn ${filter === 'past' ? 'active' : ''}`}>
           📜 Passées ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureFin || r.heureDebut}`) < new Date()).length})
+        </button>
+        <button onClick={() => filterReservations('today')} className={`filter-btn ${filter === 'today' ? 'active' : ''}`}>
+          📆 Aujourd'hui ({reservations.filter(r => {
+            const resDate = new Date(r.dateDebut);
+            const today = new Date();
+            return resDate.toDateString() === today.toDateString();
+          }).length})
+        </button>
+        <button onClick={() => filterReservations('upcoming')} className={`filter-btn ${filter === 'upcoming' ? 'active' : ''}`}>
+          🔜 À venir ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) > new Date()).length})
         </button>
       </div>
 
@@ -436,9 +412,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
                 <th onClick={() => handleSort('objet')} style={{cursor: 'pointer'}}>
                   Objet{renderSortIcon('objet')}
                 </th>
-                <th onClick={() => handleSort('statut')} style={{cursor: 'pointer'}}>
-                  Statut{renderSortIcon('statut')}
-                </th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -448,16 +421,25 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
                 
                 return (
                   <tr key={index} style={{ backgroundColor }}>
-                    <td>{reservation.salle}</td>
+                    <td>
+						{(() => {
+						const parts = reservation.salle.split(' - ');
+						const salleNom = parts[0] || reservation.salle;
+						const salleCapacite = parts[1] || '';
+					return (
+						<>
+							<div className="salle-nom">{salleNom}</div>
+								{salleCapacite && (
+									<div className="salle-capacite">{salleCapacite}</div>
+									)}
+								</>
+							);
+						})()}
+					</td>
                     <td>{new Date(reservation.dateDebut).toLocaleDateString('fr-FR')}</td>
                     <td>{reservation.heureDebut} - {reservation.heureFin}</td>
                     <td>{reservation.service}</td>
                     <td>{reservation.objet}</td>
-                    <td>
-                      <span className={`status-badge ${reservation.statut?.toLowerCase()}`}>
-                        {reservation.statut || 'Confirmée'}
-                      </span>
-                    </td>
                     <td className="actions-cell">
                       <button 
                         onClick={() => handleEdit(reservation)}
@@ -482,6 +464,91 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
         </div>
       )}
     </div>
+
+    {/* Modal d'annulation avec sélection de motif */}
+    {cancelModal.show && (
+      <div className="cancel-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}>
+        {console.log('🔵 MODAL RENDU !', cancelModal)}
+        <div className="cancel-modal" onClick={(e) => e.stopPropagation()}>
+          <h3>⚠️ Confirmer l'annulation</h3>
+          
+          <div className="reservation-details">
+            <p><strong>📅 Date :</strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })}</p>
+            <p><strong>🕐 Horaire :</strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p>
+            <p><strong>🏢 Salle :</strong> {cancelModal.reservation.salle}</p>
+            <p><strong>📝 Objet :</strong> {cancelModal.reservation.objet}</p>
+          </div>
+
+          <div className="motif-selection">
+            <label><strong>💬 Motif de l'annulation :</strong></label>
+            <select 
+              value={selectedMotif} 
+              onChange={(e) => setSelectedMotif(e.target.value)}
+              className="motif-select"
+            >
+              <option value="">-- Sélectionnez un motif --</option>
+              {MOTIFS_ANNULATION.map((motif, index) => (
+                <option key={index} value={motif}>{motif}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="modal-actions">
+            <button 
+              onClick={() => setCancelModal({ show: false, reservation: null })}
+              className="cancel-action-btn"
+            >
+              Annuler
+            </button>
+            <button 
+              onClick={handleDeleteConfirm}
+              className="confirm-action-btn"
+              disabled={!selectedMotif}
+            >
+              Confirmer l'annulation
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Modal de confirmation */}
+    {confirmModal.show && (
+      <div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}>
+        <div className="confirmation-modal" onClick={(e) => e.stopPropagation()}>
+          <h3>
+            {confirmModal.type === 'cancel' ? '✅ Annulation confirmée' : '✅ Modification confirmée'}
+          </h3>
+          
+          <div className="reservation-details">
+            <p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })}</p>
+            <p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p>
+            <p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>
+            <p><strong>📝 Objet :</strong> {confirmModal.reservation.objet}</p>
+            {confirmModal.motif && (
+              <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>
+            )}
+          </div>
+          
+          <button onClick={() => {
+            setConfirmModal({ ...confirmModal, show: false });
+          }}>
+            Fermer
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 

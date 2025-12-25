@@ -30,7 +30,9 @@ function ColorLegend({ onHoverColor }) {
       </div>
 
       <div className="legend-items">
-        {Object.entries(COULEURS_OBJETS).map(([objet, couleur]) => (
+        {Object.entries(COULEURS_OBJETS)
+          .sort(([objetA], [objetB]) => objetA.localeCompare(objetB)) // Tri alphabétique
+          .map(([objet, couleur]) => (
           <div
             key={objet}
             className={`legend-item ${hoveredColor === objet ? 'hovered' : ''}`}
