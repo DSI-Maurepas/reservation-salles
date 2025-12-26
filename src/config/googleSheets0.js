@@ -88,12 +88,15 @@ export const SERVICES = [
 // Types d'objets de réservation
 export const OBJETS_RESERVATION = [
   'Réunion de service',
+  'Réunion interservices',
   'Réunion Élus / Commissions',
   'Réunion avec prestataire',
   'Formation interne',
   'Formation externe (prestataires)',
+  'Atelier culturel / social',
   'Événement municipal / public',
   'Entretien RH',
+  'Activité associative',
   'Usage logistique / technique',
   'Permanence (élus ou services)',
   'Autre'
@@ -102,12 +105,15 @@ export const OBJETS_RESERVATION = [
 // Couleurs des objets de réservation
 export const COULEURS_OBJETS = {
   'Réunion de service': '#B3E5FC',
+  'Réunion interservices': '#B3E5FC',
   'Réunion Élus / Commissions': '#F8BBD0',
   'Réunion avec prestataire': '#B3E5FC',
   'Formation interne': '#C8E6C9',
   'Formation externe (prestataires)': '#C8E6C9',
+  'Atelier culturel / social': '#D1C4E9',
   'Événement municipal / public': '#FFE0B2',
   'Entretien RH': '#FFCCBC',
+  'Activité associative': '#FFF9C4',
   'Usage logistique / technique': '#E1BEE7',
   'Permanence (élus ou services)': '#F8BBD0',
   'Autre': '#E8E8E8'

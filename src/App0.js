@@ -72,26 +72,7 @@ function App() {
     };
   }, []);
 
-  /**
-   * Vérifie si une date est dans le passé
-   * @param {Date} date - La date à vérifier
-   * @returns {boolean} - true si la date est passée
-   */
-  const isDateInPast = (date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
-    return checkDate < today;
-  };
-
   const handleDateSelect = (date) => {
-    // BLOQUER si date dans le passé
-    if (isDateInPast(date)) {
-      alert('⚠️ Impossible de réserver une date passée !\n\nVeuillez sélectionner une date à partir d\'aujourd\'hui.');
-      return;
-    }
-    
     setSelectedDate(date);
     setEditReservationId(null); // Pas d'édition, nouvelle réservation
     setCurrentView('reservation');
@@ -163,10 +144,7 @@ function App() {
 
       <main className="app-main">
         {currentView === 'calendar' && (
-          <CalendarView 
-            onDateSelect={handleDateSelect} 
-            isDateInPast={isDateInPast}
-          />
+          <CalendarView onDateSelect={handleDateSelect} />
         )}
 
         {currentView === 'reservation' && selectedDate && (

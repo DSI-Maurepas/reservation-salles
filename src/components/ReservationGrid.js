@@ -5,6 +5,7 @@ import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
 import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS, COULEURS_OBJETS } from '../config/googleSheets';
 import ColorLegend from './ColorLegend';
+import SalleCard from './SalleCard';
 import './ReservationGrid.css';
 
 // Debug: Forcer l'inclusion de COULEURS_OBJETS dans le build
@@ -17,8 +18,19 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const [currentSelection, setCurrentSelection] = useState(null); // Sélection en cours de drag
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredObjet, setHoveredObjet] = useState(null); // Pour l'effet de survol de la légende
+  const [hoveredSalle, setHoveredSalle] = useState(null); // Pour afficher la carte salle au survol
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingReservation, setEditingReservation] = useState(null);
+  
+  // Fonction pour vérifier si une date est dans le passé
+  const isDateInPast = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    return checkDate < today;
+  };
+  
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -175,6 +187,12 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   };
 
   const handleMouseDown = (salle, hour) => {
+    // BLOQUER si date dans le passé
+    if (isDateInPast(currentDate)) {
+      alert('⚠️ Impossible de réserver une date passée !\n\nVeuillez sélectionner une date future.');
+      return;
+    }
+    
     // Vérifier si créneau réservé
     if (isSlotReserved(salle, hour)) {
       alert('Ce créneau est déjà réservé');
@@ -526,6 +544,17 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // BLOQUER si date dans le passé
+    if (isDateInPast(currentDate)) {
+      alert('⚠️ Impossible de réserver une date passée !\n\nVeuillez sélectionner une date future.');
+      return;
+    }
+
+    // NETTOYAGE AUTOMATIQUE : Supprimer les réservations > 100 jours (en arrière-plan)
+    googleSheetsService.cleanOldReservations(100).catch(error => {
+      console.error('⚠️ Erreur lors du nettoyage automatique:', error);
+    });
+
     // Mode édition : supprimer l'ancienne réservation
     if (isEditMode && editingReservation) {
       console.log('🔧 Mode édition - Suppression ancienne réservation:', editingReservation.id);
@@ -819,7 +848,13 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       const isAdminRoom = isAdminOnlyRoom(salle);
       
       grid.push(
-        <div key={`salle-header-${salleIndex}`} className={`salle-header ${isAdminRoom && !isAdminUnlocked ? 'admin-header-locked' : ''}`} style={{ gridColumn: salleIndex + 2 }}>
+        <div 
+          key={`salle-header-${salleIndex}`} 
+          className={`salle-header ${isAdminRoom && !isAdminUnlocked ? 'admin-header-locked' : ''}`} 
+          style={{ gridColumn: salleIndex + 2 }}
+          onMouseEnter={() => setHoveredSalle(salle)}
+          onMouseLeave={() => setHoveredSalle(null)}
+        >
           {isAdminRoom && !isAdminUnlocked && <span className="header-lock-icon">🔒</span>}
           <span className="salle-name">{salleNom}</span>
           {salleCapacite && <span className="salle-capacity">{salleCapacite}</span>}
@@ -1220,7 +1255,11 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
             </div>
           ) : (
             <>
-              <ColorLegend onHoverColor={setHoveredObjet} />
+              {hoveredSalle ? (
+                <SalleCard salle={hoveredSalle} />
+              ) : (
+                <ColorLegend onHoverColor={setHoveredObjet} />
+              )}
               <div className="no-selection-message">
                 <p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p>
               </div>
