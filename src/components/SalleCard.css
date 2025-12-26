@@ -1,0 +1,146 @@
+/* src/components/SalleCard.css */
+
+.salle-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.3s ease-in-out;
+  max-width: 100%;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.salle-card-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.salle-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.salle-card:hover .salle-card-image img {
+  transform: scale(1.05);
+}
+
+.salle-card-content {
+  padding: 1rem;
+}
+
+.salle-card-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+
+.salle-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.6rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 3px solid #1976d2;
+}
+
+.info-icon {
+  font-size: 1.2rem;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  color: #1976d2;
+  font-weight: 700;
+}
+
+/* Équipements */
+.equipements-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.equipement-tag {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid #bbdefb;
+}
+
+/* Dispositions */
+.dispositions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.disposition-tag {
+  background: #fff3e0;
+  color: #f57c00;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border: 1px solid #ffcc80;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .salle-card-image {
+    height: 150px;
+  }
+
+  .salle-card-title {
+    font-size: 1.1rem;
+  }
+
+  .equipement-tag,
+  .disposition-tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Icônes dans les tags */
+.tag-icon {
+  margin-right: 0.3rem;
+  font-size: 0.9rem;
+}

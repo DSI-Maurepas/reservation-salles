@@ -4,7 +4,7 @@ import googleSheetsService from '../services/googleSheetsService';
 import { JOURS_FERIES } from '../config/googleSheets';
 import './CalendarView.css';
 
-function CalendarView({ onDateSelect, isDateInPast }) {
+function CalendarView({ onDateSelect }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dateAvailability, setDateAvailability] = useState({});
   const [loading, setLoading] = useState(false);
@@ -103,12 +103,6 @@ function CalendarView({ onDateSelect, isDateInPast }) {
   };
 
   const handleDateClick = (date) => {
-    // BLOQUER d'abord si date passée (avec vérification que la fonction existe)
-    if (typeof isDateInPast === 'function' && isDateInPast(date)) {
-      alert('⚠️ Impossible de réserver une date passée !\n\nVeuillez sélectionner une date à partir d\'aujourd\'hui.');
-      return;
-    }
-    
     const dateStr = googleSheetsService.formatDate(date);
     const availability = dateAvailability[dateStr];
     
@@ -158,16 +152,12 @@ function CalendarView({ onDateSelect, isDateInPast }) {
       const dateStr = googleSheetsService.formatDate(date);
       const availability = dateAvailability[dateStr] || 'loading';
       const isToday = (year === todayYear && month === todayMonth && day === todayDay);
-      const isPast = (typeof isDateInPast === 'function') ? isDateInPast(date) : false;
 
       days.push(
         <div
           key={`day-${day}`}
-          className={`calendar-day ${availability} ${isToday ? 'today' : ''} ${isPast ? 'past-date' : ''}`}
+          className={`calendar-day ${availability} ${isToday ? 'today' : ''}`}
           onClick={() => handleDateClick(date)}
-          style={{
-            cursor: isPast ? 'not-allowed' : 'pointer'
-          }}
         >
           <span className="day-number">{day}</span>
           {availability !== 'loading' && (

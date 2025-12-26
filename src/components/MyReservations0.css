@@ -146,12 +146,9 @@
 
 .form-column {
   width: 100%;
-  min-height: 630px; /* min au lieu de height fixe */
-  max-height: none; /* Pas de limite */
-  overflow: visible; /* Visible au lieu de hidden */
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  height: 630px;
+  max-height: 630px;
+  overflow: hidden;
 }
 
 /* GRILLE DE RÉSERVATION - 630px EXACTEMENT - BLEU TRÈS CLAIR */
@@ -177,14 +174,13 @@
   font-weight: 700;
   font-size: 0.6rem;
   line-height: 1.1;
-  border-radius: 0 !important; /* Style Excel - FORCER */
-  border: 1px solid #475569;
-  border-right: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(100, 116, 139, 0.3);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   gap: 0.1rem;
   overflow: hidden;
 }
@@ -193,7 +189,6 @@
   display: block;
   font-size: 0.6rem;
   font-weight: 700;
-  color: white !important; /* FORCER blanc */
 }
 
 .salle-header .salle-capacity {
@@ -201,12 +196,11 @@
   font-size: 0.55rem;
   font-weight: 500;
   opacity: 0.9;
-  color: white !important; /* FORCER blanc */
 }
 
 .salle-header:hover {
-  background: linear-gradient(135deg, #475569 0%, #334155 100%);
-  box-shadow: inset 0 0 0 2px #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 /* Header d'heure - GRIS ARDOISE */
@@ -217,18 +211,17 @@
   text-align: center;
   font-weight: 700;
   font-size: 0.75rem;
-  border-radius: 0 !important; /* Style Excel - FORCER */
-  border: 1px solid #475569;
-  border-bottom: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(100, 116, 139, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .time-label:hover {
-  background: linear-gradient(135deg, #475569 0%, #334155 100%);
-  box-shadow: inset 0 0 0 2px #3b82f6;
+  transform: scale(1.03);
+  box-shadow: 0 3px 10px rgba(59, 130, 246, 0.4);
 }
 
 /* CRÉNEAUX - TUILES MODERNES SANS BORDS */
@@ -237,15 +230,13 @@
   min-height: 35px;
   max-height: 35px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   touch-action: none;
-  border-radius: 0 !important; /* Style Excel - FORCER pas d'arrondis */
-  border: 1px solid #e5e7eb;
-  border-right: none; /* Éviter double bordure */
-  border-bottom: none; /* Éviter double bordure */
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: hidden;
   font-size: 0.7rem;
@@ -255,22 +246,29 @@
   text-overflow: ellipsis;
 }
 
-/* Dernière colonne et dernière ligne - ajouter bordures */
-.time-slot:nth-child(9n) {
-  border-right: 1px solid #e5e7eb;
+/* Effet de brillance au survol */
+.time-slot::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
-.reservation-grid > div:last-child {
-  border-bottom: 1px solid #e5e7eb;
+.time-slot:hover::before {
+  opacity: 1;
 }
 
-/* Effet hover moderne sans brillance */
 .time-slot:hover:not(.reserved):not(.lunch-break) {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  transform: scale(1.05);
-  box-shadow: inset 0 0 0 2px #3b82f6;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   z-index: 10;
-  border-color: #3b82f6;
 }
 
 /* Créneau sélectionné - VERT MODERNE */
@@ -278,8 +276,8 @@
   background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
   color: white;
   font-weight: 700;
-  transform: scale(1.03);
-  box-shadow: inset 0 0 0 2px #059669;
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
   animation: pulse 0.5s ease;
   z-index: 20;
 }
@@ -350,14 +348,10 @@
   border-radius: 14px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
   border: 2px solid #e2e8f0;
-  min-height: 400px; /* min au lieu de height fixe */
-  max-height: 630px;
+  height: 630px;
   overflow-y: auto;
-  display: flex !important; /* FORCER l'affichage */
+  display: flex;
   flex-direction: column;
-  opacity: 1 !important; /* FORCER l'opacité */
-  visibility: visible !important; /* FORCER la visibilité */
-  position: relative !important; /* FORCER la position */
 }
 
 /* Scrollbar personnalisée */
@@ -1431,274 +1425,380 @@ button[class*="current"],
   color: white;
 }
 
-/* ===== LÉGENDE DES DISPONIBILITÉS ===== */
+/* ===== BOUTONS DE FILTRE ===== */
 
-.availability-legend {
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border: 2px solid #2196f3;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin: 1rem 0;
-  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+.filter-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.availability-legend h4 {
-  margin: 0 0 1rem 0;
-  color: #1976d2;
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-/* Message quand aucune sélection */
-.no-selection-message {
-  text-align: center;
-  padding: 2rem;
-  color: #64748b;
+.filter-btn {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
   font-size: 1rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-radius: 12px;
-  margin-top: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
 }
 
-.no-selection-message p {
-  margin: 0;
+.filter-btn:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+.filter-btn.active {
+  background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+  transform: scale(1.05);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .reservation-grid {
-    grid-template-columns: 60px repeat(9, 1fr);
+  .filter-buttons {
+    flex-direction: column;
   }
-
-  .salle-header .salle-name {
-    font-size: 0.5rem;
-  }
-
-  .salle-header .salle-capacity {
-    font-size: 0.45rem;
-  }
-
-  .time-label {
-    font-size: 0.65rem;
-  }
-
-  .time-slot {
-    font-size: 0.6rem;
+  
+  .filter-btn {
+    width: 100%;
   }
 }
 
-/* ============================================================================
-   EMPÊCHER LA SÉLECTION DE TEXTE PENDANT LE DRAG
-   ============================================================================ */
+/* ===== BOUTON EXPORTER ===== */
 
-/* Empêcher la sélection de texte dans la grille pendant le drag */
-.time-slot,
-.time-label,
-.salle-header,
-.reservation-cell,
-.reservation-grid,
-.salle-name,
-.salle-capacity {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  cursor: default;
-}
-
-/* Permettre la sélection dans le formulaire */
-.reservation-form input,
-.reservation-form textarea,
-.reservation-form select,
-.reservation-form label {
-  user-select: text;
-  -webkit-user-select: text;
-  cursor: text;
-}
-
-/* ============================================================================
-   STYLES BOUTONS RECHERCHE, FILTRES ET EXPORT
-   ============================================================================ */
-
-/* Section recherche */
-.search-section {
+.export-section {
+  display: flex;
+  gap: 1rem;
   margin-bottom: 1.5rem;
-  padding: 1rem;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.export-section select {
+  padding: 0.6rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
   background: white;
+}
+
+.export-section select:focus {
+  outline: none;
+  border-color: #4caf50;
+}
+
+.export-btn {
+  background: linear-gradient(135deg, #4caf50 0%, #43a047 100%);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.export-btn:hover {
+  background: linear-gradient(135deg, #43a047 0%, #388e3c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+/* ===== BOUTONS MODIFIER ET ANNULER ===== */
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.edit-button {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
+}
+
+.edit-button:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+.delete-button {
+  background: linear-gradient(135deg, #ef5350 0%, #e53935 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(239, 83, 80, 0.3);
+}
+
+.delete-button:hover {
+  background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 83, 80, 0.4);
+}
+
+/* ===== MODAL ANNULATION ===== */
+
+.cancel-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.cancel-modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cancel-modal h3 {
+  color: #ef4444;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.reservation-details {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.reservation-details p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+}
+
+.motif-selection {
+  margin: 1.5rem 0;
+}
+
+.motif-selection label {
+  display: block;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.5rem;
+}
+
+.motif-select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.motif-select:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  outline: none;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.cancel-action-btn,
+.confirm-action-btn {
+  flex: 1;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-action-btn {
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+  color: white;
+}
+
+.cancel-action-btn:hover {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  transform: translateY(-2px);
+}
+
+.confirm-action-btn {
+  background: linear-gradient(135deg, #ef5350 0%, #e53935 100%);
+  color: white;
+}
+
+.confirm-action-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 83, 80, 0.4);
+}
+
+.confirm-action-btn:disabled {
+  background: #cbd5e1;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .cancel-action-btn,
+  .confirm-action-btn {
+    width: 100%;
+  }
+}
+
+/* ===== SECTION RECHERCHE ===== */
+
+.search-section {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #2196f3;
 }
 
 .search-section form {
   display: flex;
-  gap: 0.8rem;
+  gap: 1rem;
   align-items: center;
 }
 
 .search-section input {
   flex: 1;
-  padding: 0.7rem 1rem;
-  border: 2px solid #2196f3;
-  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   font-size: 1rem;
   transition: all 0.3s ease;
 }
 
 .search-section input:focus {
   outline: none;
-  border-color: #1976d2;
-  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+  border-color: #2196f3;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 
 .search-section button {
-  padding: 0.7rem 1.5rem;
   background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  padding: 0.8rem 1.5rem;
+  border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
 }
 
 .search-section button:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
 }
 
-.search-section button:active {
-  transform: translateY(0);
-}
+/* ===== MODAL CONFIRMATION ===== */
 
-/* Boutons filtres */
-.filter-buttons {
+.confirmation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.filter-btn {
-  padding: 0.7rem 1.3rem;
-  border: 2px solid #2196f3;
-  background: white;
-  color: #2196f3;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  white-space: nowrap;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
 }
 
-.filter-btn:hover {
-  background: #e3f2fd;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
+.confirmation-modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.filter-btn.active {
+.confirmation-modal h3 {
+  color: #4caf50;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.confirmation-modal button {
+  width: 100%;
+  padding: 0.8rem;
   background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
   color: white;
-  border-color: #1976d2;
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-}
-
-/* Section export */
-.export-section {
-  display: flex;
-  gap: 0.8rem;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.export-section select {
-  flex: 1;
-  padding: 0.7rem 1rem;
-  border: 2px solid #4caf50;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2e7d32;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.export-section select:hover {
-  background: #e8f5e9;
-  border-color: #388e3c;
-}
-
-.export-section select:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
-}
-
-.export-btn {
-  padding: 0.7rem 1.5rem;
-  border: 2px solid #4caf50;
-  background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
-  color: white;
-  border-radius: 8px;
+  border: none;
+  border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  white-space: nowrap;
+  margin-top: 1.5rem;
 }
 
-.export-btn:hover {
+.confirmation-modal button:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-}
-
-.export-btn:active {
-  transform: translateY(0);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .search-section form {
-    flex-direction: column;
-  }
-
-  .search-section input {
-    width: 100%;
-  }
-
-  .search-section button {
-    width: 100%;
-  }
-
-  .filter-buttons {
-    gap: 0.5rem;
-  }
-
-  .filter-btn {
-    font-size: 0.85rem;
-    padding: 0.6rem 1rem;
-  }
-
-  .export-section {
-    flex-direction: column;
-  }
-
-  .export-section select,
-  .export-btn {
-    width: 100%;
-  }
 }
