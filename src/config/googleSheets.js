@@ -25,8 +25,8 @@ export const EMAIL_CONFIG = {
 
 // Liste des salles de la mairie
 export const SALLES = [
-  'Salle Conseil - 80 Personnes',
-  'Salle Mariages - 40 Personnes',
+  'Salle Conseil - 100 Personnes',
+  'Salle Mariages - 30 Personnes',
   'Salle 16e A - 20 Personnes',
   'Salle 16e B - 19 Personnes',
   'Salle N°1 - 2 Personnes',
@@ -99,18 +99,18 @@ export const OBJETS_RESERVATION = [
   'Autre'
 ];
 
-// Couleurs des objets de réservation
+// Couleurs des objets de réservation - MODERNES ET CONTRASTÉES
 export const COULEURS_OBJETS = {
-  'Réunion de service': '#B3E5FC',
-  'Réunion Élus / Commissions': '#F8BBD0',
-  'Réunion avec prestataire': '#B3E5FC',
-  'Formation interne': '#C8E6C9',
-  'Formation externe (prestataires)': '#C8E6C9',
-  'Événement municipal / public': '#FFE0B2',
-  'Entretien RH': '#FFCCBC',
-  'Usage logistique / technique': '#E1BEE7',
-  'Permanence (élus ou services)': '#F8BBD0',
-  'Autre': '#E8E8E8'
+  'Réunion de service': '#64B5F6',
+  'Réunion Élus / Commissions': '#E91E63',
+  'Réunion avec prestataire': '#42A5F5',
+  'Formation interne': '#66BB6A',
+  'Formation externe (prestataires)': '#9CCC65',
+  'Événement municipal / public': '#FFA726',
+  'Entretien RH': '#FF7043',
+  'Usage logistique / technique': '#AB47BC',
+  'Permanence (élus ou services)': '#EC407A',
+  'Autre': '#BDBDBD'
 };
 
 // Horaires d'ouverture
@@ -163,8 +163,8 @@ export const ADMINISTRATEURS = [
 
 // ⚠️ CRITIQUE : Les noms doivent être IDENTIQUES à ceux dans SALLES (avec capacités)
 export const SALLES_ADMIN_ONLY = [
-  'Salle Conseil - 80 Personnes',
-  'Salle Mariages - 40 Personnes'
+  'Salle Conseil - 100 Personnes',
+  'Salle Mariages - 30 Personnes'
 ];
 
 // Motifs d'annulation standardisés

@@ -2,9 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import { JOURS_FERIES } from '../config/googleSheets';
+import ViewToggle from './ViewToggle';
+import RoomSelector from './RoomSelector';
 import './CalendarView.css';
 
-function CalendarView({ onDateSelect, isDateInPast }) {
+function CalendarView({ onDateSelect, onRoomSelect, isDateInPast }) {
+  const [viewMode, setViewMode] = useState('date'); // 'date' ou 'room'
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dateAvailability, setDateAvailability] = useState({});
   const [loading, setLoading] = useState(false);
@@ -187,82 +190,90 @@ function CalendarView({ onDateSelect, isDateInPast }) {
 
   return (
     <div className="calendar-view">
-      <div className="calendar-header">
-        <button onClick={handlePreviousMonth} className="nav-button" title="Mois précédent">
-          ◀
-        </button>
-        
-        <div className="date-selectors">
-          <select 
-            value={currentMonth.getMonth()} 
-            onChange={(e) => setCurrentMonth(new Date(currentMonth.getFullYear(), parseInt(e.target.value), 1))}
-            className="month-selector"
-          >
-            {monthNames.map((name, index) => (
-              <option key={index} value={index}>{name}</option>
-            ))}
-          </select>
-          
-          <select 
-            value={currentMonth.getFullYear()} 
-            onChange={(e) => setCurrentMonth(new Date(parseInt(e.target.value), currentMonth.getMonth(), 1))}
-            className="year-selector"
-          >
-            {Array.from({ length: 5 }, (_, i) => {
-              const year = new Date().getFullYear() + i;
-              return <option key={year} value={year}>{year}</option>;
-            })}
-          </select>
-        </div>
-        
-        <button onClick={handleNextMonth} className="nav-button" title="Mois suivant">
-          ▶
-        </button>
-      </div>
+      <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
 
-      <div className="calendar-legend">
-        <div className="legend-item" title="🟢 Disponible (0 réservation)">
-          <span className="legend-color available"></span>
-          <span>Disponible</span>
-        </div>
-        <div className="legend-item" title="🟡 Partiellement occupé (1-3 réservations)">
-          <span className="legend-color partial"></span>
-          <span>Partiellement occupé</span>
-        </div>
-        <div className="legend-item" title="🟠 Très occupé (4-6 réservations)">
-          <span className="legend-color busy"></span>
-          <span>Très occupé</span>
-        </div>
-        <div className="legend-item" title="🔴 Complet (7+ réservations)">
-          <span className="legend-color full"></span>
-          <span>Complet</span>
-        </div>
-        <div className="legend-item" title="⚫ Fermé (hors plages horaires)">
-          <span className="legend-color closed"></span>
-          <span>Fermé</span>
-        </div>
-      </div>
+      {viewMode === 'date' ? (
+        <>
+          <div className="calendar-header">
+            <button onClick={handlePreviousMonth} className="nav-button" title="Mois précédent">
+              ◀
+            </button>
+            
+            <div className="date-selectors">
+              <select 
+                value={currentMonth.getMonth()} 
+                onChange={(e) => setCurrentMonth(new Date(currentMonth.getFullYear(), parseInt(e.target.value), 1))}
+                className="month-selector"
+              >
+                {monthNames.map((name, index) => (
+                  <option key={index} value={index}>{name}</option>
+                ))}
+              </select>
+              
+              <select 
+                value={currentMonth.getFullYear()} 
+                onChange={(e) => setCurrentMonth(new Date(parseInt(e.target.value), currentMonth.getMonth(), 1))}
+                className="year-selector"
+              >
+                {Array.from({ length: 5 }, (_, i) => {
+                  const year = new Date().getFullYear() + i;
+                  return <option key={year} value={year}>{year}</option>;
+                })}
+              </select>
+            </div>
+            
+            <button onClick={handleNextMonth} className="nav-button" title="Mois suivant">
+              ▶
+            </button>
+          </div>
 
-      {loading ? (
-        <div className="calendar-loading">
-          <div className="spinner"></div>
-          <p>Chargement du calendrier...</p>
-        </div>
+          <div className="calendar-legend">
+            <div className="legend-item" title="🟢 Disponible (0 réservation)">
+              <span className="legend-color available"></span>
+              <span>Disponible</span>
+            </div>
+            <div className="legend-item" title="🟡 Partiellement occupé (1-3 réservations)">
+              <span className="legend-color partial"></span>
+              <span>Partiellement occupé</span>
+            </div>
+            <div className="legend-item" title="🟠 Très occupé (4-6 réservations)">
+              <span className="legend-color busy"></span>
+              <span>Très occupé</span>
+            </div>
+            <div className="legend-item" title="🔴 Complet (7+ réservations)">
+              <span className="legend-color full"></span>
+              <span>Complet</span>
+            </div>
+            <div className="legend-item" title="⚫ Fermé (hors plages horaires)">
+              <span className="legend-color closed"></span>
+              <span>Fermé</span>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="calendar-loading">
+              <div className="spinner"></div>
+              <p>Chargement du calendrier...</p>
+            </div>
+          ) : (
+            <div className="calendar-grid">
+              {renderCalendar()}
+            </div>
+          )}
+
+          <div className="calendar-instructions">
+            <h3>📋 Instructions</h3>
+            <ul>
+              <li>Cliquez sur une date pour accéder au tableau de réservation</li>
+              <li>Les couleurs indiquent la disponibilité des salles</li>
+              <li>Les dimanches et jours fériés sont fermés</li>
+              <li>Horaires d'ouverture : 8h - 22h (Lundi - Samedi)</li>
+            </ul>
+          </div>
+        </>
       ) : (
-        <div className="calendar-grid">
-          {renderCalendar()}
-        </div>
+        <RoomSelector onRoomSelect={onRoomSelect} />
       )}
-
-      <div className="calendar-instructions">
-        <h3>📋 Instructions</h3>
-        <ul>
-          <li>Cliquez sur une date pour accéder au tableau de réservation</li>
-          <li>Les couleurs indiquent la disponibilité des salles</li>
-          <li>Les dimanches et jours fériés sont fermés</li>
-          <li>Horaires d'ouverture : 8h - 22h (Lundi - Samedi)</li>
-        </ul>
-      </div>
     </div>
   );
 }

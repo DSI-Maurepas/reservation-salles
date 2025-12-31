@@ -154,51 +154,70 @@
   gap: 1rem;
 }
 
-/* GRILLE DE RÉSERVATION - 630px EXACTEMENT - BLEU TRÈS CLAIR */
+/* GRILLE DE RÉSERVATION - STYLE IDENTIQUE PAR SALLE */
 .reservation-grid {
   display: grid;
-  grid-template-columns: 60px repeat(9, 1fr);
-  column-gap: 2px;
-  row-gap: 1px;
-  padding: 0.8rem;
-  background: linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%);
+  grid-template-columns: 45px repeat(9, 1fr);
+  column-gap: 0;
+  row-gap: 0;
+  padding: 0.2rem;
+  background: white;
   border-radius: 14px;
   height: 630px;
   width: 100%;
   overflow: hidden;
 }
 
-/* Header de colonne (nom des salles) - GRIS ARDOISE */
-.salle-header {
-  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-  color: white;
+/* Coin "Heure" - identique SingleRoomGrid */
+.grid-corner {
+  background: #f5f5f5;
+  color: #1976d2;
   padding: 0.4rem 0.2rem;
   text-align: center;
+  font-weight: 600;
+  font-size: 0.75rem;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Header de colonne (nom des salles) - BLEU MODERNE */
+.salle-header {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  padding: 0.35rem 0.25rem;
+  text-align: center;
   font-weight: 700;
-  font-size: 0.6rem;
-  line-height: 1.1;
-  border-radius: 0 !important; /* Style Excel - FORCER */
-  border: 1px solid #475569;
-  border-right: none;
+  font-size: 0.65rem;
+  line-height: 1.15;
+  border-radius: 0;
+  border: 1px solid #1976d2;
+  border-bottom: 2px solid #1565c0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  transition: all 0.2s ease;
-  gap: 0.1rem;
+  transition: all 0.3s ease;
+  gap: 0.2rem;
   overflow: hidden;
+}
+
+.salle-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
 }
 
 .salle-header .salle-name {
   display: block;
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: white !important; /* FORCER blanc */
 }
 
 .salle-header .salle-capacity {
   display: block;
-  font-size: 0.55rem;
+  font-size: 0.58rem;
   font-weight: 500;
   opacity: 0.9;
   color: white !important; /* FORCER blanc */
@@ -209,16 +228,16 @@
   box-shadow: inset 0 0 0 2px #3b82f6;
 }
 
-/* Header d'heure - GRIS ARDOISE */
+/* Header d'heure - GRIS CLAIR COMME PAR SALLE */
 .time-label {
-  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-  color: white;
-  padding: 0.4rem 0.2rem;
+  background: #f5f5f5;
+  color: #1976d2;
+  padding: 0.4rem 0.1rem;
   text-align: center;
   font-weight: 700;
-  font-size: 0.75rem;
-  border-radius: 0 !important; /* Style Excel - FORCER */
-  border: 1px solid #475569;
+  font-size: 0.85rem;
+  border-radius: 0 !important;
+  border: 1px solid #ddd;
   border-bottom: none;
   display: flex;
   align-items: center;
@@ -227,25 +246,22 @@
 }
 
 .time-label:hover {
-  background: linear-gradient(135deg, #475569 0%, #334155 100%);
-  box-shadow: inset 0 0 0 2px #3b82f6;
+  background: #e8e8e8;
 }
 
 /* CRÉNEAUX - TUILES MODERNES SANS BORDS */
 .time-slot {
   background: white;
-  min-height: 35px;
-  max-height: 35px;
+  min-height: 32px;
+  max-height: 32px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   touch-action: none;
-  border-radius: 0 !important; /* Style Excel - FORCER pas d'arrondis */
-  border: 1px solid #e5e7eb;
-  border-right: none; /* Éviter double bordure */
-  border-bottom: none; /* Éviter double bordure */
+  border-radius: 0 !important;
+  border: none;
   position: relative;
   overflow: hidden;
   font-size: 0.7rem;
@@ -253,15 +269,6 @@
   font-weight: 600;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-/* Dernière colonne et dernière ligne - ajouter bordures */
-.time-slot:nth-child(9n) {
-  border-right: 1px solid #e5e7eb;
-}
-
-.reservation-grid > div:last-child {
-  border-bottom: 1px solid #e5e7eb;
 }
 
 /* Effet hover moderne sans brillance */
@@ -289,47 +296,76 @@
   50% { transform: scale(1.12); }
 }
 
-/* Créneau réservé - GARDE COULEUR DE FOND */
+/* Créneau réservé - COULEUR PLEINE selon objet */
 .time-slot.reserved {
-  cursor: default;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  color: rgba(0, 0, 0, 0.5);
-  font-size: 0.6rem;
-  font-weight: 700;
+  cursor: pointer;
+  box-shadow: none;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 0.7rem;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 0.2rem;
+  padding: 0;
+  border-radius: 0 !important;
+  transition: all 0.3s ease;
+}
+
+.time-slot.occupied {
+  /* Couleur appliquée via backgroundColor inline */
 }
 
 .time-slot.reserved:hover {
-  transform: scale(1.03);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 50;
 }
 
-/* Pause déjeuner - ORANGE MODERNE */
+/* Pause déjeuner - GRIS HACHURÉ DISCRET */
 .time-slot.lunch-break:not(.reserved) {
-  background: linear-gradient(135deg, #857D7A 0%, #CCC9C8 100%);
-  color: #92400e;
-  font-weight: 600;
+  background: repeating-linear-gradient(
+    45deg,
+    #f5f5f5,
+    #f5f5f5 8px,
+    #e8e8e8 8px,
+    #e8e8e8 16px
+  ) !important;
+  color: #757575;
+  font-weight: 500;
+  position: relative;
 }
 
-.time-slot.lunch-break:hover:not(.reserved) {
-  background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%);
-  transform: scale(1.08);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+.time-slot.lunch-break:not(.reserved)::after {
+  content: '🍽️';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.65rem;
+  opacity: 0.4;
 }
 
-.time-slot.lunch-break.selected {
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-}
-
-/* Salles admin verrouillées - ROUGE MODERNE SANS CADENAS */
+/* Salles admin verrouillées - HACHURES + CADENAS DISCRET */
 .time-slot.admin-only-locked {
-  background: linear-gradient(135deg, #F54927 0%, #fecaca 100%);
+  background: repeating-linear-gradient(
+    45deg,
+    #fee2e2,
+    #fee2e2 10px,
+    #fecaca 10px,
+    #fecaca 20px
+  );
   cursor: not-allowed;
   position: relative;
   color: #991b1b;
+  font-size: 0.8rem;
+}
+
+.time-slot.admin-only-locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.7rem;
+  opacity: 0.5;
 }
 
 /* Cacher le cadenas dans les tuiles normales */
@@ -1485,4 +1521,103 @@ button[class*="current"],
   .time-slot {
     font-size: 0.6rem;
   }
+}
+
+/* POPUP CARTE ÉLÉGANTE AU SURVOL */
+.reservation-popup-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  padding: 0;
+  min-width: 300px;
+  animation: popupSlideUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+@keyframes popupSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -90%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%);
+  }
+}
+
+.popup-card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-card-header {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.popup-icon {
+  font-size: 1.8rem;
+}
+
+.popup-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.popup-card-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.popup-info-line {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.popup-info-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.popup-info-text {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+
+/* === CORRECTIONS FINALES 31/12/2025 === */
+
+/* Salles admin + lunch-break = HACHURES ROUGES */
+.time-slot.admin-only-locked.lunch-break {
+  background: repeating-linear-gradient(
+    45deg,
+    #fee2e2,
+    #fee2e2 8px,
+    #fecaca 8px,
+    #fecaca 16px
+  ) !important;
+}
+
+/* Cadenas discret salles admin */
+.time-slot.admin-only-locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+/* FORCER colonnes égales - FIX CCAS */
+.reservation-grid {
+  grid-template-columns: 60px repeat(9, 1fr) !important;
 }
