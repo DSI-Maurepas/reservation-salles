@@ -22,7 +22,7 @@
 
 .salle-card-image {
   width: 100%;
-  height: 200px;
+  height: 230px;
   overflow: hidden;
   background: #f5f5f5;
 }
@@ -120,6 +120,12 @@
   font-size: 0.8rem;
   font-weight: 500;
   border: 1px solid #ffcc80;
+}
+
+/* Masquer titre et capacité quand formulaire affiché */
+.room-sidebar:has(.room-form-container) .salle-card-title,
+.room-sidebar:has(.room-form-container) .info-item:has(.info-value) {
+  display: none;
 }
 
 /* Responsive */

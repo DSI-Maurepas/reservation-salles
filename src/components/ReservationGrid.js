@@ -19,6 +19,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredObjet, setHoveredObjet] = useState(null); // Pour l'effet de survol de la légende
   const [hoveredSalle, setHoveredSalle] = useState(null); // Pour afficher la carte salle au survol
+  const [hoveredReservation, setHoveredReservation] = useState(null); // Pour popup carte élégante
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 }); // Position du popup
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingReservation, setEditingReservation] = useState(null);
   
@@ -42,6 +44,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     recurrenceJusquau: '',
     recurrenceType: 'weekly' // 'weekly' ou 'biweekly'
   });
+  const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
@@ -51,14 +55,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     message: ''
   });
   
-  // État pour le mot de passe admin
-  const [adminPasswordModal, setAdminPasswordModal] = useState({
-    show: false,
-    salle: null,
-    hour: null,
-    password: ''
-  });
-  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const ADMIN_PASSWORD = 'R3sa@Morepas78';
 
   // Vérifier si l'utilisateur est admin
@@ -869,7 +865,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       // Colonne 1 : Label de l'heure
       grid.push(
         <div key={`time-${hour}`} className="time-label" style={{ gridRow: rowNumber }}>
-          {googleSheetsService.formatTime(hour)}
+          {hour}h
         </div>
       );
       
@@ -909,7 +905,20 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
               transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
             onMouseDown={() => handleMouseDown(salle, hour)}
-            onMouseEnter={() => handleMouseEnter(salle, hour)}
+            onMouseEnter={(e) => {
+              handleMouseEnter(salle, hour);
+              if (reserved && reservation) {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setHoveredReservation(reservation);
+                setPopupPosition({
+                  x: rect.left + rect.width / 2,
+                  y: rect.top - 10
+                });
+              }
+            }}
+            onMouseLeave={() => {
+              setHoveredReservation(null);
+            }}
             onTouchStart={(e) => {
               e.stopPropagation();
               handleTouchStart(salle, hour);
@@ -917,14 +926,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
           >
             {isAdminRoom && !isAdminUnlocked && !reserved && (
               <span className="lock-icon">🔒</span>
-            )}
-            {reserved && reservation && (
-              <span className="reserved-indicator" title={`${reservation.prenom || ''} ${reservation.nom || ''} - ${reservation.service || ''}`}>
-                {reservation.prenom && reservation.nom 
-                  ? `${reservation.prenom.charAt(0)}. ${reservation.nom}`
-                  : reservation.nom || reservationEmail.split('@')[0]
-                }
-              </span>
             )}
           </div>
         );
@@ -1411,6 +1412,50 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
             >
               Valider
             </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Popup carte élégante au survol */}
+    {hoveredReservation && (
+      <div 
+        className="reservation-popup-card"
+        style={{
+          position: 'fixed',
+          left: `${popupPosition.x}px`,
+          top: `${popupPosition.y}px`,
+          transform: 'translate(-50%, -100%)',
+          zIndex: 10001
+        }}
+      >
+        <div className="popup-card-content">
+          <div className="popup-card-header">
+            <span className="popup-icon">👤</span>
+            <span className="popup-name">
+              {hoveredReservation.prenom ? `${hoveredReservation.prenom} ` : ''}
+              {hoveredReservation.nom || 'Anonyme'}
+            </span>
+          </div>
+          <div className="popup-card-body">
+            {hoveredReservation.email && (
+              <div className="popup-info-line">
+                <span className="popup-info-icon">📧</span>
+                <span className="popup-info-text">{hoveredReservation.email}</span>
+              </div>
+            )}
+            {hoveredReservation.service && (
+              <div className="popup-info-line">
+                <span className="popup-info-icon">🏢</span>
+                <span className="popup-info-text">{hoveredReservation.service}</span>
+              </div>
+            )}
+            <div className="popup-info-line">
+              <span className="popup-info-icon">📅</span>
+              <span className="popup-info-text">
+                {hoveredReservation.dateDebut} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}
+              </span>
+            </div>
           </div>
         </div>
       </div>

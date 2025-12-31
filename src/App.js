@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import CalendarView from './components/CalendarView';
 import ReservationGrid from './components/ReservationGrid';
+import SingleRoomGrid from './components/SingleRoomGrid';
 import MyReservations from './components/MyReservations';
 import AdminPanel from './components/AdminPanel';
 import googleSheetsService from './services/googleSheetsService';
@@ -11,6 +12,7 @@ import emailService from './services/emailService';
 function App() {
   const [currentView, setCurrentView] = useState('calendar');
   const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedRoom, setSelectedRoom] = useState(null);
   const [editReservationId, setEditReservationId] = useState(null);
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
   const [isAdmin, setIsAdmin] = useState(false);
@@ -97,9 +99,15 @@ function App() {
     setCurrentView('reservation');
   };
 
+  const handleRoomSelect = (room) => {
+    setSelectedRoom(room);
+    setCurrentView('roomview');
+  };
+
   const handleBackToCalendar = () => {
     setCurrentView('calendar');
     setSelectedDate(null);
+    setSelectedRoom(null);
     setEditReservationId(null);
   };
 
@@ -164,7 +172,8 @@ function App() {
       <main className="app-main">
         {currentView === 'calendar' && (
           <CalendarView 
-            onDateSelect={handleDateSelect} 
+            onDateSelect={handleDateSelect}
+            onRoomSelect={handleRoomSelect}
             isDateInPast={isDateInPast}
           />
         )}
@@ -173,6 +182,14 @@ function App() {
           <ReservationGrid 
             selectedDate={selectedDate}
             editReservationId={editReservationId}
+            onBack={handleBackToCalendar}
+            onSuccess={handleReservationSuccess}
+          />
+        )}
+
+        {currentView === 'roomview' && selectedRoom && (
+          <SingleRoomGrid 
+            selectedRoom={selectedRoom}
             onBack={handleBackToCalendar}
             onSuccess={handleReservationSuccess}
           />
