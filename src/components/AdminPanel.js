@@ -152,7 +152,7 @@ function AdminPanel() {
   };
 
   const renderSortIcon = (column) => {
-    if (sortColumn !== column) return null;
+    if (sortColumn !== column) return ' ⇅'; // Icône neutre (double flèche)
     return sortDirection === 'asc' ? ' ▲' : ' ▼';
   };
 
@@ -504,7 +504,7 @@ function AdminPanel() {
               </thead>
               <tbody>
                 {filteredReservations.map(res => (
-                  <tr key={res.id} style={{backgroundColor: `${getObjetColor(res.objet)}40`}}>
+                  <tr key={res.id} style={{backgroundColor: `${getObjetColor(res.objet)}20`}}>
                     <td>
                       <div className="salle-cell">
                         <div className="salle-name">{res.salle.split(' - ')[0]}</div>

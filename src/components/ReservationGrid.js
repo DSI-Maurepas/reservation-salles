@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
-import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS, COULEURS_OBJETS } from '../config/googleSheets';
+import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS, COULEURS_OBJETS, JOURS_FERIES } from '../config/googleSheets';
 import ColorLegend from './ColorLegend';
 import SalleCard from './SalleCard';
 import './ReservationGrid.css';
@@ -40,12 +40,14 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     telephone: '',
     service: '',
     objet: '',
+    description: '',
     recurrence: false,
     recurrenceJusquau: '',
     recurrenceType: 'weekly' // 'weekly' ou 'biweekly'
   });
   const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+  const [blockedDayModal, setBlockedDayModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
@@ -73,16 +75,29 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     return isUserAdmin(userEmail); // Salle admin : vérifier si user est admin
   };
 
+  // Vérifier si la date est bloquée (dimanche ou jour férié)
+  const isDateBlocked = (date) => {
+    if (date.getDay() === 0) return true; // Dimanche
+    const dateStr = googleSheetsService.formatDate(date);
+    return JOURS_FERIES.includes(dateStr);
+  };
+
   const loadReservations = useCallback(async () => {
     try {
       const allReservations = await googleSheetsService.getAllReservations();
       const dateStr = googleSheetsService.formatDate(currentDate);
       
       // Filtrer les réservations pour la date sélectionnée
-      const dayReservations = allReservations.filter(res => 
+      let dayReservations = allReservations.filter(res => 
         res.dateDebut === dateStr || 
         (res.dateDebut <= dateStr && res.dateFin >= dateStr)
       );
+      
+      // CORRECTION #13: Exclure la réservation en cours d'édition
+      if (editingReservation && editingReservation.id) {
+        console.log('🔧 Mode édition: Exclusion réservation', editingReservation.id);
+        dayReservations = dayReservations.filter(res => res.id !== editingReservation.id);
+      }
       
       setReservations(dayReservations);
       setLoading(false);
@@ -90,7 +105,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       console.error('Erreur lors du chargement des réservations:', error);
       setLoading(false);
     }
-  }, [currentDate]);
+  }, [currentDate, editingReservation]);
 
   useEffect(() => {
     loadReservations();
@@ -183,6 +198,12 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   };
 
   const handleMouseDown = (salle, hour) => {
+    // BLOQUER si date bloquée (dimanche ou férié)
+    if (isDateBlocked(currentDate)) {
+      setBlockedDayModal(true);
+      return;
+    }
+    
     // BLOQUER si date dans le passé
     if (isDateInPast(currentDate)) {
       alert('⚠️ Impossible de réserver une date passée !\n\nVeuillez sélectionner une date future.');
@@ -574,6 +595,9 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     // Activer l'état de soumission IMMÉDIATEMENT
     setIsSubmitting(true);
 
+    // Forcer React à rendre le modal AVANT de démarrer les opérations lourdes
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     try {
       // PRÉ-FUSIONNER les selections contigues AVANT de créer les réservations
       const mergedSelections = preMergeSelections(selections);
@@ -628,8 +652,10 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
               nom: formData.nom,
               prenom: formData.prenom,
               email: formData.email,
+              telephone: formData.telephone || '',
               service: formData.service,
               objet: formData.objet,
+              description: formData.description || '',
               recurrence: true,
               recurrenceJusquau: formData.recurrenceJusquau
             });
@@ -646,8 +672,10 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
           nom: formData.nom,
           prenom: formData.prenom,
           email: formData.email,
+          telephone: formData.telephone || '',
           service: formData.service,
           objet: formData.objet,
+          description: formData.description || '',
           recurrence: false,
           recurrenceJusquau: null
         }));
@@ -762,6 +790,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         telephone: '',
         service: '',
         objet: '',
+        description: '',
         recurrence: false,
         recurrenceJusquau: '',
         recurrenceType: 'weekly'
@@ -881,13 +910,15 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         const isLunchBreak = hour === 12 || hour === 13;
         const isAdminRoom = isAdminOnlyRoom(salle);
         const canBook = canUserBookRoom(salle, formData.email);
+        const isBlocked = isDateBlocked(currentDate);
         
         grid.push(
           <div
             key={`slot-${salle}-${hour}`}
-            className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''} ${isLunchBreak ? 'lunch-break' : ''} ${isAdminRoom && !isAdminUnlocked ? 'admin-only-locked' : ''}`}
+            className={`time-slot ${reserved ? 'reserved' : ''} ${selected ? 'selected' : ''} ${isLunchBreak ? 'lunch-break' : ''} ${isAdminRoom && !isAdminUnlocked && !reserved ? 'admin-only-locked' : ''} ${isBlocked ? 'blocked' : ''}`}
             data-salle={salle}
             data-hour={hour}
+            data-objet-color={reserved && isLunchBreak ? backgroundColor : ''}
             title={
               isAdminRoom && !isAdminUnlocked 
                 ? `🔒 Salle réservée - Mot de passe requis`
@@ -898,7 +929,9 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
             style={{ 
               gridColumn: salleIndex + 2,
               gridRow: rowNumber,
-              backgroundColor: reserved ? backgroundColor : 'white', // Correction 1
+              background: (reserved && isLunchBreak) 
+                ? `repeating-linear-gradient(45deg, ${backgroundColor}, ${backgroundColor} 8px, ${backgroundColor}dd 8px, ${backgroundColor}dd 16px)`
+                : (reserved ? backgroundColor : 'white'),
               transform: isHighlighted ? 'scale(1.08)' : 'scale(1)',
               boxShadow: isHighlighted ? '0 8px 24px rgba(33, 150, 243, 0.5), 0 0 0 3px rgba(33, 150, 243, 0.3)' : 'none',
               zIndex: isHighlighted ? 100 : 'auto',
@@ -1054,7 +1087,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       <div className="grid-instructions">
         <p>
           <strong>Instructions:</strong> Cliquez et glissez pour sélectionner un ou plusieurs créneaux dans différentes salles.
-          Les cases de couleur sont déjà réservées et affichent le nom de l'agent.
+          Les cases de couleur sont déjà réservées.
         </p>
       </div>
 
@@ -1129,6 +1162,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                   type="text"
                   value={formData.nom}
                   onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                  placeholder="Nom *"
                   required
                 />
               </div>
@@ -1138,29 +1172,30 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                   type="text"
                   value={formData.prenom}
                   onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
+                  placeholder="Prénom"
                 />
               </div>
             </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label>Email *</label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Téléphone</label>
-                <input
-                  type="tel"
-                  value={formData.telephone || ''}
-                  onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-                  placeholder="06 12 34 56 78"
-                />
-              </div>
+            <div className="form-group">
+              <label>Email *</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="Email *"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Téléphone</label>
+              <input
+                type="tel"
+                value={formData.telephone || ''}
+                onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                placeholder="Téléphone"
+              />
             </div>
 
             <div className="form-group">
@@ -1170,7 +1205,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                 onChange={(e) => setFormData({ ...formData, service: e.target.value })}
                 required
               >
-                <option value="">-- Sélectionner un service --</option>
+                <option value="">Sélectionnez un service *</option>
                 {SERVICES.map(service => (
                   <option key={service} value={service}>{service}</option>
                 ))}
@@ -1184,11 +1219,21 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                 onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
                 required
               >
-                <option value="">-- Sélectionner un objet --</option>
+                <option value="">Objet de la réservation *</option>
                 {OBJETS_RESERVATION.map(objet => (
                   <option key={objet} value={objet}>{objet}</option>
                 ))}
               </select>
+            </div>
+
+            <div className="form-group">
+              <label>Description (optionnelle)</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Description (optionnelle)"
+                rows="3"
+              />
             </div>
 
             <div className="form-group checkbox-group">
@@ -1456,6 +1501,27 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                 {hoveredReservation.dateDebut} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}
               </span>
             </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Modal jour bloqué */}
+    {blockedDayModal && (
+      <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}>
+        <div className="blocked-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="blocked-modal-header">
+            <span className="blocked-icon">🚫</span>
+            <h2>Jour bloqué</h2>
+          </div>
+          <div className="blocked-modal-body">
+            <p>Cette date est un <strong>jour férié ou un dimanche</strong>.</p>
+            <p>Les réservations ne sont pas autorisées pour ce jour.</p>
+          </div>
+          <div className="blocked-modal-footer">
+            <button className="blocked-close-button" onClick={() => setBlockedDayModal(false)}>
+              Compris
+            </button>
           </div>
         </div>
       </div>

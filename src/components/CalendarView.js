@@ -227,6 +227,11 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast }) {
             </button>
           </div>
 
+          {/* CORRECTION #4: Bandeau instructions capacités */}
+          <div className="capacity-instructions">
+            <strong>💡 Survolez les catégories ci-dessous pour comprendre les niveaux de disponibilité</strong>
+          </div>
+
           <div className="calendar-legend">
             <div className="legend-item" title="🟢 Disponible (0 réservation)">
               <span className="legend-color available"></span>
