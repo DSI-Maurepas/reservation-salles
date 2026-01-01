@@ -1,5 +1,7 @@
 // src/config/googleSheets.js
 // Configuration pour l'API Google Sheets
+// VERSION FINALE - 31/12/2025
+// Configuration unifiée et validée
 
 export const GOOGLE_CONFIG = {
   API_KEY: 'AIzaSyAfpo4O0YkzjG8AaRl9tz9JMcAdQW3b8nY',
@@ -17,13 +19,14 @@ export const GOOGLE_CONFIG = {
 };
 
 export const EMAIL_CONFIG = {
+  // ⚠️ À COMPLÉTER avec vos identifiants EmailJS réels
   SERVICE_ID: 'VOTRE_SERVICE_ID',
   TEMPLATE_ID_CONFIRMATION: 'VOTRE_TEMPLATE_CONFIRMATION',
   TEMPLATE_ID_ANNULATION: 'VOTRE_TEMPLATE_ANNULATION',
   USER_ID: 'VOTRE_USER_ID'
 };
 
-// Liste des salles de la mairie
+// Liste des salles de la mairie (9 salles)
 export const SALLES = [
   'Salle Conseil - 100 Personnes',
   'Salle Mariages - 30 Personnes',
@@ -36,7 +39,7 @@ export const SALLES = [
   'Salle CCAS - 10 Personnes'
 ];
 
-// Liste des services
+// Liste des services (46 services)
 export const SERVICES = [
   'Achats Publics',
   'Administration Générale',
@@ -85,7 +88,7 @@ export const SERVICES = [
   'Technique / Serres'
 ];
 
-// Types d'objets de réservation
+// Types d'objets de réservation (10 objets)
 export const OBJETS_RESERVATION = [
   'Réunion de service',
   'Réunion Élus / Commissions',
@@ -100,24 +103,13 @@ export const OBJETS_RESERVATION = [
 ];
 
 // Couleurs des objets de réservation - MODERNES ET CONTRASTÉES
-export const COULEURS_OBJETS = {
-  'Réunion de service': '#64B5F6',
-  'Réunion Élus / Commissions': '#E91E63',
-  'Réunion avec prestataire': '#42A5F5',
-  'Formation interne': '#66BB6A',
-  'Formation externe (prestataires)': '#9CCC65',
-  'Événement municipal / public': '#FFA726',
-  'Entretien RH': '#FF7043',
-  'Usage logistique / technique': '#AB47BC',
-  'Permanence (élus ou services)': '#EC407A',
-  'Autre': '#BDBDBD'
-};
+export const COULEURS_OBJETS = {  'Réunion de service': '#64B5F6',  'Réunion Élus / Commissions': '#F06292',  'Réunion avec prestataire': '#0D47A1',  'Formation interne': '#81C784',  'Formation externe (prestataires)': '#1B5E20',  'Événement municipal / public': '#FFA726',  'Entretien RH': '#FF7043',  'Usage logistique / technique': '#AB47BC',  'Permanence (élus ou services)': '#880E4F',  'Autre': '#BDBDBD'};
 
 // Horaires d'ouverture
 export const HORAIRES = {
   HEURE_DEBUT: 8,
   HEURE_FIN: 22,
-  JOURS_OUVRES: [1, 2, 3, 4, 5, 6],
+  JOURS_OUVRES: [1, 2, 3, 4, 5, 6], // Lundi à Samedi
   DUREE_CRENEAU: 1
 };
 
