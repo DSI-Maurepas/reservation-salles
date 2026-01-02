@@ -224,14 +224,13 @@ class GoogleSheetsService {
         reservation.objet,                     // L: Objet
         reservation.recurrence ? 'OUI' : 'NON', // M: Récurrence
         reservation.recurrenceJusquau || '',   // N: Récurrence Jusqu'au
-        reservation.description || '',         // O: Description
-        'active',                              // P: Statut
-        new Date().toISOString()               // Q: Date de création
+        'active',                              // O: Statut
+        new Date().toISOString()               // P: Date de création
       ]];
 
       const response = await window.gapi.client.sheets.spreadsheets.values.append({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
-        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A:Q`,
+        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A:P`,
         valueInputOption: 'USER_ENTERED',
         resource: { values }
       });

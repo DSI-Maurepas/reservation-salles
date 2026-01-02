@@ -158,7 +158,6 @@
 .reservation-grid {
   display: grid;
   grid-template-columns: 35px repeat(9, 1fr);
-  grid-template-rows: repeat(15, 42px);
   column-gap: 0;
   row-gap: 0;
   padding: 0;
@@ -235,7 +234,7 @@
 
 /* Header d'heure - GRIS CLAIR COMME PAR SALLE */
 .time-label {
-  background: #e8e8e8;
+  background: #f5f5f5;
   color: #1976d2;
   padding: 0.3rem 0.05rem;
   text-align: center;
@@ -250,13 +249,14 @@
 }
 
 .time-label:hover {
-  background: #d0d0d0;
+  background: #e8e8e8;
 }
 
 /* CRÉNEAUX - TUILES MODERNES SANS BORDS */
 .time-slot {
   background: white;
   height: 100%;
+  min-height: 42px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -454,21 +454,20 @@
 
 .form-group label {
   display: block;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   color: #334155;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
   width: 100%;
-  padding: 0.9rem 1rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-family: inherit;
+  padding: 0.6rem 0.8rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
   transition: all 0.3s ease;
   background: white;
 }
@@ -477,17 +476,8 @@
 .form-group select:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #2196f3;
-  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-}
-
-.form-group select {
-  cursor: pointer;
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 80px;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
 /* Boutons d'action */
@@ -1664,18 +1654,6 @@ button[class*="current"],
   background: #e0e0e0 !important;
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-/* CORRECTION #2: Jours bloqués + salles admin + lunch = GRIS (pas rouge hachuré) */
-.time-slot.blocked.admin-only-locked.lunch-break,
-.time-slot.blocked.admin-only-locked {
-  background: #e0e0e0 !important;
-  cursor: not-allowed !important;
-  opacity: 0.6 !important;
-}
-
-.time-slot.blocked.admin-only-locked::after {
-  display: none !important;
 }
 
 /* Modal jour bloqué */

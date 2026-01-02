@@ -6,6 +6,24 @@ import emailService from '../services/emailService';
 import { MOTIFS_ANNULATION, COULEURS_OBJETS } from '../config/googleSheets';
 import './MyReservations.css';
 
+// CORRECTION #10: Fonction pour convertir couleurs en pastel
+const toPastel = (hexColor) => {
+  if (!hexColor || hexColor === '#f9f9f9') return '#f9f9f9';
+  
+  // Convertir hex en RGB
+  const r = parseInt(hexColor.slice(1, 3), 16);
+  const g = parseInt(hexColor.slice(3, 5), 16);
+  const b = parseInt(hexColor.slice(5, 7), 16);
+  
+  // Éclaircir en mélangeant avec du blanc (80% blanc, 20% couleur)
+  const pastelR = Math.round(r * 0.3 + 255 * 0.7);
+  const pastelG = Math.round(g * 0.3 + 255 * 0.7);
+  const pastelB = Math.round(b * 0.3 + 255 * 0.7);
+  
+  // Reconvertir en hex
+  return `#${pastelR.toString(16).padStart(2, '0')}${pastelG.toString(16).padStart(2, '0')}${pastelB.toString(16).padStart(2, '0')}`;
+};
+
 function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const [reservations, setReservations] = useState([]);
   const [filteredReservations, setFilteredReservations] = useState([]);
@@ -266,6 +284,8 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const handleExport = () => {
     if (exportFormat === 'csv') {
       exportToCSV();
+    } else if (exportFormat === 'xlsx') {
+      exportToXLSX();
     } else {
       exportToICalendar();
     }
@@ -291,6 +311,45 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `reservations_${userEmail}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  // CORRECTION #11: Export XLSX avec toutes les colonnes
+  const exportToXLSX = () => {
+    const headers = ['Salle', 'Date', 'Horaire', 'Agent', 'Service', 'Objet', 'Email', 'Téléphone', 'Description', 'Récurrence'];
+    const rows = filteredReservations.map(res => [
+      res.salle,
+      new Date(res.dateDebut).toLocaleDateString('fr-FR'),
+      `${res.heureDebut} - ${res.heureFin}`,
+      `${res.prenom || ''} ${res.nom || ''}`.trim(),
+      res.service,
+      res.objet,
+      res.email || '',
+      res.telephone || '',
+      res.description || '',
+      res.recurrence ? `OUI (jusqu'au ${res.recurrenceJusquau || 'N/A'})` : 'NON'
+    ]);
+
+    // Créer XML Excel
+    const xmlContent = `<?xml version="1.0"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Worksheet ss:Name="Réservations">
+  <Table>
+   <Row>
+    ${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}
+   </Row>
+   ${rows.map(row => `<Row>
+    ${row.map(cell => `<Cell><Data ss:Type="String">${String(cell).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Data></Cell>`).join('')}
+   </Row>`).join('')}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+
+    const blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `reservations_${userEmail}_${new Date().toISOString().split('T')[0]}.xls`;
     link.click();
   };
 
@@ -382,6 +441,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
         <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}>
           <option value="ical">📅 iCalendar (.ics)</option>
           <option value="csv">📊 CSV</option>
+          <option value="xlsx">📗 Excel (.xls)</option>
         </select>
         <button onClick={handleExport} className="export-btn">
           ⬇️ Exporter
@@ -417,7 +477,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
             </thead>
             <tbody>
               {getSortedReservations().map((reservation, index) => {
-                const backgroundColor = COULEURS_OBJETS[reservation.objet] || '#f9f9f9';
+                const backgroundColor = toPastel(COULEURS_OBJETS[reservation.objet] || '#f9f9f9');
                 
                 return (
                   <tr key={index} style={{ backgroundColor }}>

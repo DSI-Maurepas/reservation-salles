@@ -1,0 +1,79 @@
+# ========================================
+# COMMANDES GIT - COMPILATION ET UPLOAD
+# ========================================
+
+# OPTION 1 - AVEC SCRIPT AUTOMATIQUE
+# -------------------------------------
+# Rendre le script exécutable (une seule fois)
+chmod +x git-deploy.sh
+
+# Lancer le script
+./git-deploy.sh
+
+
+# OPTION 2 - COMMANDES MANUELLES
+# -------------------------------------
+
+# 1. Compiler l'application
+npm run build
+
+# 2. Voir les fichiers modifiés
+git status
+
+# 3. Ajouter tous les fichiers modifiés
+git add src/
+git add public/
+git add docs/
+git add build/
+git add package.json
+git add package-lock.json
+
+# OU ajouter TOUT d'un coup (plus simple)
+git add .
+
+# 4. Faire le commit avec un message
+git commit -m "Mise à jour réservations salles - corrections finales"
+
+# 5. Envoyer vers Git distant (origin)
+git push origin main
+
+# Si erreur avec 'main', essayer avec 'master'
+git push origin master
+
+
+# COMMANDES UTILES SUPPLÉMENTAIRES
+# -------------------------------------
+
+# Voir l'historique des commits
+git log --oneline -10
+
+# Voir la branche actuelle
+git branch
+
+# Voir les dépôts distants configurés
+git remote -v
+
+# Annuler le dernier commit (ATTENTION : dangereux)
+git reset --soft HEAD~1
+
+# Forcer le push (ATTENTION : écrase l'historique distant)
+git push --force origin main
+
+
+# DÉPLOIEMENT GITHUB PAGES (si applicable)
+# -------------------------------------
+
+# Si vous utilisez GitHub Pages pour héberger l'app
+npm run deploy
+
+# OU configuration manuelle :
+# 1. Ajouter dans package.json :
+#    "homepage": "https://VOTRE-USERNAME.github.io/VOTRE-REPO"
+#    "predeploy": "npm run build"
+#    "deploy": "gh-pages -d build"
+#
+# 2. Installer gh-pages :
+#    npm install --save-dev gh-pages
+#
+# 3. Déployer :
+#    npm run deploy

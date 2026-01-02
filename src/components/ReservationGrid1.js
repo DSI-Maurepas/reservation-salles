@@ -40,7 +40,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     telephone: '',
     service: '',
     objet: '',
-    description: '',
     recurrence: false,
     recurrenceJusquau: '',
     recurrenceType: 'weekly' // 'weekly' ou 'biweekly'
@@ -88,16 +87,10 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       const dateStr = googleSheetsService.formatDate(currentDate);
       
       // Filtrer les réservations pour la date sélectionnée
-      let dayReservations = allReservations.filter(res => 
+      const dayReservations = allReservations.filter(res => 
         res.dateDebut === dateStr || 
         (res.dateDebut <= dateStr && res.dateFin >= dateStr)
       );
-      
-      // CORRECTION #13: Exclure la réservation en cours d'édition
-      if (editingReservation && editingReservation.id) {
-        console.log('🔧 Mode édition: Exclusion réservation', editingReservation.id);
-        dayReservations = dayReservations.filter(res => res.id !== editingReservation.id);
-      }
       
       setReservations(dayReservations);
       setLoading(false);
@@ -105,7 +98,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       console.error('Erreur lors du chargement des réservations:', error);
       setLoading(false);
     }
-  }, [currentDate, editingReservation]);
+  }, [currentDate]);
 
   useEffect(() => {
     loadReservations();
@@ -652,10 +645,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
               nom: formData.nom,
               prenom: formData.prenom,
               email: formData.email,
-              telephone: formData.telephone || '',
               service: formData.service,
               objet: formData.objet,
-              description: formData.description || '',
               recurrence: true,
               recurrenceJusquau: formData.recurrenceJusquau
             });
@@ -672,10 +663,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
           nom: formData.nom,
           prenom: formData.prenom,
           email: formData.email,
-          telephone: formData.telephone || '',
           service: formData.service,
           objet: formData.objet,
-          description: formData.description || '',
           recurrence: false,
           recurrenceJusquau: null
         }));
@@ -790,7 +779,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         telephone: '',
         service: '',
         objet: '',
-        description: '',
         recurrence: false,
         recurrenceJusquau: '',
         recurrenceType: 'weekly'
@@ -1087,7 +1075,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       <div className="grid-instructions">
         <p>
           <strong>Instructions:</strong> Cliquez et glissez pour sélectionner un ou plusieurs créneaux dans différentes salles.
-          Les cases de couleur sont déjà réservées.
+          Les cases de couleur sont déjà réservées et affichent le nom de l'agent.
         </p>
       </div>
 
@@ -1162,7 +1150,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                   type="text"
                   value={formData.nom}
                   onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                  placeholder="Nom *"
                   required
                 />
               </div>
@@ -1172,30 +1159,29 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                   type="text"
                   value={formData.prenom}
                   onChange={(e) => setFormData({ ...formData, prenom: e.target.value })}
-                  placeholder="Prénom"
                 />
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Email *</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Email *"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Téléphone</label>
-              <input
-                type="tel"
-                value={formData.telephone || ''}
-                onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
-                placeholder="Téléphone"
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Email *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Téléphone</label>
+                <input
+                  type="tel"
+                  value={formData.telephone || ''}
+                  onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                  placeholder="06 12 34 56 78"
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -1205,7 +1191,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                 onChange={(e) => setFormData({ ...formData, service: e.target.value })}
                 required
               >
-                <option value="">Sélectionnez un service *</option>
+                <option value="">-- Sélectionner un service --</option>
                 {SERVICES.map(service => (
                   <option key={service} value={service}>{service}</option>
                 ))}
@@ -1219,21 +1205,11 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                 onChange={(e) => setFormData({ ...formData, objet: e.target.value })}
                 required
               >
-                <option value="">Objet de la réservation *</option>
+                <option value="">-- Sélectionner un objet --</option>
                 {OBJETS_RESERVATION.map(objet => (
                   <option key={objet} value={objet}>{objet}</option>
                 ))}
               </select>
-            </div>
-
-            <div className="form-group">
-              <label>Description (optionnelle)</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Description (optionnelle)"
-                rows="3"
-              />
             </div>
 
             <div className="form-group checkbox-group">

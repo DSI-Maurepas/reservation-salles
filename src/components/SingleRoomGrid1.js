@@ -39,13 +39,9 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
     nom: '',
     prenom: '',
     email: '',
-    telephone: '',
     service: '',
     objet: '',
-    description: '',
-    recurrence: false,
-    recurrenceType: 'weekly',
-    recurrenceJusquau: ''
+    description: ''
   });
 
   const salleData = getSalleData(selectedRoom);
@@ -212,41 +208,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
     setDragStart(null);
   };
 
-  // Calculer les occurrences récurrentes
-  const calculateRecurrences = (baseDate, type, endDate) => {
-    const dates = [];
-    let current = new Date(baseDate);
-    const end = new Date(endDate);
-    
-    // Maximum 2 ans
-    const maxDate = new Date(baseDate);
-    maxDate.setFullYear(maxDate.getFullYear() + 2);
-    const finalEnd = end < maxDate ? end : maxDate;
-    
-    while (current <= finalEnd) {
-      // Vérifier si pas dimanche/férié
-      if (!isDateBlocked(current)) {
-        dates.push(new Date(current));
-      }
-      
-      // Incrémenter selon type
-      if (type === 'weekly') {
-        current.setDate(current.getDate() + 7);
-      } else if (type === 'biweekly') {
-        current.setDate(current.getDate() + 14);
-      } else if (type === 'monthly') {
-        current.setMonth(current.getMonth() + 1);
-      }
-    }
-    
-    return dates;
-  };
-
-  // CORRECTION #8: Fonction pour supprimer une sélection
-  const removeSelection = (index) => {
-    setSelections(selections.filter((_, i) => i !== index));
-  };
-
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     if (selections.length === 0) {
@@ -270,28 +231,12 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
         reservationsByDay[dateStr].push(sel.hour);
       });
 
-      // Si récurrence, calculer toutes les dates
-      let allDates = [];
-      if (formData.recurrence && formData.recurrenceJusquau) {
-        const baseDate = new Date(Object.keys(reservationsByDay)[0]);
-        const recurrentDates = calculateRecurrences(baseDate, formData.recurrenceType, formData.recurrenceJusquau);
-        allDates = recurrentDates;
-      } else {
-        allDates = Object.keys(reservationsByDay).map(d => new Date(d));
-      }
-
       const createdReservations = [];
-      const blockedDates = [];
-      const conflictDates = [];
-      
-      setSubmissionProgress({ current: 0, total: allDates.length });
+      const totalReservations = Object.keys(reservationsByDay).length;
+      setSubmissionProgress({ current: 0, total: totalReservations });
 
       let count = 0;
-      for (const date of allDates) {
-        const dateStr = googleSheetsService.formatDate(date);
-        
-        // Pour récurrence, utiliser les mêmes heures que la sélection initiale
-        const hours = reservationsByDay[Object.keys(reservationsByDay)[0]] || [];
+      for (const [dateStr, hours] of Object.entries(reservationsByDay)) {
         hours.sort((a, b) => a - b);
         const startHour = hours[0];
         const endHour = hours[hours.length - 1] + 1;
@@ -306,49 +251,26 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
           statut: 'confirmée'
         };
 
-        // Vérifier conflits
-        try {
-          const conflicts = await googleSheetsService.checkConflicts(reservation);
-          if (conflicts.length > 0) {
-            conflictDates.push(dateStr);
-            count++;
-            setSubmissionProgress({ current: count, total: allDates.length });
-            continue; // Passer à la date suivante
-          }
-          
-          console.log('📤 Création réservation:', reservation);
-          const created = await googleSheetsService.addReservation(reservation);
-          console.log('✅ Réservation créée:', created);
-          createdReservations.push({...reservation, id: created.id});
-          
-        } catch (err) {
-          console.error('Erreur création:', err);
-          conflictDates.push(dateStr);
-        }
+        console.log('📤 Création réservation:', reservation);
+        const created = await googleSheetsService.addReservation(reservation);
+        console.log('✅ Réservation créée:', created);
+        createdReservations.push(created);
         
         count++;
-        setSubmissionProgress({ current: count, total: allDates.length });
+        setSubmissionProgress({ current: count, total: totalReservations });
       }
 
       setIsSubmitting(false);
-      
-      // Message avec dates impossibles
-      let message = `${createdReservations.length} réservation${createdReservations.length > 1 ? 's créées' : ' créée'} avec succès !`;
-      if (conflictDates.length > 0) {
-        message += `\n\n⚠️ ${conflictDates.length} date${conflictDates.length > 1 ? 's' : ''} ignorée${conflictDates.length > 1 ? 's' : ''} (déjà réservée${conflictDates.length > 1 ? 's' : ''}) :\n${conflictDates.join(', ')}`;
-      }
-      
       setSuccessModal({
         show: true,
         reservations: createdReservations,
-        message: message
+        message: `${createdReservations.length} réservation${createdReservations.length > 1 ? 's créées' : ' créée'} avec succès !`
       });
       setSelections([]);
       setShowForm(false);
-      setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '' });
+      setFormData({ nom: '', prenom: '', email: '', service: '', objet: '', description: '' });
       loadWeekReservations();
-      // CORRECTION : Ne pas rediriger immédiatement, laisser l'utilisateur voir le modal
-      // if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess();
     } catch (error) {
       console.error('❌ Erreur création réservations:', error);
       setIsSubmitting(false);
@@ -428,34 +350,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                 <span className="form-icon">📝</span>
                 Réservation de {selections.length} {creneauText}
               </h3>
-
-              {/* CORRECTION #8: Bloc vert créneaux sélectionnés avec bouton ❌ */}
-              <div className="selections-summary">
-                <h4>📍 Créneau{selections.length > 1 ? 'x' : ''} sélectionné{selections.length > 1 ? 's' : ''}</h4>
-                {selections.map((sel, index) => {
-                  const dateStr = googleSheetsService.formatDate(sel.date);
-                  const startHour = sel.hour;
-                  const endHour = sel.hour + 1;
-                  
-                  return (
-                    <div key={index} className="selection-item">
-                      <div className="selection-info">
-                        <p><strong>{selectedRoom}</strong></p>
-                        <p>{dateStr} · {googleSheetsService.formatTime(startHour)} - {googleSheetsService.formatTime(endHour)} (1h)</p>
-                      </div>
-                      <button 
-                        type="button" 
-                        className="remove-selection-btn"
-                        onClick={() => removeSelection(index)}
-                        title="Supprimer cette sélection"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-
               <form onSubmit={handleFormSubmit} className="room-form">
                 <div className="form-row">
                   <input 
@@ -480,13 +374,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                   value={formData.email} 
                   onChange={(e) => setFormData({...formData, email: e.target.value})} 
                   required 
-                  className="form-input"
-                />
-                <input 
-                  type="tel" 
-                  placeholder="Téléphone" 
-                  value={formData.telephone} 
-                  onChange={(e) => setFormData({...formData, telephone: e.target.value})} 
                   className="form-input"
                 />
                 <select 
@@ -514,43 +401,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                   rows="3"
                   className="form-textarea"
                 />
-                
-                {/* Récurrence */}
-                <div className="form-checkbox">
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={formData.recurrence}
-                      onChange={(e) => setFormData({...formData, recurrence: e.target.checked})}
-                    />
-                    <span>Réservation récurrente</span>
-                  </label>
-                </div>
-
-                {formData.recurrence && (
-                  <>
-                    <select
-                      value={formData.recurrenceType}
-                      onChange={(e) => setFormData({...formData, recurrenceType: e.target.value})}
-                      className="form-select"
-                    >
-                      <option value="weekly">Chaque semaine</option>
-                      <option value="biweekly">Une semaine sur 2</option>
-                      <option value="monthly">Chaque mois</option>
-                    </select>
-                    <input
-                      type="date"
-                      placeholder="Récurrence jusqu'au"
-                      value={formData.recurrenceJusquau}
-                      onChange={(e) => setFormData({...formData, recurrenceJusquau: e.target.value})}
-                      min={selections.length > 0 ? googleSheetsService.formatDate(selections[0].date) : new Date().toISOString().split('T')[0]}
-                      max={selections.length > 0 ? new Date(new Date(selections[0].date).setFullYear(new Date(selections[0].date).getFullYear() + 2)).toISOString().split('T')[0] : new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString().split('T')[0]}
-                      required
-                      className="form-input"
-                    />
-                  </>
-                )}
-
                 <div className="form-actions">
                   <button type="button" onClick={handleCancelSelection} className="btn-cancel">
                     ✖ Annuler
