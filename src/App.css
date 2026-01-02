@@ -1,4 +1,5 @@
 /* src/App.css */
+/* VERSION OPTIMISÉE FULL HD 1920x1080 */
 /* FOND MODERNE ET DYNAMIQUE */
 
 :root {
@@ -60,12 +61,12 @@ body {
   z-index: 0;
 }
 
-/* Header moderne - BLEU BLASON MAUREPAS */
+/* HEADER OPTIMISÉ - 80px → 50px (-30px) */
 .app-header {
   background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
   backdrop-filter: blur(10px);
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
-  padding: 1rem 2rem;
+  padding: 0.6rem 1.5rem;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -78,24 +79,24 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .header-title {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .blason-maurepas {
-  height: 50px;
+  height: 35px;
   width: auto;
   filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.1));
 }
 
 .header-title h1 {
   color: white;
-  font-size: 1.5rem;
+  font-size: 1.15rem;
   font-weight: 700;
   margin: 0;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
@@ -104,7 +105,7 @@ body {
 /* Navigation */
 .main-nav {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .main-nav button {
@@ -112,9 +113,9 @@ body {
   backdrop-filter: blur(10px);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0.7rem 1.5rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 10px;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -134,23 +135,23 @@ body {
   box-shadow: 0 4px 20px rgba(37, 99, 235, 0.6);
 }
 
-/* Contenu principal */
+/* CONTENU PRINCIPAL - ESPACEMENT RÉDUIT */
 .app-main {
   max-width: 1400px;
-  margin: 2rem auto;
-  padding: 0 2rem;
+  margin: 0.75rem auto;
+  padding: 0 1.5rem;
   position: relative;
   z-index: 1;
 }
 
-/* Footer moderne - BLEU ROI */
+/* FOOTER OPTIMISÉ - 85px → 50px (-35px) */
 .app-footer {
   background: linear-gradient(135deg, #0a1e4a 0%, #1e3a8a 100%);
   backdrop-filter: blur(10px);
   color: rgba(255, 255, 255, 0.7);
   text-align: center;
-  padding: 1.5rem;
-  margin-top: 3rem;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
   border-top: 2px solid rgba(37, 99, 235, 0.4);
   position: relative;
   z-index: 1;
@@ -158,10 +159,10 @@ body {
 
 .app-footer p {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
-/* Loading state - BLEU ROI */
+/* Loading state */
 .app-loading {
   min-height: 100vh;
   display: flex;
@@ -197,11 +198,11 @@ body {
   .header-content {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 0.8rem;
   }
   
   .header-title h1 {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
   
   .main-nav {
@@ -216,11 +217,11 @@ body {
   
   .app-main {
     padding: 0 1rem;
-    margin: 1rem auto;
+    margin: 0.5rem auto;
   }
 }
 
-/* Animations d'entrée pour les pages */
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -239,7 +240,7 @@ body {
   animation: fadeIn 0.5s ease;
 }
 
-/* Scrollbar personnalisée - BLEU ROI */
+/* Scrollbar personnalisée */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
