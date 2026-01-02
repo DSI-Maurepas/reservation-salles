@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/reservation-salles/static/css/main.8e6c1b83.css",
+    "main.js": "/reservation-salles/static/js/main.af7d637d.js",
+    "index.html": "/reservation-salles/index.html",
+    "main.8e6c1b83.css.map": "/reservation-salles/static/css/main.8e6c1b83.css.map",
+    "main.af7d637d.js.map": "/reservation-salles/static/js/main.af7d637d.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.8e6c1b83.css",
+    "static/js/main.af7d637d.js"
+  ]
+}
