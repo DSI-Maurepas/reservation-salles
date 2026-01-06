@@ -9,7 +9,6 @@ import SalleCard from './SalleCard';
 import './SingleRoomGrid.css';
 
 function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
-  // ... (Code logique inchangé jusqu'au render) ...
   const getMondayOfWeek = (d) => { const date = new Date(d); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); const monday = new Date(date.setDate(diff)); monday.setHours(0, 0, 0, 0); return monday; };
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getMondayOfWeek(new Date()));
   const [reservations, setReservations] = useState([]);
@@ -63,10 +62,9 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '✅ Réservation confirmée !' }); setSelections([]); setShowForm(false); loadWeekReservations(); } catch (error) { alert('Erreur: ' + error.message); } finally { setIsSubmitting(false); } };
   const handleFormSubmit = async (e) => { e.preventDefault(); if (dispositions && !formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(sel.date); const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); const dates = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } };
   
-  // MERGE (OPTION A)
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
   
-  // TITRE DYNAMIQUE (Sans 'S' à Réservation)
+  // TITRE DYNAMIQUE (Option A)
   const getFormTitle = () => {
     const count = mergedForDisplay.length;
     if (count > 1) return `Réservation de ${count} créneaux`;
@@ -105,7 +103,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
             )}
             {showForm && selections.length > 0 && (
               <div className="room-form-container">
-                {/* TITRE MODIFIÉ ICI */}
                 <h3 className="form-title">{getFormTitle()}</h3>
                 <div className="selections-summary">
                   {mergedForDisplay.map((sel, idx) => (
