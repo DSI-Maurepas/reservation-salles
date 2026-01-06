@@ -1,5 +1,5 @@
 /* src/components/SingleRoomGrid.css */
-/* VERSION RESPONSIVE CORRIGÉE : MOBILE & TABLETTE */
+/* VERSION CORRIGÉE : BOUTONS RESPONSIVE (IN-BLOCK) & JOURS ABRÉGÉS */
 
 .single-room-container { width: 100%; padding: 1rem 2rem; padding-bottom: 80px; }
 
@@ -14,7 +14,7 @@
 .week-date-display { color: #1565c0; margin: 0 0.5rem; font-size: 1.1rem; font-weight: 700; text-transform: capitalize; white-space: nowrap; }
 .nav-group-right-spacer { display: none; }
 
-/* LAYOUT : Grid Desktop */
+/* LAYOUT */
 .single-room-layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: start; }
 .room-sidebar { position: sticky; top: 1rem; z-index: 10; }
 
@@ -25,62 +25,23 @@
 .week-grid tbody { display: table-row-group !important; }
 .week-grid tr { display: table-row !important; }
 
-/* HEADER JOURS */
-.week-grid th { 
-  display: table-cell !important; 
-  height: 50px !important;
-  padding: 0 !important; 
-  background: #1976d2; 
-  color: white; 
-  border: 1px solid #1565c0; 
-  text-align: center; 
-  vertical-align: middle; 
-}
-
-/* HEADER HEURE */
-.hour-header { 
-  width: 52px; 
-  background: white !important; 
-  color: #1976d2 !important; 
-  border: 1px solid #e2e8f0 !important;
-  text-align: center !important; 
-  vertical-align: middle !important;
-  padding: 0 !important; 
-}
+/* EN-TÊTES JOURS */
+.week-grid th { display: table-cell !important; height: 50px !important; padding: 0 !important; background: #1976d2; color: white; border: 1px solid #1565c0; text-align: center; vertical-align: middle; }
+.hour-header { width: 52px; background: white !important; color: #1976d2 !important; border: 1px solid #e2e8f0 !important; text-align: center !important; vertical-align: middle !important; padding: 0 !important; }
 
 .day-header .day-name { display: block; font-weight: 800; text-transform: uppercase; font-size: 0.85rem; text-align: center; }
-.day-header .day-date { 
-  font-size: 0.8rem; 
-  color: white !important; 
-  text-align: center; 
-  display: block; 
-  margin-top: 2px;
-}
+.day-header .day-date { font-size: 0.8rem; color: white !important; text-align: center; display: block; margin-top: 2px; }
+
+/* GESTION VISIBILITÉ NOMS JOURS (DESKTOP) */
+.name-short { display: none; }
+.name-full { display: inline; }
 
 /* CELLULES */
 .week-grid td { display: table-cell !important; height: 25px; padding: 0; vertical-align: middle; position: relative; border-right: 1px solid #e2e8f0; }
 .week-grid tr:last-child td { border-bottom: 1px solid #64748b !important; }
 
-.hour-cell-full { 
-  background: white; 
-  color: #94a3b8; 
-  font-size: 0.75rem; 
-  font-weight: 600; 
-  text-align: center !important; 
-  vertical-align: middle !important; 
-  padding: 0 !important;
-  border-bottom: none !important; 
-  border-right: 1px solid #e2e8f0; 
-}
-
-.hour-cell-half { 
-  background: white;
-  border-top: none !important; 
-  border-bottom: 1px solid #64748b !important; 
-  border-right: 1px solid #e2e8f0;
-  text-align: center !important;
-}
-
+.hour-cell-full { background: white; color: #94a3b8; font-size: 0.75rem; font-weight: 600; text-align: center !important; vertical-align: middle !important; padding: 0 !important; border-bottom: none !important; border-right: 1px solid #e2e8f0; }
+.hour-cell-half { background: white; border-top: none !important; border-bottom: 1px solid #64748b !important; border-right: 1px solid #e2e8f0; text-align: center !important; }
 .full-hour-border { border-top: 1px solid #64748b; }
 .half-hour-border { border-top: 1px dotted rgba(0, 0, 0, 0.3); }
 
@@ -164,6 +125,17 @@
     justify-content: center; /* Tout centré */
     grid-column: auto; /* Reset grid */
   }
+
+  /* CORRECTION BOUTONS NAV : WRAP POUR RESTER DANS LE BLOC */
+  .nav-group-center {
+    flex-wrap: wrap; /* Permet le passage à la ligne */
+    gap: 0.5rem; /* Espace réduit */
+  }
+  
+  .week-nav-btn {
+    padding: 0.5rem 0.8rem; /* Boutons légèrement plus petits */
+    font-size: 0.85rem;
+  }
   
   /* 3. Layout principal : On casse la grille 350px | 1fr */
   .single-room-layout {
@@ -189,4 +161,8 @@
   .room-form-container {
     max-height: none;
   }
+
+  /* --- AFFICHAGE JOURS COURTS --- */
+  .name-short { display: inline; }
+  .name-full { display: none; }
 }
