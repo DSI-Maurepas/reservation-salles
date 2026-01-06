@@ -353,9 +353,13 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     grid.push(<div key="corner" className="grid-corner">Heure</div>);
     SALLES.forEach((salle, idx) => {
       const parts = salle.split(' - ');
+      const originalName = parts[0];
+      const mobileName = originalName.replace('Salle Conseil', 'Conseil').replace('Salle Mariages', 'Mariages');
+
       grid.push(
         <div key={`h-${idx}`} className="salle-header" style={{gridColumn: idx+2}} onMouseEnter={() => setHoveredSalle(salle)} onMouseLeave={() => setHoveredSalle(null)}>
-          <span className="salle-name">{parts[0]}</span>
+          <span className="salle-name desktop-name">{originalName}</span>
+          <span className="salle-name mobile-name">{mobileName}</span>
           <span className="salle-capacity">{parts[1]||''}</span>
         </div>
       );
@@ -405,14 +409,11 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     return grid;
   };
 
-  // Préparation des sélections fusionnées
   const mergedSelectionsForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
 
-  // CORRECTION : TITRE DYNAMIQUE AVEC "RÉSERVATION" AU SINGULIER
   const getFormTitle = () => {
     if (isEditMode) return 'Modifier la réservation';
     const count = mergedSelectionsForDisplay.length;
-    // Accord : Réservation (singulier) + créneaux (pluriel si > 1)
     if (count > 1) return `Réservation de ${count} créneaux`;
     return "Réservation d'un créneau";
   };
@@ -439,6 +440,10 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         <div className="nav-group-right"></div>
       </div>
 
+      <div className="mobile-instruction">
+        Cliquez sur le nom d'une salle pour en connaître les propriétés
+      </div>
+
       <div className="reservation-content" onMouseUp={handleMouseUp}>
         <div className="grid-column">
           <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>{renderGrid()}</div>
@@ -447,7 +452,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         <div className="form-column">
           {selections.length > 0 ? (
             <div className="reservation-form">
-                {/* UTILISATION DU TITRE CORRIGÉ */}
                 <h3>{getFormTitle()}</h3>
                 
                 <div className="selections-summary">
@@ -464,7 +468,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    {/* ... (Reste du formulaire inchangé) ... */}
                     <div className="form-row"><input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required style={{flex:1}} /><input className="form-input" placeholder="Prénom" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} style={{flex:1}} /></div>
                     <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
                     <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} />
@@ -505,7 +508,35 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         </div>
       </div>
 
-      {hoveredReservation && <div className="reservation-popup-card" style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}><div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div><div className="popup-card-body">{hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}{hoveredReservation.service && <div className="popup-info-line"><span className="popup-info-icon">🏢</span><span className="popup-info-text">{hoveredReservation.service}</span></div>}<div className="popup-info-line"><span className="popup-info-icon">📅</span><span className="popup-info-text">{new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</span></div></div></div>}
+      {hoveredReservation && (
+        <div className="reservation-popup-card" style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}>
+          <div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div>
+          <div className="popup-card-body">
+            {hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}
+            {hoveredReservation.service && <div className="popup-info-line"><span className="popup-info-icon">🏢</span><span className="popup-info-text">{hoveredReservation.service}</span></div>}
+            <div className="popup-info-line"><span className="popup-info-icon">📅</span><span className="popup-info-text">{new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</span></div>
+            
+            {/* RESTAURATION DE L'AGENCEMENT ET NB PERSONNES */}
+            {(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (
+              <>
+                {hoveredReservation.agencement && (
+                  <div className="popup-info-line">
+                    <span className="popup-info-icon">🪑</span>
+                    <span className="popup-info-text">Disposition : {hoveredReservation.agencement}</span>
+                  </div>
+                )}
+                {hoveredReservation.nbPersonnes && (
+                  <div className="popup-info-line">
+                    <span className="popup-info-icon">👥</span>
+                    <span className="popup-info-text">{hoveredReservation.nbPersonnes} pers.</span>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><h2>Fermé</h2><p>Dimanche/Férié fermé.</p><button className="blocked-close-button" onClick={() => setBlockedDayModal(false)}>Fermer</button></div></div>}
       {adminPasswordModal.show && <div className="modal-overlay"><div className="modal-content"><h3>Admin</h3><input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" /><div className="modal-footer"><button className="cancel-button" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button><button className="submit-button" onClick={handleAdminPasswordSubmit}>Valider</button></div></div></div>}
       {successModal.show && (<div className="success-modal-overlay" onClick={() => setSuccessModal({show:false, reservations:[], message:''})}><div className="success-modal" onClick={e => e.stopPropagation()}><div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div><div className="success-modal-body"><p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p><div className="reservations-list">{successModal.reservations.map((res, i) => (<div key={i} className="reservation-item-success"><span className="calendar-icon">📅 </span>{res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin}</div>))}</div><div className="ical-download-section"><button className="download-ical-button" onClick={(e) => { e.stopPropagation(); icalService.generateAndDownload(successModal.reservations); }}>📥 Télécharger le fichier .ics</button></div></div><div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({show:false, reservations:[], message:''})}>Fermer</button></div></div></div>)}
