@@ -1,0 +1,61 @@
+# SCRIPT UPLOAD GITHUB - Réservation Salles Maurepas
+# Sauvegarder ce script sous : upload-github.ps1
+
+# Configuration (MODIFIER AVEC VOS INFOS)
+$GITHUB_USERNAME = "VOTRE_USERNAME"
+$GITHUB_REPO = "reservation-salles-maurepas"
+$YOUR_NAME = "Votre Nom"
+$YOUR_EMAIL = "votre.email@maurepas.fr"
+
+Write-Host "🚀 Début du processus d'upload vers GitHub..." -ForegroundColor Green
+
+# 1. Aller dans le dossier
+cd c:\dev\reservation-salles
+
+# 2. Vérifier que .gitignore existe
+if (-not (Test-Path ".gitignore")) {
+    Write-Host "⚠️  Création de .gitignore..." -ForegroundColor Yellow
+    @"
+node_modules/
+build/
+.env
+src/config/googleSheets.js
+"@ | Out-File -FilePath .gitignore -Encoding UTF8
+}
+
+# 3. Configurer Git
+Write-Host "🔧 Configuration Git..." -ForegroundColor Cyan
+git config --global user.name "$YOUR_NAME"
+git config --global user.email "$YOUR_EMAIL"
+
+# 4. Initialiser Git (si pas déjà fait)
+if (-not (Test-Path ".git")) {
+    Write-Host "📂 Initialisation Git..." -ForegroundColor Cyan
+    git init
+}
+
+# 5. Compiler l'application
+Write-Host "📦 Compilation de l'application..." -ForegroundColor Cyan
+npm run build
+
+# 6. Ajouter tous les fichiers
+Write-Host "📥 Ajout des fichiers..." -ForegroundColor Cyan
+git add .
+
+# 7. Créer le commit
+Write-Host "💾 Création du commit..." -ForegroundColor Cyan
+git commit -m "Initial commit - Application réservation salles Maurepas v1.0"
+
+# 8. Lier au dépôt distant
+Write-Host "🔗 Liaison au dépôt GitHub..." -ForegroundColor Cyan
+git remote add origin "https://github.com/$GITHUB_USERNAME/$GITHUB_REPO.git"
+
+# 9. Définir la branche
+git branch -M main
+
+# 10. Pousser vers GitHub
+Write-Host "🚀 Upload vers GitHub..." -ForegroundColor Green
+git push -u origin main
+
+Write-Host "✅ Upload terminé avec succès !" -ForegroundColor Green
+Write-Host "🌐 Voir sur : https://github.com/$GITHUB_USERNAME/$GITHUB_REPO" -ForegroundColor Cyan

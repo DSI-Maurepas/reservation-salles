@@ -229,7 +229,7 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast }) {
 
           {/* CORRECTION #4: Bandeau instructions capacités */}
           <div className="capacity-instructions">
-            <strong>💡 Survolez les catégories ci-dessous pour comprendre les niveaux de disponibilité</strong>
+            <strong>💡 Survolez les catégories ci-dessous pour afficher les niveaux de disponibilité des salles dans la journée</strong>
           </div>
 
           <div className="calendar-legend">
@@ -270,14 +270,14 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast }) {
             <h3>📋 Instructions</h3>
             <ul>
               <li>Cliquez sur une date pour accéder au tableau de réservation</li>
-              <li>Les couleurs indiquent la disponibilité des salles</li>
+              <li>Les couleurs indiquent la disponibilité des salles dans une journée</li>
               <li>Les dimanches et jours fériés sont fermés</li>
-              <li>Horaires d'ouverture : 8h - 22h (Lundi - Samedi)</li>
+              <li>Horaires d'ouverture (Créneau = 1h) : 8h - 22h (Lundi - Samedi)</li>
             </ul>
           </div>
         </>
       ) : (
-        <RoomSelector onRoomSelect={onRoomSelect} />
+        <RoomSelector onSelectRoom={onRoomSelect} />
       )}
     </div>
   );

@@ -104,6 +104,11 @@ function App() {
     setCurrentView('roomview');
   };
 
+  const handleRoomSelection = (roomName) => {
+    setSelectedRoom(roomName);
+    setCurrentView('roomview');
+  };
+
   const handleBackToCalendar = () => {
     setCurrentView('calendar');
     setSelectedDate(null);

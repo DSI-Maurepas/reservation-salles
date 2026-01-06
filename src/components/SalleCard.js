@@ -3,27 +3,41 @@ import React from 'react';
 import './SalleCard.css';
 import { getSalleData } from '../data/sallesData';
 
-// Icônes pour les équipements
+// Icônes pour les équipements (Détection par mot-clé)
 const getEquipementIcon = (equipement) => {
-  const icons = {
-    'WiFi': '📡',
-    'Écran': '🖥️',
-    'Tableau blanc': '⬜',
-    'Vidéoprojecteur': '📽️',
-    'Paperboard': '📋'
-  };
-  return icons[equipement] || '🔧';
+  if (!equipement) return '🔧';
+  const text = equipement.toLowerCase();
+
+  // Ordre important : "tableau" avant "table" pour éviter les confusions
+  if (text.includes('wifi')) return '📡';
+  if (text.includes('vidéoprojecteur')) return '📽️';
+  if (text.includes('écran')) return '🖥️';
+  if (text.includes('tableau')) return '⬜';
+  if (text.includes('paperboard')) return '📋';
+  
+  // Nouveaux émojis demandés
+  if (text.includes('sonorisation')) return '🔊';
+  if (text.includes('téléphone')) return '☎️';
+  if (text.includes('réseau')) return '🌐';     // Prise réseau
+  if (text.includes('électrique')) return '🔌'; // Prises électriques
+  if (text.includes('chaise')) return '🪑';
+  if (text.includes('table')) return '🟫';      // Tables (après tableau)
+
+  return '🔧';
 };
 
 // Icônes pour les dispositions
 const getDispositionIcon = (disposition) => {
-  const icons = {
-    'Table en U': '🔲',
-    'Table en carré': '⬛',
-    'Conférence': '🎤',
-    'Libre': '🔄'
-  };
-  return icons[disposition] || '📐';
+  if (!disposition) return '📐';
+  const text = disposition.toLowerCase();
+
+  if (text.includes('conseil')) return '🏛️';    // Format Conseil
+  if (text.includes('u')) return '⛎';          // Tables en U (Symbole Ophiuchus)
+  if (text.includes('carré')) return '⏹️';      // Tables en carré
+  if (text.includes('conférence')) return '🎓'; // Style conférence (Chapeau)
+  if (text.includes('libre')) return '🔄';      // Format Libre
+
+  return '📐';
 };
 
 function SalleCard({ salle }) {
@@ -60,7 +74,6 @@ function SalleCard({ salle }) {
 
           {equipements && equipements.length > 0 && (
             <div className="info-item equipements">
-              <span className="info-icon">🔧</span>
               <span className="info-label">Équipements</span>
               <div className="equipements-list">
                 {equipements.map((equip, index) => (
@@ -75,7 +88,6 @@ function SalleCard({ salle }) {
 
           {dispositions && dispositions.length > 0 && (
             <div className="info-item dispositions">
-              <span className="info-icon">📐</span>
               <span className="info-label">Dispositions possibles</span>
               <div className="dispositions-list">
                 {dispositions.map((dispo, index) => (
