@@ -7,15 +7,13 @@ export const SALLES_DATA = {
     nom: 'Salle Conseil',
     capacite: 100,
     photo: process.env.PUBLIC_URL + '/images/Salle_Conseil.jpg',
-    equipements: ['Vidéoprojecteur', 'Écran projection', 'Micros/Amplificateur sonore', 'Tables', 'Chaises', 'Prises électriques', 'WiFi public', 'WiFi mairie'],
-    dispositions: ['Format Conseil', 'Tables en U', 'Tables en carré', 'Style conférence', 'Libre']
+    equipements: ['Vidéoprojecteur', 'Écran', 'Sonorisation', 'Tables', 'Chaises', 'Prises électriques', 'WiFi public', 'WiFi'],
   },
   'Salle Mariages - 30 Personnes': {
     nom: 'Salle Mariages',
     capacite: 30,
     photo: process.env.PUBLIC_URL + '/images/Salle_Mariages.jpg',
-    equipements: ['2 Écrans numériques', 'Tables', 'Chaises', 'WiFi public', 'WiFi mairie'],
-    dispositions: ['Tables en U', 'Tables en carré', 'Style conférence', 'Libre']
+    equipements: ['2 Écrans', 'Tables', 'Chaises', 'WiFi public', 'WiFi'],
   },
   'Salle 16e A - 20 Personnes': {
     nom: 'Salle 16e A',
@@ -35,28 +33,28 @@ export const SALLES_DATA = {
     nom: 'Salle N°1',
     capacite: 2,
     photo: process.env.PUBLIC_URL + '/images/Salle_1.jpg',
-    equipements: ['2 Tables', '4 Chaises', '1 Téléphone', '3 Prises électriques', 'WiFi public', 'WiFi mairie'],
+    equipements: ['2 Tables', '4 Chaises', 'Téléphone', '3 Prises électriques', 'WiFi', 'WiFi public'],
     dispositions: null
   },
   'Salle N°2 - 12 Personnes': {
     nom: 'Salle N°2',
     capacite: 12,
     photo: process.env.PUBLIC_URL + '/images/Salle_2.jpg',
-    equipements: ['3 Tables', '12 Chaises', '1 Écran', '1 Téléphone', '13 Prises électriques', '9 Prises réseau', 'WiFi public', 'WiFi mairie'],
+    equipements: ['3 Tables', '12 Chaises', 'Écran', 'Téléphone', '13 Prises électriques', 'WiFi', '9 Prises réseau', 'WiFi public'],
     dispositions: null
   },
   'Salle N°3 - 8 Personnes': {
     nom: 'Salle N°3',
     capacite: 8,
     photo: process.env.PUBLIC_URL + '/images/Salle_3.jpg',
-    equipements: ['2 Tables', '8 Chaises', '1 Téléphone', '8 Prises électriques', '4 Prises réseau', 'WiFi public', 'WiFi mairie'],
+    equipements: ['2 Tables', '8 Chaises', 'Écran', 'Téléphone', '8 Prises électriques', 'WiFi', '4 Prises réseau', 'WiFi public'],
     dispositions: null
   },
   'Salle N°4 - 4 Personnes': {
     nom: 'Salle N°4',
     capacite: 4,
     photo: process.env.PUBLIC_URL + '/images/Salle_4.jpg',
-    equipements: ['2 Tables', '4 Chaises', '4 Prises électriques', '4 Prises réseau', 'WiFi public', 'WiFi mairie'],
+    equipements: ['2 Tables', '4 Chaises', '4 Prises électriques', 'WiFi', '4 Prises réseau', 'WiFi public'],
     dispositions: null
   },
   'Salle CCAS - 10 Personnes': {
@@ -75,14 +73,14 @@ export const sallesData = [
     nom: 'Salle Conseil',
     image: 'Salle_Conseil.jpg',
     capacite: 100,
-    dispositions: ['Format Conseil', 'Tables en U', 'Tables en carré', 'Style conférence', 'Libre']
+    dispositions: ['Tables en U', 'Tables en carré', 'Format Conférence', 'Format Libre', 'Format Conseil']
   },
   {
     id: 2,
     nom: 'Salle Mariages',
     image: 'Salle_Mariages.jpg',
     capacite: 30,
-    dispositions: ['Tables en U', 'Tables en carré', 'Style conférence', 'Libre']
+    dispositions: ['Tables en U', 'Tables en carré', 'Format Conférence', 'Format Libre']
   },
   {
     id: 3,
@@ -137,5 +135,15 @@ export const sallesData = [
 
 // Fonction helper pour obtenir les données d'une salle
 export const getSalleData = (salleNom) => {
-  return SALLES_DATA[salleNom] || null;
+  // Si on reçoit le nom complet (ex: "Salle Conseil - 100 Personnes")
+  if (SALLES_DATA[salleNom]) {
+    return SALLES_DATA[salleNom];
+  }
+  
+  // Si on reçoit le nom court (ex: "Salle Conseil"), chercher par nom
+  const found = Object.entries(SALLES_DATA).find(([key, value]) => 
+    value.nom === salleNom
+  );
+  
+  return found ? found[1] : null;
 };

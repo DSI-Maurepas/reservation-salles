@@ -1,113 +1,99 @@
 // src/services/icalService.js
-// Service pour générer des fichiers iCalendar (.ics) pour Outlook/Google Calendar
 
-class ICalService {
+const icalService = {
   /**
-   * Génère un fichier .ics à partir d'une ou plusieurs réservations
-   * @param {Array|Object} reservations - Une réservation ou un tableau de réservations
-   * @param {string} filename - Nom du fichier à télécharger (optionnel)
+   * Formate une date JS en chaîne iCal (YYYYMMDDTHHmm00)
+   * Prend en compte le fuseau horaire local pour l'affichage correct
    */
-  generateAndDownload(reservations, filename = null) {
-    // Convertir en tableau si c'est un seul objet
-    const reservationArray = Array.isArray(reservations) ? reservations : [reservations];
+  formatDateToIcalString: (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return '';
+    // dateStr est au format YYYY-MM-DD
+    // timeStr est au format HH:mm ou HH:mm:ss
+    const [year, month, day] = dateStr.split('-');
+    const [hour, minute] = timeStr.split(':');
     
-    // Générer le contenu iCal
-    const icalContent = this.generateICalContent(reservationArray);
-    
-    // Télécharger le fichier
-    this.downloadICalFile(icalContent, filename);
-  }
+    return `${year}${month}${day}T${hour}${minute}00`;
+  },
 
   /**
-   * Génère le contenu iCalendar
-   * @param {Array} reservations - Tableau de réservations
-   * @returns {string} - Contenu au format iCalendar
+   * Génère le contenu du fichier .ics
    */
-  generateICalContent(reservations) {
-    let icalContent = 'BEGIN:VCALENDAR\n';
-    icalContent += 'VERSION:2.0\n';
-    icalContent += 'PRODID:-//Mairie//Réservation Salles//FR\n';
-    icalContent += 'CALSCALE:GREGORIAN\n';
-    icalContent += 'METHOD:PUBLISH\n';
-    icalContent += 'X-WR-CALNAME:Réservations Salles Mairie\n';
-    icalContent += 'X-WR-TIMEZONE:Europe/Paris\n';
+  generateICSContent: (reservations) => {
+    let icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Mairie de Maurepas//Reservation Salles//FR',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH' // Indique qu'il s'agit d'événements à publier/ajouter
+    ];
 
-    reservations.forEach(res => {
-      // Format des dates : YYYYMMDDTHHMMSS
-      const startDateTime = `${res.dateDebut.replace(/-/g, '')}T${res.heureDebut.replace(':', '')}00`;
-      const endDateTime = `${(res.dateFin || res.dateDebut).replace(/-/g, '')}T${res.heureFin.replace(':', '')}00`;
-      const now = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    reservations.forEach((res, index) => {
+      // Nettoyage du nom de la salle (retirer la capacité si présente pour le titre)
+      const salleNom = res.salle.split(' - ')[0];
       
-      icalContent += 'BEGIN:VEVENT\n';
-      icalContent += `UID:${res.id || `RES_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`}@mairie.fr\n`;
-      icalContent += `DTSTAMP:${now}\n`;
-      icalContent += `DTSTART:${startDateTime}\n`;
-      icalContent += `DTEND:${endDateTime}\n`;
-      icalContent += `SUMMARY:Réservation ${res.salle}\n`;
-      icalContent += `DESCRIPTION:Objet: ${res.objet}\\nService: ${res.service}\\nAgent: ${res.prenom} ${res.nom}\n`;
-      icalContent += `LOCATION:${res.salle} - Mairie\n`;
-      icalContent += 'STATUS:CONFIRMED\n';
-      icalContent += 'TRANSP:OPAQUE\n';
+      const startDateTime = icalService.formatDateToIcalString(res.dateDebut, res.heureDebut);
+      const endDateTime = icalService.formatDateToIcalString(res.dateFin || res.dateDebut, res.heureFin);
       
-      // Ajouter un rappel 15 minutes avant
-      icalContent += 'BEGIN:VALARM\n';
-      icalContent += 'TRIGGER:-PT15M\n';
-      icalContent += 'ACTION:DISPLAY\n';
-      icalContent += `DESCRIPTION:Rappel: Réservation ${res.salle}\n`;
-      icalContent += 'END:VALARM\n';
+      // Création d'un UID unique pour l'événement
+      const uid = `res-${res.id || index}-${Date.now()}@maurepas.fr`;
       
-      icalContent += 'END:VEVENT\n';
+      // Description détaillée
+      let description = `Réservation de salle : ${res.salle}\\n`;
+      description += `Service : ${res.service}\\n`;
+      description += `Objet : ${res.objet}\\n`;
+      if (res.description) description += `Note : ${res.description}\\n`;
+      if (res.agencement) description += `Disposition : ${res.agencement}\\n`;
+      if (res.nbPersonnes) description += `Nombre de personnes : ${res.nbPersonnes}\\n`;
+
+      icsContent.push(
+        'BEGIN:VEVENT',
+        `UID:${uid}`,
+        `DTSTAMP:${new Date().toISOString().replace(/[-:.]/g, '')}`,
+        `DTSTART:${startDateTime}`,
+        `DTEND:${endDateTime}`,
+        `SUMMARY:Réservation ${salleNom}`,
+        `DESCRIPTION:${description}`,
+        `LOCATION:Mairie de Maurepas - ${res.salle}`,
+        'STATUS:CONFIRMED',
+        'SEQUENCE:0',
+        'END:VEVENT'
+      );
     });
 
-    icalContent += 'END:VCALENDAR';
-    
-    return icalContent;
-  }
+    icsContent.push('END:VCALENDAR');
+    return icsContent.join('\r\n'); // Retour chariot standard pour iCal
+  },
 
   /**
-   * Télécharge un fichier iCalendar
-   * @param {string} icalContent - Contenu iCalendar
-   * @param {string} filename - Nom du fichier (optionnel)
+   * Génère le fichier et déclenche le téléchargement
    */
-  downloadICalFile(icalContent, filename = null) {
-    const defaultFilename = `reservation_${new Date().toISOString().split('T')[0]}.ics`;
-    const finalFilename = filename || defaultFilename;
-    
-    // Créer un blob avec le bon type MIME
-    const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
-    
-    // Créer un lien temporaire et simuler un clic
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = finalFilename;
-    a.style.display = 'none';
-    document.body.appendChild(a);
-    a.click();
-    
-    // Nettoyer
-    setTimeout(() => {
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    }, 100);
-  }
-
-  /**
-   * Génère un nom de fichier descriptif basé sur les réservations
-   * @param {Array} reservations - Tableau de réservations
-   * @returns {string} - Nom de fichier
-   */
-  generateFilename(reservations) {
-    if (reservations.length === 1) {
-      const res = reservations[0];
-      return `reservation_${res.salle.replace(/\s+/g, '_')}_${res.dateDebut}.ics`;
-    } else {
-      const firstDate = reservations[0].dateDebut;
-      return `reservations_${reservations.length}_creneaux_${firstDate}.ics`;
+  generateAndDownload: (reservations) => {
+    try {
+      const content = icalService.generateICSContent(reservations);
+      
+      // Création du Blob avec encodage UTF-8 explicite
+      const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+      
+      // Création du lien de téléchargement
+      const link = document.createElement('a');
+      link.href = window.URL.createObjectURL(blob);
+      
+      // Nom du fichier : reservation_DATE.ics
+      const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+      link.download = `reservations_maurepas_${dateStr}.ics`;
+      
+      // Déclenchement
+      document.body.appendChild(link);
+      link.click();
+      
+      // Nettoyage
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
+    } catch (error) {
+      console.error("Erreur lors de la génération du fichier ICS :", error);
+      alert("Une erreur est survenue lors de la création du fichier calendrier.");
     }
   }
-}
+};
 
-// Export une instance unique
-const icalService = new ICalService();
 export default icalService;

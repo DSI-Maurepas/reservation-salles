@@ -110,7 +110,7 @@ export const HORAIRES = {
   HEURE_DEBUT: 8,
   HEURE_FIN: 22,
   JOURS_OUVRES: [1, 2, 3, 4, 5, 6], // Lundi à Samedi
-  DUREE_CRENEAU: 1
+  DUREE_CRENEAU: 0.5 // Passage à 30 minutes (CRITIQUE)
 };
 
 // Jours fériés français 2024-2032

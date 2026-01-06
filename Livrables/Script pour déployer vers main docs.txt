@@ -1,0 +1,285 @@
+cd /c/dev/reservation-salles || exit 1
+
+echo "🧹 Nettoyage"
+rm -rf build docs
+
+echo "🏗️ Build React"
+npm run build || exit 1
+
+echo "📁 Copie vers docs/"
+mkdir docs
+cp -r build/* docs/
+
+echo "📦 Commit & push"
+git add docs
+git commit -m "Deploy React app to /docs"
+git push origin main
+
+
+
+
+/////////////////////////////
+
+#!/bin/bash
+# FIX IMAGES + DEPLOY vers main/docs pour GitHub Pages
+
+set -e  # Arrêt si erreur
+
+cd c:/dev/reservation-salles
+
+echo "🖼️ FIX IMAGES + DEPLOY GITHUB PAGES (main/docs)"
+echo "================================================="
+echo ""
+
+# ========================================
+# PARTIE 1 : CORRECTION DES CHEMINS IMAGES
+# ========================================
+
+echo "📝 ÉTAPE 1 : Correction des chemins d'images"
+echo "---------------------------------------------"
+
+# Backup des fichiers
+echo "💾 Sauvegarde des fichiers originaux..."
+BACKUP_DIR="backups/images-fix-$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$BACKUP_DIR"
+find src -name "*.js" -o -name "*.jsx" | while read file; do
+    cp "$file" "$BACKUP_DIR/$(basename $file).backup"
+done
+echo "✅ Backup créé dans $BACKUP_DIR"
+
+# Recherche des fichiers avec chemins absolus
+echo ""
+echo "🔍 Recherche des images avec chemins absolus..."
+FILES=$(find src -type f \( -name "*.js" -o -name "*.jsx" \) -exec grep -l 'src="/images\|src="/public' {} \; 2>/dev/null || true)
+
+if [ -z "$FILES" ]; then
+    echo "✅ Aucun chemin absolu d'image trouvé"
+else
+    echo "📋 Fichiers à corriger :"
+    echo "$FILES" | while read file; do
+        echo "   - $file"
+    done
+    echo ""
+    
+    # Correction automatique
+    echo "🔧 Application des corrections..."
+    echo "$FILES" | while read file; do
+        echo "   Correction de $file..."
+        
+        # Remplacer src="/images par src={process.env.PUBLIC_URL + "/images
+        sed -i 's|src="/images/|src={process.env.PUBLIC_URL + "/images/|g' "$file"
+        sed -i "s|src='/images/|src={process.env.PUBLIC_URL + '/images/|g" "$file"
+        
+        # Remplacer src="/public par src={process.env.PUBLIC_URL + "
+        sed -i 's|src="/public/|src={process.env.PUBLIC_URL + "/|g' "$file"
+        sed -i "s|src='/public/|src={process.env.PUBLIC_URL + '/|g" "$file"
+        
+        # Fermer les accolades pour les extensions
+        sed -i 's|\(\.png\|\.jpg\|\.jpeg\|\.gif\|\.svg\|\.webp\)"|\1"}|g' "$file"
+        sed -i "s|\(\.png\|\.jpg\|\.jpeg\|\.gif\|\.svg\|\.webp\)'|\1'}|g" "$file"
+    done
+    
+    echo "✅ Corrections appliquées"
+fi
+
+# ========================================
+# PARTIE 2 : CONFIGURATION POUR main/docs
+# ========================================
+
+echo ""
+echo "⚙️ ÉTAPE 2 : Configuration pour déploiement main/docs"
+echo "------------------------------------------------------"
+
+# Modifier package.json pour utiliser docs/ au lieu de gh-pages
+echo "📝 Mise à jour package.json..."
+
+# Backup package.json
+cp package.json package.json.backup-$(date +%Y%m%d-%H%M%S)
+
+# Modifier le script deploy pour copier vers docs/
+cat > package.json << 'PACKAGE_JSON_EOF'
+{
+  "name": "reservation-salles",
+  "version": "1.0.0",
+  "private": true,
+  "homepage": "https://dsi-maurepas.github.io/reservation-salles",
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-scripts": "5.0.1",
+    "web-vitals": "^2.1.4",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "npm run build && npm run copy-to-docs",
+    "copy-to-docs": "rm -rf docs && cp -r build docs"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
+PACKAGE_JSON_EOF
+
+echo "✅ package.json mis à jour (deploy → docs/)"
+
+# ========================================
+# PARTIE 3 : COMPILATION
+# ========================================
+
+echo ""
+echo "🏗️ ÉTAPE 3 : Compilation de l'application"
+echo "------------------------------------------"
+
+# Vérifier que les images existent
+echo "🔍 Vérification des images..."
+if [ -d "public/images" ]; then
+    IMAGE_COUNT=$(find public/images -type f | wc -l)
+    echo "✅ Dossier public/images/ trouvé ($IMAGE_COUNT fichiers)"
+else
+    echo "⚠️ Dossier public/images/ n'existe pas"
+fi
+
+# Compilation
+echo ""
+echo "📦 Compilation avec React Scripts..."
+npm run build
+
+# Vérifier que build contient les images
+if [ -d "build/images" ]; then
+    BUILD_IMAGE_COUNT=$(find build/images -type f 2>/dev/null | wc -l || echo 0)
+    echo "✅ Images copiées dans build/ ($BUILD_IMAGE_COUNT fichiers)"
+else
+    echo "⚠️ Aucune image dans build/images/"
+fi
+
+# ========================================
+# PARTIE 4 : COPIE VERS docs/
+# ========================================
+
+echo ""
+echo "📂 ÉTAPE 4 : Copie build/ → docs/"
+echo "----------------------------------"
+
+# Supprimer ancien docs/
+if [ -d "docs" ]; then
+    echo "🗑️ Suppression ancien docs/..."
+    rm -rf docs
+fi
+
+# Copier build vers docs
+echo "📋 Copie build/ → docs/..."
+cp -r build docs
+
+# Vérifier
+if [ -d "docs" ] && [ -f "docs/index.html" ]; then
+    echo "✅ docs/ créé avec succès"
+    
+    # Afficher la taille
+    DOCS_SIZE=$(du -sh docs | cut -f1)
+    echo "   Taille : $DOCS_SIZE"
+    
+    # Compter les fichiers
+    FILE_COUNT=$(find docs -type f | wc -l)
+    echo "   Fichiers : $FILE_COUNT"
+else
+    echo "❌ Erreur : docs/ non créé correctement"
+    exit 1
+fi
+
+# ========================================
+# PARTIE 5 : COMMIT ET PUSH VERS GITHUB
+# ========================================
+
+echo ""
+echo "🚀 ÉTAPE 5 : Commit et push vers GitHub"
+echo "----------------------------------------"
+
+# Ajouter docs/ au git
+echo "📥 Ajout de docs/ à Git..."
+git add docs/
+
+# Ajouter les corrections de code
+echo "📥 Ajout des corrections de code..."
+git add src/
+git add package.json
+
+# Vérifier qu'il y a des changements
+if git diff --cached --quiet; then
+    echo "ℹ️ Aucun changement à commiter"
+else
+    # Créer le commit
+    echo "💾 Création du commit..."
+    git commit -m "fix: Correction chemins images + Déploiement vers docs/
+
+- Correction chemins images (process.env.PUBLIC_URL)
+- Compilation build/
+- Copie vers docs/ pour GitHub Pages
+- Configuration homepage pour /reservation-salles/
+
+Déploiement : main/docs
+Date : $(date +'%d/%m/%Y %H:%M')"
+    
+    echo "✅ Commit créé"
+fi
+
+# Push vers GitHub
+echo ""
+echo "⬆️ Push vers GitHub main..."
+git push origin main
+
+echo ""
+echo "✅ ✅ ✅ DÉPLOIEMENT TERMINÉ ! ✅ ✅ ✅"
+
+# ========================================
+# PARTIE 6 : CONFIGURATION GITHUB PAGES
+# ========================================
+
+echo ""
+echo "⚙️ ÉTAPE 6 : Configuration GitHub Pages"
+echo "---------------------------------------"
+echo ""
+echo "🌐 CONFIGURATION REQUISE SUR GITHUB :"
+echo ""
+echo "1. Aller sur :"
+echo "   https://github.com/DSI-Maurepas/reservation-salles/settings/pages"
+echo ""
+echo "2. Configurer :"
+echo "   Source : Deploy from a branch"
+echo "   Branch : main"
+echo "   Folder : /docs"
+echo ""
+echo "3. Cliquer 'Save'"
+echo ""
+echo "⏳ Après configuration, attendre 2-3 minutes puis tester :"
+echo "   https://dsi-maurepas.github.io/reservation-salles/"
+echo ""
+echo "📋 VÉRIFICATIONS :"
+echo "   ✓ Images corrigées dans src/"
+echo "   ✓ Build compilé"
+echo "   ✓ docs/ créé et pushé sur GitHub"
+echo "   ✓ À faire : Configurer GitHub Pages → main/docs"
+echo ""
+echo "🎉 Script terminé avec succès !"
