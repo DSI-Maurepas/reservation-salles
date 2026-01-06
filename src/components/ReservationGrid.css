@@ -1,5 +1,5 @@
 /* src/components/ReservationGrid.css */
-/* VERSION CORRIGÉE : BOUTON CALENDRIER DANS LE FLUX, A GAUCHE, CENTRE PARFAIT */
+/* VERSION FINALE : RESPONSIVE GRID SCROLL, BOUTONS STACK, FORMULAIRE VISIBLE */
 
 .reservation-grid-container {
   background: transparent !important;
@@ -13,38 +13,39 @@
 
 @keyframes slideIn { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
 
-/* HEADER : FLEXBOX ÉQUILIBRÉ 3 PARTIES */
+/* === HEADER NAVIGATION (DESKTOP) === */
 .date-navigation-bar {
-  display: flex; /* Flexbox pour gérer l'alignement */
+  display: flex; 
+  justify-content: center; 
   align-items: center;
-  justify-content: space-between; /* Distribue l'espace : Gauche - Centre - Droite */
-  
+  position: relative; /* Référence pour desktop */
   margin-bottom: 20px;
   padding: 0.8rem 1.5rem;
   background: white;
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  min-height: 60px;
+  min-height: 50px;
 }
 
-/* GROUPE GAUCHE (Bouton Calendrier) */
-/* Prend 1 part de l'espace disponible et colle son contenu à gauche */
+/* Groupe Gauche (Calendrier) - Desktop : Absolu */
 .nav-group-left { 
-  flex: 1; /* Prend l'espace disponible pour pousser le centre */
+  position: absolute;
+  left: 1.5rem; 
+  top: 50%;
+  transform: translateY(-50%); 
   display: flex;
-  justify-content: flex-start; /* Aligné à gauche */
+  z-index: 10;
 }
 
 .back-button-small { background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 10px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3); display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
 .back-button-small:hover { background: linear-gradient(135deg, #475569 0%, #334155 100%); transform: translateY(-2px); }
 
-/* GROUPE CENTRAL (Navigation Dates) */
-/* Ne grandit pas, reste centré grâce à l'équilibre gauche/droite */
+/* Groupe Central (Dates) - Desktop */
 .nav-group-center { 
   display: flex; 
   align-items: center; 
   gap: 0.8rem; 
-  /* Pas de flex: 1 ici, il garde sa taille naturelle */
+  z-index: 5;
 }
 
 .nav-day-button, .nav-week-button, .nav-today-button { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.2s ease; box-shadow: 0 2px 5px rgba(33, 150, 243, 0.2); display: flex; align-items: center; justify-content: center; }
@@ -53,31 +54,65 @@
 .nav-day-button:hover, .nav-week-button:hover, .nav-today-button:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .date-display h2 { margin: 0; color: #1565c0; font-size: 1.2rem; font-weight: 800; text-transform: capitalize; min-width: 250px; text-align: center; letter-spacing: -0.5px; }
 
-/* GROUPE DROIT (VIDE MAIS INDISPENSABLE) */
-/* Prend 1 part de l'espace disponible (comme à gauche) pour équilibrer */
-.nav-group-right {
-  flex: 1; /* Identique à nav-group-left */
-  display: flex;
-  justify-content: flex-end; /* Aligné à droite (même si vide) */
+/* === LAYOUT (DESKTOP) === */
+.reservation-content { 
+  display: grid; 
+  grid-template-columns: minmax(900px, 1fr) 350px; 
+  gap: 20px; 
+  align-items: start; 
 }
 
-/* LAYOUT & AUTRES STYLES (INCHANGÉS ET CORRECTS) */
-.reservation-content { display: grid; grid-template-columns: minmax(900px, 1fr) 350px; gap: 20px; align-items: start; }
-.grid-column { width: 100%; height: auto; min-height: 650px; overflow: visible; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); background: white; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 10px; }
-.form-column { width: 100%; height: auto; display: flex; flex-direction: column; gap: 20px; }
+.grid-column { 
+  width: 100%; 
+  height: auto; 
+  min-height: 650px;
+  overflow: visible; 
+  border-radius: 16px; 
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
+  background: white; 
+  display: flex; 
+  flex-direction: column; 
+  border: 1px solid #e2e8f0; 
+  padding: 10px;
+}
+
+.form-column { 
+  width: 100%; 
+  height: auto; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 20px; 
+}
+
+/* Force suppression marges enfants */
 .form-column > * { margin-top: 0 !important; margin-bottom: 0 !important; }
 
-/* GRILLE - 45px Colonne Heure */
-.reservation-grid { display: grid; grid-template-columns: 45px repeat(9, 1fr); grid-template-rows: 57px repeat(28, 25px); gap: 0; padding: 0; background: white; height: auto; width: 100%; overflow: visible; user-select: none; -webkit-user-select: none; }
+/* === GRILLE (DESKTOP) === */
+.reservation-grid { 
+  display: grid; 
+  grid-template-columns: 45px repeat(9, 1fr); 
+  grid-template-rows: 57px repeat(28, 25px); 
+  gap: 0; 
+  padding: 0; 
+  background: white; 
+  height: auto; 
+  width: 100%; 
+  overflow: visible; 
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 .grid-corner { background: #f1f5f9; color: #64748b; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; position: sticky; top: 0; left: 0; z-index: 30; border-bottom: 1px solid #64748b; border-right: 1px solid #64748b; }
 .salle-header { background: #1976d2; color: white !important; padding: 0.2rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; border-right: 1px solid rgba(255,255,255,0.3); border-bottom: 1px solid #64748b; position: sticky; top: 0; z-index: 20; }
 .salle-name { display: block; font-size: 0.85rem !important; font-weight: 700; color: white !important; line-height: 1.2; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 95%; }
 .salle-capacity { display: block; font-size: 0.75rem !important; font-weight: 400; color: white !important; opacity: 0.9; }
+
 .time-label { background: #f8fafc; color: #334155; font-weight: 700; font-size: 0.85rem; display: flex; align-items: flex-start; justify-content: center; padding-top: 2px; line-height: 1; border-right: 1px solid #64748b; border-top: 1px solid #64748b; position: sticky; left: 0; z-index: 10; user-select: none; }
 .time-slot { background: white; height: 100%; cursor: pointer; border-right: 1px solid #94a3b8; position: relative; display: flex; align-items: center; justify-content: center; }
 .time-slot.full-hour-start { border-top: 1px solid #64748b; }
 .time-slot.half-hour-start { border-top: 1px dotted rgba(0, 0, 0, 0.3); }
 .reservation-grid > div:nth-last-child(-n+9) { border-bottom: 1px solid #64748b; }
+
 .time-slot:hover:not(.reserved):not(.lunch-break):not(.blocked):not(.past-date) { background-color: #e0f2fe; }
 .time-slot.selected { background: #22c55e !important; box-shadow: inset 0 0 0 1px #15803d; }
 .time-slot.blocked { background: #cfd8dc; background-image: repeating-linear-gradient(45deg, #b0bec5, #b0bec5 10px, #cfd8dc 10px, #cfd8dc 20px); cursor: not-allowed; }
@@ -86,6 +121,8 @@
 .time-slot.lunch-break:not(.reserved)::after { content: '🍽️'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2rem; opacity: 0.4; pointer-events: none; }
 .time-slot.admin-only-locked { background: repeating-linear-gradient(45deg, #fee2e2, #fee2e2 10px, #fecaca 10px, #fecaca 20px); }
 .lock-icon { font-size: 0.8rem; opacity: 0.5; }
+
+/* === FORMULAIRE & ELEMENTS === */
 .reservation-form { background: white; padding: 1rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; height: auto; max-height: 800px; overflow-y: auto; }
 .reservation-form h3 { color: #1e293b; font-size: 1.1rem; margin-bottom: 0.8rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.4rem; }
 .form-row { display: flex; gap: 0.8rem; width: 100%; }
@@ -93,9 +130,40 @@
 .form-input, .form-select, .form-textarea { width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
 .disposition-select { background-color: #fffbeb; border-color: #fcd34d; color: #92400e; }
 .selections-summary { background: #e8f5e9; border: 1px solid #4caf50; border-radius: 8px; padding: 0.6rem; margin-bottom: 0.8rem; }
-.selection-item { background: white; border: 1px solid #a5d6a7; border-radius: 6px; padding: 0.5rem; margin-bottom: 0.3rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.selection-info p { margin: 0; color: #2e7d32; font-weight: 700; font-size: 0.85rem; }
-.remove-selection-btn { background: #ef5350; color: white; width: 20px; height: 20px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; }
+
+/* ITEM DE SÉLECTION - OPTIMISÉ POUR FLEXIBILITÉ */
+.selection-item { 
+  background: white; 
+  border: 1px solid #a5d6a7; 
+  border-radius: 6px; 
+  padding: 0.5rem; 
+  margin-bottom: 0.3rem; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+  gap: 10px; /* Écart minimal garanti */
+}
+
+/* Le texte prend la place dispo mais peut rétrécir */
+.selection-info {
+  flex: 1;
+  min-width: 0; /* CRUCIAL pour éviter que le texte ne pousse la boite */
+}
+
+.selection-info p { 
+  margin: 0; 
+  color: #2e7d32; 
+  font-weight: 700; 
+  font-size: 0.85rem; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; /* Coupe le texte proprement si trop long */
+}
+
+.remove-selection-btn { background: #ef5350; color: white; width: 20px; height: 20px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.8rem; flex-shrink: 0; /* Interdit de rétrécir le bouton */ }
+
+/* ... (Reste des styles popup, modal, etc. inchangés) ... */
 .recurrence-section-styled { margin-bottom: 0.8rem; }
 .recurrence-box { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 0.6rem; border-radius: 4px; display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
 .recurrence-box label { margin: 0; color: #1565c0; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
@@ -131,4 +199,74 @@
 .conflict-list li { font-size: 0.9rem; margin-bottom: 0.5rem; color: #e65100; font-weight: 600; }
 .warning-modal-footer { padding: 1.5rem; background: #f9f9f9; display: flex; justify-content: space-between; gap: 1rem; }
 
-@media (max-width: 1280px) { .reservation-content { grid-template-columns: 1fr; } .grid-column { height: auto; } }
+/* ----------------------------------------------------------------- */
+/* MEDIA QUERIES - RESPONSIVE DESIGN CORRIGÉ */
+/* ----------------------------------------------------------------- */
+
+@media (max-width: 1280px) {
+  /* 1. Conteneur principal */
+  .reservation-grid-container {
+    padding: 1rem;
+  }
+
+  /* 2. Layout général passe en colonne */
+  .reservation-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  /* 3. Navigation Header : Mode Empilé propre */
+  .date-navigation-bar {
+    display: flex;
+    flex-direction: column; /* Empilement vertical */
+    gap: 1rem;
+    height: auto;
+    padding: 1rem;
+  }
+
+  /* Le bouton Calendrier n'est plus en absolu mais en relatif centré */
+  .nav-group-left {
+    position: static; /* Annule l'absolute du desktop */
+    transform: none;
+    width: 100%;
+    justify-content: center; /* Centré */
+    margin-bottom: 0.5rem;
+  }
+
+  /* Le groupe de dates permet le retour à la ligne */
+  .nav-group-center {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap; /* Évite la superposition */
+    gap: 0.5rem;
+  }
+
+  .date-display h2 {
+    font-size: 1.1rem; /* Texte un peu plus petit */
+    min-width: auto;
+  }
+
+  /* 4. Grille avec Ascenseur Horizontal */
+  .grid-column {
+    width: 100%;
+    display: block; /* Nécessaire pour le scroll */
+    overflow-x: auto; /* Scroll horizontal activé */
+  }
+
+  /* On force la grille à garder sa largeur min pour ne pas s'écraser */
+  .reservation-grid {
+    min-width: 900px; 
+  }
+
+  /* 5. Formulaire visible en largeur */
+  .form-column {
+    width: 100%;
+    max-width: 100vw; /* Sécurité */
+  }
+
+  .reservation-form {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
