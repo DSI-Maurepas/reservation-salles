@@ -1,9 +1,9 @@
 /* src/components/SingleRoomGrid.css */
-/* VERSION CORRIGÉE : BOUTONS RESPONSIVE (IN-BLOCK) & JOURS ABRÉGÉS */
+/* VERSION RESPONSIVE FINALE : HEADER SUR 3 LIGNES */
 
 .single-room-container { width: 100%; padding: 1rem 2rem; padding-bottom: 80px; }
 
-/* NAVIGATION : Grid Desktop */
+/* NAVIGATION (DESKTOP) */
 .week-navigation { display: grid; grid-template-columns: 350px 2rem 1fr; align-items: center; margin-bottom: 1.5rem; padding: 0.8rem 1.5rem; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); gap: 0; }
 .nav-group-left { grid-column: 1; display: flex; align-items: center; gap: 1.2rem; justify-content: flex-start; position: relative; }
 .back-button-inline { padding: 0.6rem 1.2rem; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 0.9rem; }
@@ -14,7 +14,7 @@
 .week-date-display { color: #1565c0; margin: 0 0.5rem; font-size: 1.1rem; font-weight: 700; text-transform: capitalize; white-space: nowrap; }
 .nav-group-right-spacer { display: none; }
 
-/* LAYOUT */
+/* LAYOUT (DESKTOP) */
 .single-room-layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: start; }
 .room-sidebar { position: sticky; top: 1rem; z-index: 10; }
 
@@ -100,7 +100,7 @@
 .warning-modal-footer { padding: 1.5rem; background: #f9f9f9; display: flex; justify-content: space-between; gap: 1rem; }
 
 /* ----------------------------------------------------------------- */
-/* MEDIA QUERIES - RESPONSIVE DESIGN (Modifié pour le User) */
+/* MEDIA QUERIES - RESPONSIVE DESIGN (3 LIGNES) */
 /* ----------------------------------------------------------------- */
 
 @media (max-width: 1280px) {
@@ -109,38 +109,56 @@
     padding: 1rem;
   }
 
-  /* 2. Navigation : On casse la grille pour empiler */
+  /* 2. Navigation : Flex Vertical pour empiler les groupes */
   .week-navigation {
     display: flex;
-    flex-direction: column; /* Empilement vertical */
-    gap: 1rem;
+    flex-direction: column; 
+    gap: 0.5rem;
     height: auto;
-    /* On retire la grille rigide */
-    grid-template-columns: 1fr;
+    padding: 1rem;
   }
 
-  /* Centrage des groupes dans la nav empilée */
-  .nav-group-left, .nav-group-center {
+  /* LIGNE 1 : RETOUR + TITRE */
+  .nav-group-left {
     width: 100%;
-    justify-content: center; /* Tout centré */
-    grid-column: auto; /* Reset grid */
+    justify-content: center; /* Centré */
+    grid-column: auto;
+    margin-bottom: 0.5rem;
   }
 
-  /* CORRECTION BOUTONS NAV : WRAP POUR RESTER DANS LE BLOC */
+  /* GROUPE CENTRAL : Contient la Date (Ligne 2) et les Boutons (Ligne 3) */
   .nav-group-center {
-    flex-wrap: wrap; /* Permet le passage à la ligne */
-    gap: 0.5rem; /* Espace réduit */
+    width: 100%;
+    grid-column: auto;
+    
+    /* Permet le retour à la ligne des éléments internes */
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: center;
+    gap: 0.5rem;
   }
-  
+
+  /* LIGNE 2 : LA DATE SEULE */
+  .week-date-display {
+    width: 100%; /* Force la largeur pour prendre toute la ligne */
+    text-align: center;
+    order: 1; /* Position 1 dans ce groupe */
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+  }
+
+  /* LIGNE 3 : LES BOUTONS DE NAVIGATION */
   .week-nav-btn {
-    padding: 0.5rem 0.8rem; /* Boutons légèrement plus petits */
+    order: 2; /* Position 2, donc en dessous de la date */
+    padding: 0.5rem 0.8rem;
     font-size: 0.85rem;
+    /* Flex-grow optionnel pour boutons uniformes : flex: 1 0 auto; */
   }
   
-  /* 3. Layout principal : On casse la grille 350px | 1fr */
+  /* 3. Layout principal : Colonne */
   .single-room-layout {
     display: flex;
-    flex-direction: column; /* Empilement vertical */
+    flex-direction: column;
     gap: 1.5rem;
   }
 
@@ -154,7 +172,7 @@
   .room-sidebar {
     order: 2;
     width: 100%;
-    position: static; /* Plus de sticky */
+    position: static; 
   }
   
   /* Ajustement formulaire mobile */
