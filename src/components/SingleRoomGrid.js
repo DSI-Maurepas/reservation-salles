@@ -9,6 +9,7 @@ import SalleCard from './SalleCard';
 import './SingleRoomGrid.css';
 
 function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
+  // ... (Code logique inchangé jusqu'au render) ...
   const getMondayOfWeek = (d) => { const date = new Date(d); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); const monday = new Date(date.setDate(diff)); monday.setHours(0, 0, 0, 0); return monday; };
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getMondayOfWeek(new Date()));
   const [reservations, setReservations] = useState([]);
@@ -61,7 +62,17 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (existing.salle !== candidate.salle && existing.salle.split(' - ')[0] !== candidate.salle) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
   const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '✅ Réservation confirmée !' }); setSelections([]); setShowForm(false); loadWeekReservations(); } catch (error) { alert('Erreur: ' + error.message); } finally { setIsSubmitting(false); } };
   const handleFormSubmit = async (e) => { e.preventDefault(); if (dispositions && !formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(sel.date); const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); const dates = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } };
+  
+  // MERGE (OPTION A)
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
+  
+  // TITRE DYNAMIQUE (Sans 'S' à Réservation)
+  const getFormTitle = () => {
+    const count = mergedForDisplay.length;
+    if (count > 1) return `Réservation de ${count} créneaux`;
+    return "Réservation d'un créneau";
+  };
+
   const successModalContent = successModal.show ? ( <div className="success-modal-overlay" onClick={() => setSuccessModal({ ...successModal, show: false })} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '70px' }}> <div className="success-modal" onClick={e => e.stopPropagation()}> <div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div> <div className="success-modal-body"> <p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p> <div className="reservations-list"> {successModal.reservations.map((res, i) => ( <div key={i} className="reservation-item-success"> <span className="calendar-icon">📅</span> {res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin} </div> ))} </div> <div className="ical-download-section"> <button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Télécharger .ics</button> </div> </div> <div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({ ...successModal, show: false })}>Fermer</button></div> </div> </div> ) : null;
 
   return (
@@ -94,7 +105,8 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
             )}
             {showForm && selections.length > 0 && (
               <div className="room-form-container">
-                <h3 className="form-title">{selections.length > 1 ? `Réservation de ${selections.length} créneaux` : 'Confirmer la réservation'}</h3>
+                {/* TITRE MODIFIÉ ICI */}
+                <h3 className="form-title">{getFormTitle()}</h3>
                 <div className="selections-summary">
                   {mergedForDisplay.map((sel, idx) => (
                     <div key={idx} className="selection-item">{googleSheetsService.formatDate(sel.date)} : {googleSheetsService.formatTime(sel.hour)} - {googleSheetsService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => removeSelection(idx)}>✕</button></div>
@@ -122,10 +134,22 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
           </div>
           <div className="week-grid-container">
             <table className="week-grid" onMouseLeave={handleMouseUp} onMouseUp={handleMouseUp}>
-              <thead><tr><th className="hour-header">Heure</th>{dates.map((date, idx) => (<th key={idx} className="day-header"><div className="day-name">{weekDays[idx]}</div><div className="day-date">{date.getDate()}/{date.getMonth() + 1}</div></th>))}</tr></thead>
+              <thead>
+                <tr>
+                  <th className="hour-header">Heure</th>
+                  {dates.map((date, idx) => (
+                    <th key={idx} className="day-header">
+                      <div className="day-name">
+                        <span className="name-full">{weekDays[idx]}</span>
+                        <span className="name-short">{weekDays[idx].slice(0, 3)}</span>
+                      </div>
+                      <div className="day-date">{date.getDate()}/{date.getMonth() + 1}</div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>{timeSlots.map(slot => (
                 <tr key={slot}>
-                  {/* CORRECTION CLASSNAME DISTINCTS POUR HEURE PLEINE ET DEMI HEURE */}
                   <td className={slot % 1 === 0 ? 'hour-cell-full' : 'hour-cell-half'}>
                     {slot % 1 === 0 ? `${slot}h` : ''}
                   </td>
