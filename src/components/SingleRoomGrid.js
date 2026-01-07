@@ -21,7 +21,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [hoveredReservation, setHoveredReservation] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   
-  // État pour l'animation de dissolution
+  // NOUVEL ÉTAT POUR L'EFFET DE DISSOLUTION
   const [isFading, setIsFading] = useState(false);
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
@@ -55,43 +55,45 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const isSlotReserved = (dayIndex, slotStart) => { const slotEnd = slotStart + 0.5; const date = dates[dayIndex]; const dateStr = googleSheetsService.formatDate(date); return reservations.some(res => { if (res.dateDebut !== dateStr) return false; const resStart = googleSheetsService.timeToFloat(res.heureDebut); const resEnd = googleSheetsService.timeToFloat(res.heureFin); return (slotStart < resEnd && slotEnd > resStart); }); };
   const getReservation = (dayIndex, slotStart) => { const slotEnd = slotStart + 0.5; const date = dates[dayIndex]; const dateStr = googleSheetsService.formatDate(date); return reservations.find(res => { if (res.dateDebut !== dateStr) return false; const resStart = googleSheetsService.timeToFloat(res.heureDebut); const resEnd = googleSheetsService.timeToFloat(res.heureFin); return (slotStart < resEnd && slotEnd > resStart); }); };
   const isSlotSelected = (dayIndex, slot) => selections.some(sel => sel.dayIndex === dayIndex && sel.hour === slot);
+  
   const handleMouseDown = (dayIndex, hour, date) => { if (isDateInPast(date)) return; if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; } if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) { setAdminPasswordModal({ show: true, password: '' }); return; } if (isSlotReserved(dayIndex, hour)) return; setIsDragging(false); setDragStart({ dayIndex, hour }); setMouseDownPos({ dayIndex, hour, date }); };
   const handleMouseEnter = (dayIndex, hour, date) => { if (!dragStart) return; if (!isDragging && mouseDownPos) { if (dayIndex !== mouseDownPos.dayIndex || hour !== mouseDownPos.hour) setIsDragging(true); else return; } if (!isDragging) return; if (isSlotReserved(dayIndex, hour) || isDimanche(date) || isJourFerie(date) || isDateInPast(date)) return; const newSelections = [...selections]; const minDay = Math.min(dragStart.dayIndex, dayIndex); const maxDay = Math.max(dragStart.dayIndex, dayIndex); const minHour = Math.min(dragStart.hour, hour); const maxHour = Math.max(dragStart.hour, hour); for (let d = minDay; d <= maxDay; d++) { const dayDate = dates[d]; if (!isDimanche(dayDate) && !isJourFerie(dayDate) && !isDateInPast(dayDate)) { for (let h = minHour; h <= maxHour; h += 0.5) { const exists = newSelections.some(sel => sel.dayIndex === d && sel.hour === h); if (!exists && !isSlotReserved(d, h)) newSelections.push({ dayIndex: d, hour: h, date: dates[d] }); } } } setSelections(newSelections); };
-  const handleMouseUp = () => { if (!isDragging && mouseDownPos) { const { dayIndex, hour, date } = mouseDownPos; const alreadySelected = selections.some(sel => sel.dayIndex === dayIndex && sel.hour === hour); if (alreadySelected) { const newSelections = selections.filter(sel => !(sel.dayIndex === dayIndex && sel.hour === hour)); setSelections(newSelections); if (newSelections.length === 0) setShowForm(false); } else { setSelections([...selections, { dayIndex, hour, date }]); setShowForm(true); } } else if (isDragging && selections.length > 0) setShowForm(true); setIsDragging(false); setDragStart(null); setMouseDownPos(null); };
+  
+  const handleMouseUp = () => { 
+    if (!isDragging && mouseDownPos) { 
+      const { dayIndex, hour, date } = mouseDownPos; 
+      const alreadySelected = selections.some(sel => sel.dayIndex === dayIndex && sel.hour === hour); 
+      if (alreadySelected) { 
+        const newSelections = selections.filter(sel => !(sel.dayIndex === dayIndex && sel.hour === hour)); 
+        setSelections(newSelections); 
+        if (newSelections.length === 0) setShowForm(false); 
+      } else { 
+        setSelections([...selections, { dayIndex, hour, date }]); 
+        setShowForm(true);
+        // CORRECTION: Remonter en haut de page lors d'une nouvelle sélection
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } 
+    } else if (isDragging && selections.length > 0) {
+      setShowForm(true); 
+      // CORRECTION: Remonter en haut de page après un "drag"
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    setIsDragging(false); 
+    setDragStart(null); 
+    setMouseDownPos(null); 
+  };
+
   const handleCancelSelection = () => { setSelections([]); setShowForm(false); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
   const removeSelection = (index) => { const newSelections = selections.filter((_, i) => i !== index); setSelections(newSelections); if (newSelections.length === 0) setShowForm(false); };
   const preMergeSelections = (selections) => { const byDate = {}; selections.forEach(sel => { const dateKey = sel.date instanceof Date ? sel.date.toISOString().split('T')[0] : sel.date; if (!byDate[dateKey]) byDate[dateKey] = []; byDate[dateKey].push(sel); }); const merged = []; for (const dateKey in byDate) { const slots = byDate[dateKey].sort((a, b) => a.hour - b.hour); let i = 0; while (i < slots.length) { const current = { date: slots[i].date, hour: slots[i].hour, endHour: slots[i].hour + 0.5 }; while (i + 1 < slots.length && Math.abs(current.endHour - slots[i + 1].startHour) < 0.001) { current.endHour = slots[i + 1].hour + 0.5; i++; } merged.push(current); i++; } } return merged; };
   const generateRecurrenceDates = (startDate, endDate, type) => { const dates = []; const current = new Date(startDate); const end = new Date(endDate); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); while (current <= end) { dates.push(new Date(current)); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); } return dates; };
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (existing.salle !== candidate.salle && existing.salle.split(' - ')[0] !== candidate.salle) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
   const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '✅ Réservation confirmée !' }); setSelections([]); setShowForm(false); loadWeekReservations(); } catch (error) { alert('Erreur: ' + error.message); } finally { setIsSubmitting(false); } };
-  
-  const handleFormSubmit = async (e) => { 
-    e.preventDefault();
-    
-    // --- VALIDATION AGENCEMENT ET CAPACITÉ ---
-    const isConseil = selectedRoom.includes('Conseil');
-    const isMariages = selectedRoom.includes('Mariages');
-
-    if (isConseil || isMariages) {
-        if (!formData.agencement) return alert('⚠️ Veuillez choisir une disposition.');
-        if (!formData.nbPersonnes) return alert('⚠️ Veuillez indiquer le nombre de personnes.');
-        
-        const nb = parseInt(formData.nbPersonnes, 10);
-        const max = isMariages ? 30 : 100;
-        
-        if (nb > max) {
-          return alert(`⚠️ La capacité maximale pour la salle ${isMariages ? 'des Mariages' : 'du Conseil'} est de ${max} personnes.`);
-        }
-    }
-    // ------------------------------------------
-
-    setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(sel.date); const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); const dates = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } 
-  };
-  
+  const handleFormSubmit = async (e) => { e.preventDefault(); if (dispositions && !formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(sel.date); const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); const dates = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } };
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
   const successModalContent = successModal.show ? ( <div className="success-modal-overlay" onClick={() => setSuccessModal({ ...successModal, show: false })} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '70px' }}> <div className="success-modal" onClick={e => e.stopPropagation()}> <div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div> <div className="success-modal-body"> <p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p> <div className="reservations-list"> {successModal.reservations.map((res, i) => ( <div key={i} className="reservation-item-success"> <span className="calendar-icon">📅</span> {res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin} </div> ))} </div> <div className="ical-download-section"> <button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Télécharger .ics</button> </div> </div> <div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({ ...successModal, show: false })}>Fermer</button></div> </div> </div> ) : null;
 
-  // --- GESTION DU TIMER DE DISPARITION (4 SECONDES) ---
+  // --- GESTION DU TIMER (4 SECONDES) ---
   useEffect(() => {
     let fadeTimer;
     let removeTimer;

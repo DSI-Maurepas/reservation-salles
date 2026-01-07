@@ -22,7 +22,7 @@
 
 /* Graphique en camembert */
 .pie-chart { width: 200px; height: 200px; flex-shrink: 0; }
-.pie-chart path { cursor: pointer; transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); } /* Transition fluide pour l'éclatement */
+.pie-chart path { cursor: pointer; transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 .pie-chart path:hover { opacity: 0.9; }
 
 /* Légende */
@@ -51,10 +51,10 @@
 .occupation-bar { height: 100%; border-radius: 9px; transition: width 0.5s ease; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); }
 .occupation-value { width: 50px; text-align: right; font-weight: 700; color: var(--text-dark); flex-shrink: 0; }
 
-/* POPUP STATISTIQUES (Style Fiche) */
+/* POPUP STATISTIQUES */
 .stats-popup {
   position: fixed;
-  transform: translate(-50%, -100%); /* Centré horizontalement par rapport à la souris (desktop) */
+  transform: translate(-50%, -100%); /* Centre horizontalement par rapport à la souris (desktop) et met au-dessus */
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
@@ -62,7 +62,7 @@
   z-index: 10000;
   min-width: 180px;
   border: 1px solid #e2e8f0;
-  pointer-events: none; /* Laisse passer les clics */
+  pointer-events: none;
   opacity: 1;
   transition: opacity 0.4s ease-in-out;
 }
@@ -108,12 +108,11 @@
   .occupation-label { width: 100px; font-size: 0.8rem; }
   .chart-legend { max-height: none; overflow: visible; margin-top: 1rem; width: 100%; }
 
-  /* FORÇAGE POPUP CENTRÉE SUR MOBILE */
+  /* FORÇAGE POPUP CENTRÉE HORIZONTALEMENT SUR MOBILE */
   .stats-popup {
-    top: 50% !important; /* Milieu vertical */
-    left: 50% !important; /* Milieu horizontal */
-    transform: translate(-50%, -50%) !important; /* Centrage exact */
-    position: fixed !important;
+    /* Top est géré par le JS (inline style) pour suivre le scroll/clic verticalement */
+    left: 50% !important; /* Force le centrage horizontal par rapport à l'écran */
+    transform: translate(-50%, -100%) !important; /* Décalage pour centrer la div et la mettre au dessus */
     width: 80% !important; 
     max-width: 300px;
     z-index: 20000 !important;

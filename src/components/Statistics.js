@@ -2,13 +2,12 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import './Statistics.css';
 
-// --- SOUS-COMPOSANT DÉFINI À L'EXTÉRIEUR POUR ÉVITER LE "REMONTAGE" (CLIGNOTEMENT) ---
+// --- SOUS-COMPOSANT DÉFINI À L'EXTÉRIEUR ---
 const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', onHover, activeLabel }) => {
   let entries = Object.entries(data);
   const jourOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
   const moisOrder = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
-  // Tri des données
   if (sortOrder === 'alpha') entries.sort(([a], [b]) => a.localeCompare(b));
   else if (sortOrder === 'asc') entries.sort(([, a], [, b]) => a - b);
   else if (sortOrder === 'desc') entries.sort(([, a], [, b]) => b - a);
@@ -24,15 +23,13 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
     const angle = (value / total) * 360;
     const startAngle = currentAngle;
     const endAngle = currentAngle + angle;
-    const midAngle = startAngle + angle / 2; // Angle médian pour l'éclatement
+    const midAngle = startAngle + angle / 2;
     currentAngle = endAngle;
 
-    // Calcul des coordonnées du secteur
-    const r = 40; // Rayon
-    const cx = 50; // Centre X
-    const cy = 50; // Centre Y
+    const r = 40;
+    const cx = 50;
+    const cy = 50;
     
-    // Conversion degrés -> radians (svg utilise radians, -90° pour commencer en haut)
     const startRad = (startAngle - 90) * Math.PI / 180;
     const endRad = (endAngle - 90) * Math.PI / 180;
     const midRad = (midAngle - 90) * Math.PI / 180;
@@ -44,7 +41,6 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
     
     const largeArc = angle > 180 ? 1 : 0;
 
-    // Calcul du vecteur d'éclatement (5 unités vers l'extérieur)
     const isActive = activeLabel === label;
     const explodeDist = isActive ? 4 : 0;
     const transX = explodeDist * Math.cos(midRad);
@@ -52,9 +48,7 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
 
     const color = colors[index % colors.length];
 
-    // Handler unifié
     const handleInteraction = (e) => {
-      // Si c'est un clic, on arrête la propagation pour ne pas fermer tout de suite
       if (e.type === 'click') e.stopPropagation();
       
       const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
@@ -91,7 +85,7 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
               fill={segment.color} 
               stroke="white" 
               strokeWidth="0.5"
-              transform={segment.transform} /* Application de l'éclatement */
+              transform={segment.transform}
               onClick={segment.handleInteraction}
               onMouseEnter={segment.handleInteraction}
               style={{cursor: 'pointer', transition: 'transform 0.3s ease-out'}}
@@ -103,7 +97,7 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
             <div 
               key={i} 
               className={`legend-item ${segment.isActive ? 'active' : ''}`}
-              onClick={segment.handleInteraction} /* Clic sur légende active aussi */
+              onClick={segment.handleInteraction}
               style={{cursor: 'pointer'}}
             >
               <span className="legend-color" style={{ backgroundColor: segment.color }}></span>
@@ -119,7 +113,6 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
 
 function Statistics({ reservations }) {
   
-  // Calcul des stats (inchangé)
   const stats = useMemo(() => {
     if (!reservations || reservations.length === 0) return null;
 
@@ -207,40 +200,32 @@ function Statistics({ reservations }) {
     return { total: reservations.length, parSalle, parJour, topUtilisateurs, parObjet, parService, parMois, parHoraire, dureeMoyenne, tauxOccupation };
   }, [reservations]);
 
-  // --- GESTION POPUP ET TIMER (3s + 0.4s fade) ---
+  // --- GESTION POPUP ET TIMER ---
   const [hoveredSlice, setHoveredSlice] = useState(null);
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
 
-  // Fonction de mise à jour appelée par le PieChart
   const handleSliceHover = (sliceData) => {
     setHoveredSlice(sliceData);
-    setPopupPos({ x: sliceData.x, y: sliceData.y - 50 }); // Position desktop (offset)
-    setIsFading(false); // Reset fading à chaque nouvelle interaction
+    // Position proche du clic (-15px) pour éviter "trop loin"
+    setPopupPos({ x: sliceData.x, y: sliceData.y - 15 }); 
+    setIsFading(false);
   };
 
   useEffect(() => {
     let fadeTimer;
     let removeTimer;
-
     if (hoveredSlice) {
-      // 1. Attendre 3 secondes sans bouger
       fadeTimer = setTimeout(() => {
-        setIsFading(true); // Déclencher le fade-out CSS
-
-        // 2. Attendre la fin de la transition CSS (0.4s)
+        setIsFading(true); 
         removeTimer = setTimeout(() => {
           setHoveredSlice(null);
           setIsFading(false);
         }, 400); 
       }, 3000); 
     }
-
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
-    };
-  }, [hoveredSlice]); // Se relance si on change de slice (hoveredSlice change)
+    return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
+  }, [hoveredSlice]);
 
   if (!stats) return <div className="statistics-container"><p className="no-data">Aucune donnée disponible.</p></div>;
 
@@ -290,7 +275,7 @@ function Statistics({ reservations }) {
         </div>
       </div>
 
-      {/* POPUP POUR CAMEMBERTS (Structure Fiche) */}
+      {/* POPUP STATISTIQUES */}
       {hoveredSlice && (
         <div className={`stats-popup ${isFading ? 'fading-out' : ''}`} style={{ top: popupPos.y, left: popupPos.x }}>
           <div className="stats-popup-header" style={{ borderLeft: `5px solid ${hoveredSlice.color}` }}>
