@@ -18,6 +18,10 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const [hoveredSalle, setHoveredSalle] = useState(null);
   const [hoveredReservation, setHoveredReservation] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  
+  // État pour l'animation de dissolution
+  const [isFading, setIsFading] = useState(false);
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingReservation, setEditingReservation] = useState(null);
   
@@ -46,6 +50,32 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   });
   
   const ADMIN_PASSWORD = 'R3sa@Morepas78';
+
+  // --- GESTION DU TIMER (4 SECONDES) ---
+  useEffect(() => {
+    let fadeTimer;
+    let removeTimer;
+
+    if (hoveredReservation) {
+      setIsFading(false); // Reset l'opacité à 100%
+
+      // 1. Attendre 4 secondes
+      fadeTimer = setTimeout(() => {
+        setIsFading(true); // Déclencher le fade-out CSS
+
+        // 2. Attendre la fin de la transition CSS (0.5s)
+        removeTimer = setTimeout(() => {
+          setHoveredReservation(null);
+          setIsFading(false);
+        }, 400); 
+      }, 3000); // 3000ms = 3 secondes
+    }
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [hoveredReservation]);
 
   const normalizeRoomName = (name) => name ? name.split(' - ')[0].trim().toLowerCase() : '';
   const isDateInPast = (date) => { const today = new Date(); today.setHours(0,0,0,0); const check = new Date(date); check.setHours(0,0,0,0); return check < today; };
@@ -77,7 +107,12 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (normalizeRoomName(existing.salle) !== normalizeRoomName(candidate.salle)) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
   const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '' }); setSelections([]); loadReservations(); } catch (error) { alert("Erreur : " + error.message); } finally { setIsSubmitting(false); } };
   const handleSubmit = async (e) => { e.preventDefault(); if (selections.length === 0) return alert('Aucune sélection'); if (!formData.nom || !formData.email || !formData.service || !formData.objet) return alert('Champs manquants'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(currentDate); const baseRes = { salle: sel.salle, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.startHour), heureFin: googleSheetsService.formatTime(sel.endHour), nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, service: formData.service, objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement, nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const dates = generateRecurrenceDates(currentDate, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (e) { alert("Erreur : " + e.message); setIsSubmitting(false); } };
-  const handleReservationMouseEnter = (res, e) => { const rect = e.currentTarget.getBoundingClientRect(); setPopupPosition({ x: rect.left + (rect.width / 2), y: rect.top }); setHoveredReservation(res); };
+  
+  const handleReservationMouseEnter = (res, e) => { 
+    const rect = e.currentTarget.getBoundingClientRect(); 
+    setPopupPosition({ x: rect.left + (rect.width / 2), y: rect.top }); 
+    setHoveredReservation(res); 
+  };
 
   const renderGrid = () => {
     const grid = [];
@@ -122,7 +157,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
               handleMouseEnter(salle, h); 
               if(reserved && res) handleReservationMouseEnter(res, e); 
             }}
-            onMouseLeave={() => setHoveredReservation(null)}
+            // IMPORTANT : Pas de onMouseLeave ici pour laisser le timer faire son travail
           >
             {isAdmin && !isAdminUnlocked && !reserved && <span className="lock-icon">🔒</span>}
           </div>
@@ -157,15 +192,14 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         <div className="nav-group-right"></div>
       </div>
 
+      <div className="mobile-instruction">
+        <p>Cliquez sur le nom d'une salle pour en connaître les propriétés</p>
+        <p>Cliquez sur un créneau pour en connaître les propriétés</p>
+      </div>
+
       <div className="reservation-content" onMouseUp={handleMouseUp}>
         <div className="grid-column">
           <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>{renderGrid()}</div>
-        </div>
-
-        {/* --- INSTRUCTION MOBILE (DÉPLACÉE ICI POUR GESTION ORDRE FLEX) --- */}
-        <div className="mobile-instruction">
-          <p>Cliquez sur le nom d'une salle pour en connaître les propriétés</p>
-          <p>Cliquez sur un créneau pour en connaître les propriétés</p>
         </div>
 
         <div className="form-column">
@@ -185,7 +219,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                   ))}
                 </div>
                 <form onSubmit={handleSubmit}>
-                    {/* ... (champs formulaire) ... */}
                     <div className="form-row"><input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required style={{flex:1}} /><input className="form-input" placeholder="Prénom" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} style={{flex:1}} /></div>
                     <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
                     <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} />
@@ -214,13 +247,11 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
             hoveredSalle ? (
               <>
                 <SalleCard salle={hoveredSalle} />
-                {/* --- LÉGENDE BUREAU AVEC CLASS MASQUAGE --- */}
                 <div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div>
               </>
             ) : (
               <>
                 <ColorLegend onHoverColor={setHoveredObjet} />
-                {/* --- LÉGENDE BUREAU AVEC CLASS MASQUAGE --- */}
                 <div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div>
               </>
             )
@@ -228,7 +259,18 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         </div>
       </div>
 
-      {hoveredReservation && <div className="reservation-popup-card" style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}><div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div><div className="popup-card-body">{hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}{hoveredReservation.service && <div className="popup-info-line"><span className="popup-info-icon">🏢</span><span className="popup-info-text">{hoveredReservation.service}</span></div>}<div className="popup-info-line"><span className="popup-info-icon">📅</span><span className="popup-info-text">{new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</span></div>{(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (<>{hoveredReservation.agencement && (<div className="popup-info-line"><span className="popup-info-icon">🪑</span><span className="popup-info-text">Disposition : {hoveredReservation.agencement}</span></div>)}{hoveredReservation.nbPersonnes && (<div className="popup-info-line"><span className="popup-info-icon">👥</span><span className="popup-info-text">{hoveredReservation.nbPersonnes} pers.</span></div>)}</>)}</div></div>}
+      {hoveredReservation && (
+        <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}>
+          <div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div>
+          <div className="popup-card-body">
+            {hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}
+            {hoveredReservation.service && <div className="popup-info-line"><span className="popup-info-icon">🏢</span><span className="popup-info-text">{hoveredReservation.service}</span></div>}
+            <div className="popup-info-line"><span className="popup-info-icon">📅</span><span className="popup-info-text">{new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</span></div>
+            {(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (<>{hoveredReservation.agencement && (<div className="popup-info-line"><span className="popup-info-icon">🪑</span><span className="popup-info-text">Disposition : {hoveredReservation.agencement}</span></div>)}{hoveredReservation.nbPersonnes && (<div className="popup-info-line"><span className="popup-info-icon">👥</span><span className="popup-info-text">{hoveredReservation.nbPersonnes} pers.</span></div>)}</>)}
+          </div>
+        </div>
+      )}
+
       {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><h2>Fermé</h2><p>Dimanche/Férié fermé.</p><button className="blocked-close-button" onClick={() => setBlockedDayModal(false)}>Fermer</button></div></div>}
       {adminPasswordModal.show && <div className="modal-overlay"><div className="modal-content"><h3>Admin</h3><input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" /><div className="modal-footer"><button className="cancel-button" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button><button className="submit-button" onClick={handleAdminPasswordSubmit}>Valider</button></div></div></div>}
       {successModal.show && (<div className="success-modal-overlay" onClick={() => setSuccessModal({show:false, reservations:[], message:''})}><div className="success-modal" onClick={e => e.stopPropagation()}><div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div><div className="success-modal-body"><p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p><div className="reservations-list">{successModal.reservations.map((res, i) => (<div key={i} className="reservation-item-success"><span className="calendar-icon">📅 </span>{res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin}</div>))}</div><div className="ical-download-section"><button className="download-ical-button" onClick={(e) => { e.stopPropagation(); icalService.generateAndDownload(successModal.reservations); }}>📥 Télécharger le fichier .ics</button></div></div><div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({show:false, reservations:[], message:''})}>Fermer</button></div></div></div>)}
