@@ -1,5 +1,5 @@
 /* src/components/ReservationGrid.css */
-/* VERSION FINALE : GESTION LEGENDES DESKTOP VS MOBILE & FADING POPUP */
+/* VERSION FINALE : COULEURS ET AFFICHAGE STRICT (DESKTOP/MOBILE) */
 
 .reservation-grid-container {
   background: transparent !important;
@@ -38,12 +38,12 @@
 .nav-day-button:hover, .nav-week-button:hover, .nav-today-button:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .date-display h2 { margin: 0; color: #1565c0; font-size: 1.2rem; font-weight: 800; text-transform: capitalize; min-width: 250px; text-align: center; letter-spacing: -0.5px; }
 
-/* INSTRUCTION MOBILE */
+/* INSTRUCTION MOBILE (DÉSACTIVÉE SUR DESKTOP) */
 .mobile-instruction {
   display: none; 
   text-align: center;
   margin-bottom: 20px;
-  background-color: #1976d2;
+  background-color: #1976d2; /* BLEU STANDARD */
   color: white; 
   font-size: 0.9rem;
   padding: 1rem;
@@ -81,7 +81,7 @@
 .time-slot.admin-only-locked { background: repeating-linear-gradient(45deg, #fee2e2, #fee2e2 10px, #fecaca 10px, #fecaca 20px); }
 .lock-icon { font-size: 0.8rem; opacity: 0.5; }
 
-/* LEGENDE DESKTOP */
+/* LEGENDE DESKTOP (VISIBLE PAR DEFAUT) */
 .desktop-legend { display: block; }
 
 /* Styles formulaire */
@@ -163,14 +163,12 @@
   .nav-day-button, .nav-week-button, .nav-today-button { order: 2; padding: 0.4rem 0.6rem; font-size: 0.75rem; min-width: auto; }
   .grid-column { width: 100%; display: block; overflow-x: auto; order: 1; }
   .reservation-grid { min-width: 900px; }
-  
-  /* ORDRE FLEX POUR LEGENDE MOBILE */
-  .mobile-instruction { display: block; order: 2; }
-  .form-column { width: 100%; max-width: 100vw; order: 3; }
-  
+  .form-column { width: 100%; max-width: 100vw; order: 2; }
   .reservation-form { width: 100%; box-sizing: border-box; }
   .desktop-name { display: none; }
   .mobile-name { display: block; }
   
+  /* AFFICHER INSTRUCTION MOBILE ET MASQUER LÉGENDE DESKTOP */
+  .mobile-instruction { display: block; }
   .desktop-legend { display: none !important; }
 }

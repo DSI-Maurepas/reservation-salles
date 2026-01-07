@@ -67,8 +67,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         removeTimer = setTimeout(() => {
           setHoveredReservation(null);
           setIsFading(false);
-        }, 400); 
-      }, 3000); // 3000ms = 3 secondes
+        }, 500); 
+      }, 4000); // 4000ms = 4 secondes
     }
 
     return () => {
@@ -108,9 +108,9 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '' }); setSelections([]); loadReservations(); } catch (error) { alert("Erreur : " + error.message); } finally { setIsSubmitting(false); } };
   const handleSubmit = async (e) => { e.preventDefault(); if (selections.length === 0) return alert('Aucune sélection'); if (!formData.nom || !formData.email || !formData.service || !formData.objet) return alert('Champs manquants'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(currentDate); const baseRes = { salle: sel.salle, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.startHour), heureFin: googleSheetsService.formatTime(sel.endHour), nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, service: formData.service, objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement, nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const dates = generateRecurrenceDates(currentDate, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (e) { alert("Erreur : " + e.message); setIsSubmitting(false); } };
   
+  // MODIFICATION : Positionnement par rapport à la souris (50px au-dessus)
   const handleReservationMouseEnter = (res, e) => { 
-    const rect = e.currentTarget.getBoundingClientRect(); 
-    setPopupPosition({ x: rect.left + (rect.width / 2), y: rect.top }); 
+    setPopupPosition({ x: e.clientX, y: e.clientY - 50 }); 
     setHoveredReservation(res); 
   };
 
@@ -157,7 +157,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
               handleMouseEnter(salle, h); 
               if(reserved && res) handleReservationMouseEnter(res, e); 
             }}
-            // IMPORTANT : Pas de onMouseLeave ici pour laisser le timer faire son travail
+            // On ne met PAS onMouseLeave ici pour laisser le timer gérer
           >
             {isAdmin && !isAdminUnlocked && !reserved && <span className="lock-icon">🔒</span>}
           </div>
