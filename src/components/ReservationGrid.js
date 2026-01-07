@@ -136,13 +136,21 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       const nomSalle = parts[0];
       const capaSalle = parts[1] || '';
 
-      const mobileNom = nomSalle.replace('Salle Conseil', 'Conseil').replace('Salle Mariages', 'Mariages');
-      const mobileCapa = capaSalle.replace('Personnes', 'Pers.');
+      // --- REMPLACEMENT TEXTE MOBILE ---
+      const mobileNom = nomSalle
+        .replace('Salle Conseil', 'Conseil')
+        .replace('Salle Mariages', 'Mariages');
+      
+      const mobileCapa = capaSalle
+        .replace('Personnes', 'Pers.');
 
       grid.push(
         <div key={`h-${idx}`} className="salle-header" style={{gridColumn: idx+2}} onMouseEnter={() => setHoveredSalle(salle)} onMouseLeave={() => setHoveredSalle(null)}>
+          {/* Version Desktop */}
           <span className="salle-name desktop-view">{nomSalle}</span>
           <span className="salle-capacity desktop-view">{capaSalle}</span>
+          
+          {/* Version Mobile (Abréviations) */}
           <span className="salle-name mobile-view">{mobileNom}</span>
           <span className="salle-capacity mobile-view">{mobileCapa}</span>
         </div>
@@ -213,7 +221,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         <div className="nav-group-right"></div>
       </div>
 
-      {/* BLOC MOBILE INSTRUCTION TOTALEMENT SUPPRIMÉ ICI */}
+      {/* BLOC MOBILE INSTRUCTION RETIRÉ */}
 
       <div className="reservation-content" onMouseUp={handleMouseUp}>
         <div className="grid-column">

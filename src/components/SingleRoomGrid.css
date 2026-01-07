@@ -259,8 +259,7 @@
     position: static; 
   }
   
-  /* CORRECTIF RESPONSIVE : Hauteur auto pour s'adapter au contenu */
-  .room-form-container { max-height: none; height: auto; }
+  .room-form-container { max-height: none; height: auto; } /* Reset hauteur mobile */
 
   /* 5. ABRÉVIATIONS JOURS */
   .name-short { display: inline; }
