@@ -19,9 +19,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const [hoveredReservation, setHoveredReservation] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   
-  // État pour l'animation de dissolution
   const [isFading, setIsFading] = useState(false);
-
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingReservation, setEditingReservation] = useState(null);
   
@@ -51,30 +49,21 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   
   const ADMIN_PASSWORD = 'R3sa@Morepas78';
 
-  // --- GESTION DU TIMER (4 SECONDES) ---
+  // --- TIMER 4 SECONDES ---
   useEffect(() => {
     let fadeTimer;
     let removeTimer;
-
     if (hoveredReservation) {
-      setIsFading(false); // Reset l'opacité à 100%
-
-      // 1. Attendre 4 secondes
+      setIsFading(false);
       fadeTimer = setTimeout(() => {
-        setIsFading(true); // Déclencher le fade-out CSS
-
-        // 2. Attendre la fin de la transition CSS (0.4s)
+        setIsFading(true);
         removeTimer = setTimeout(() => {
           setHoveredReservation(null);
           setIsFading(false);
         }, 400); 
       }, 4000); 
     }
-
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
-    };
+    return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
   }, [hoveredReservation]);
 
   const normalizeRoomName = (name) => name ? name.split(' - ')[0].trim().toLowerCase() : '';
@@ -105,34 +94,14 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const preMergeSelections = (selections) => { const bySalle = {}; selections.forEach(sel => { if (!bySalle[sel.salle]) bySalle[sel.salle] = []; bySalle[sel.salle].push(sel); }); const merged = []; for (const salle in bySalle) { const slots = bySalle[salle].sort((a, b) => a.startHour - b.startHour); let i = 0; while (i < slots.length) { const current = { ...slots[i] }; while (i + 1 < slots.length && Math.abs(current.endHour - slots[i + 1].startHour) < 0.01) { current.endHour = slots[i + 1].endHour; i++; } merged.push(current); i++; } } return merged; };
   const generateRecurrenceDates = (startDate, endDate, type) => { const dates = []; const current = new Date(startDate); const end = new Date(endDate); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); while (current <= end) { dates.push(new Date(current)); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); } return dates; };
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (normalizeRoomName(existing.salle) !== normalizeRoomName(candidate.salle)) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
-  
-  const finalizeReservation = async (reservationsToSave) => { 
-    setIsSubmitting(true); 
-    setSubmissionProgress({ current: 0, total: reservationsToSave.length }); 
-    setWarningModal({ show: false, conflicts: [], validReservations: [] }); 
-    try { 
-      const createdReservations = []; 
-      for (const res of reservationsToSave) { 
-        const result = await googleSheetsService.addReservation(res); 
-        createdReservations.push({ ...res, id: result.id }); 
-        setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); 
-      } 
-      setSuccessModal({ show: true, reservations: createdReservations, message: '' }); 
-      setSelections([]); 
-      loadReservations(); 
-    } catch (error) { 
-      alert("Erreur : " + error.message); 
-    } finally { 
-      setIsSubmitting(false); 
-    } 
-  };
+  const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '' }); setSelections([]); loadReservations(); } catch (error) { alert("Erreur : " + error.message); } finally { setIsSubmitting(false); } };
   
   const handleSubmit = async (e) => { 
     e.preventDefault(); 
     if (selections.length === 0) return alert('Aucune sélection'); 
     if (!formData.nom || !formData.email || !formData.service || !formData.objet) return alert('Champs manquants'); 
     
-    // --- VALIDATION AGENCEMENT ET CAPACITÉ ---
+    // VALIDATIONS OBLIGATOIRES
     const selectedSalles = [...new Set(selections.map(s => s.salle))];
     if (selectedSalles.length > 0) {
       const room = selectedSalles[0];
@@ -142,16 +111,13 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       if (isConseil || isMariages) {
         if (!formData.agencement) return alert('⚠️ Veuillez choisir une disposition.');
         if (!formData.nbPersonnes) return alert('⚠️ Veuillez indiquer le nombre de personnes.');
-        
         const nb = parseInt(formData.nbPersonnes, 10);
         const max = isMariages ? 30 : 100;
-        
         if (nb > max) {
           return alert(`⚠️ La capacité maximale pour la salle ${isMariages ? 'des Mariages' : 'du Conseil'} est de ${max} personnes.`);
         }
       }
     }
-    // ------------------------------------------
 
     setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(currentDate); const baseRes = { salle: sel.salle, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.startHour), heureFin: googleSheetsService.formatTime(sel.endHour), nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, service: formData.service, objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement, nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const dates = generateRecurrenceDates(currentDate, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (e) { alert("Erreur : " + e.message); setIsSubmitting(false); } 
   };

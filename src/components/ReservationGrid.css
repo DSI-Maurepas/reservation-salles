@@ -1,5 +1,5 @@
 /* src/components/ReservationGrid.css */
-/* VERSION FINALE : GESTION LEGENDES DESKTOP VS MOBILE & FADING POPUP */
+/* VERSION CORRIGÉE : FIX SYNTAXE FLEX-DIRECTION POUR EMPILEMENT MOBILE */
 
 .reservation-grid-container {
   background: transparent !important;
@@ -43,7 +43,7 @@
   display: none; 
   text-align: center;
   margin-bottom: 20px;
-  background-color: #cdf6ff; /* Bleu ciel demandé */
+  background-color: #cdf6ff;
   color: #1e3a8a; 
   font-size: 0.9rem;
   padding: 1rem;
@@ -54,7 +54,6 @@
 .mobile-instruction p:first-child { margin-bottom: 0.5rem; }
 
 /* LAYOUT */
-/* FIX: align-items: start pour ne pas étirer la grille */
 .reservation-content { 
   display: grid; 
   grid-template-columns: minmax(900px, 1fr) 350px; 
@@ -92,7 +91,6 @@
 .desktop-legend { display: block; }
 
 /* Styles formulaire */
-/* FIX: height auto pour grandir naturellement */
 .reservation-form { background: white; padding: 1rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; height: auto; max-height: none; overflow-y: auto; box-sizing: border-box; }
 .reservation-form h3 { color: #1e293b; font-size: 1.1rem; margin-bottom: 0.8rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.4rem; }
 .form-row { display: flex; gap: 0.8rem; width: 100%; }
@@ -159,9 +157,19 @@
 .conflict-list li { font-size: 0.9rem; margin-bottom: 0.5rem; color: #e65100; font-weight: 600; }
 .warning-modal-footer { padding: 1.5rem; background: #f9f9f9; display: flex; justify-content: space-between; gap: 1rem; }
 
+/* ----------------------------------------------------------------- */
+/* MEDIA QUERIES - RESPONSIVE DESIGN (CORRIGÉ & STABILISÉ) */
+/* ----------------------------------------------------------------- */
+
 @media (max-width: 1280px) {
   .reservation-grid-container { padding: 1rem; }
-  .reservation-content { display: flex; flexDirection: column !important; gap: 1.5rem; }
+  
+  /* CONTENEUR PRINCIPAL : Passage en colonne */
+  .reservation-content { 
+    display: flex; 
+    flex-direction: column !important; /* CORRIGÉ : Syntaxe CSS valide */
+    gap: 1.5rem; 
+  }
   
   /* 1. HEADER 3 LIGNES (L1:Retour, L2:Date, L3:Boutons) */
   .date-navigation-bar { 
@@ -172,51 +180,63 @@
     padding: 1rem; 
   }
 
-  /* LIGNE 1 : RETOUR + TITRE */
   .nav-group-left { 
     width: 100%; 
     justify-content: center; 
     grid-column: auto; 
     margin-bottom: 0.5rem; 
-    order: 1; /* Premier */
+    order: 1; 
   }
 
-  /* GROUPE CENTRAL : DATE (L2) + BOUTONS (L3) */
   .nav-group-center { 
     width: 100%; 
     display: flex; 
     flex-wrap: wrap; 
     justify-content: center; 
     gap: 0.5rem; 
-    order: 2; /* Second */
+    order: 2; 
   }
 
-  /* LIGNE 2 : DATE */
   .date-display { 
     width: 100%; 
     text-align: center; 
-    order: 1; /* Premier dans le groupe central */
+    order: 1; 
     margin-bottom: 0.5rem; 
   }
   .date-display h2 { font-size: 1.1rem; }
 
-  /* LIGNE 3 : BOUTONS */
   .nav-day-button, .nav-week-button, .nav-today-button {
-    order: 2; /* Second dans le groupe central */
+    order: 2; 
     padding: 0.4rem 0.6rem; 
     font-size: 0.75rem; 
     min-width: auto;
   }
   
-  /* 2. LAYOUT : COLONNE */
-  .grid-column { width: 100%; display: block; overflow-x: auto; order: 1; }
+  .nav-group-right { display: none !important; }
+
+  /* 2. ORDONNANCEMENT DES BLOCS */
+  /* Grille en premier */
+  .grid-column { 
+    width: 100%; 
+    display: block; 
+    overflow-x: auto; 
+    order: 1; 
+  }
   .reservation-grid { min-width: 900px; }
   
-  /* ORDRE FLEX POUR LEGENDE MOBILE */
-  .mobile-instruction { display: block; order: 2; }
-  .form-column { width: 100%; max-width: 100vw; order: 3; }
+  /* Instruction en deuxième (sous la grille) */
+  .mobile-instruction { 
+    display: block; 
+    order: 2; 
+  }
+
+  /* Formulaire en troisième (tout en bas) */
+  .form-column { 
+    width: 100%; 
+    max-width: 100vw; 
+    order: 3; 
+  }
   
-  /* MODIF: height auto en mobile */
   .reservation-form { width: 100%; box-sizing: border-box; height: auto; }
   .desktop-name { display: none; }
   .mobile-name { display: block; }
