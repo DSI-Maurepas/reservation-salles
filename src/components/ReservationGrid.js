@@ -101,7 +101,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     if (selections.length === 0) return alert('Aucune sélection'); 
     if (!formData.nom || !formData.email || !formData.service || !formData.objet) return alert('Champs manquants'); 
     
-    // VALIDATIONS OBLIGATOIRES
+    // VALIDATIONS
     const selectedSalles = [...new Set(selections.map(s => s.salle))];
     if (selectedSalles.length > 0) {
       const room = selectedSalles[0];
@@ -136,21 +136,13 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       const nomSalle = parts[0];
       const capaSalle = parts[1] || '';
 
-      // --- REMPLACEMENT TEXTE MOBILE ---
-      const mobileNom = nomSalle
-        .replace('Salle Conseil', 'Conseil')
-        .replace('Salle Mariages', 'Mariages');
-      
-      const mobileCapa = capaSalle
-        .replace('Personnes', 'Pers.');
+      const mobileNom = nomSalle.replace('Salle Conseil', 'Conseil').replace('Salle Mariages', 'Mariages');
+      const mobileCapa = capaSalle.replace('Personnes', 'Pers.');
 
       grid.push(
         <div key={`h-${idx}`} className="salle-header" style={{gridColumn: idx+2}} onMouseEnter={() => setHoveredSalle(salle)} onMouseLeave={() => setHoveredSalle(null)}>
-          {/* Version Desktop */}
           <span className="salle-name desktop-view">{nomSalle}</span>
           <span className="salle-capacity desktop-view">{capaSalle}</span>
-          
-          {/* Version Mobile (Abréviations) */}
           <span className="salle-name mobile-view">{mobileNom}</span>
           <span className="salle-capacity mobile-view">{mobileCapa}</span>
         </div>
@@ -221,7 +213,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         <div className="nav-group-right"></div>
       </div>
 
-      {/* BLOC MOBILE INSTRUCTION TOTALEMENT RETIRÉ */}
+      {/* BLOC MOBILE INSTRUCTION TOTALEMENT SUPPRIMÉ ICI */}
 
       <div className="reservation-content" onMouseUp={handleMouseUp}>
         <div className="grid-column">
