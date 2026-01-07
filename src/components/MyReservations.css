@@ -1,5 +1,5 @@
 /* src/components/MyReservations.css */
-/* STYLES SPÉCIFIQUES POUR MES RÉSERVATIONS - SANS DOUBLONS */
+/* STYLES SPÉCIFIQUES POUR MES RÉSERVATIONS */
 
 .my-reservations-container {
   background: white;
@@ -382,6 +382,11 @@
   .filter-buttons {
     justify-content: center;
     gap: 0.5rem;
+  }
+
+  /* 1.1 MASQUAGE BOUTON PASSÉES (Force avec !important) */
+  .btn-past {
+    display: none !important;
   }
 
   /* 2. TABLEAU COMPACT */
