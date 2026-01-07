@@ -1,5 +1,5 @@
 /* src/components/ReservationGrid.css */
-/* VERSION CORRIGÉE : FIX BUG SYNTAXE + CENTRAGE POPUP MOBILE */
+/* VERSION FINALE : BUGFIX SYNTAXE + CENTRAGE POPUP MOBILE */
 
 .reservation-grid-container {
   background: transparent !important;
@@ -210,7 +210,8 @@
   .form-column { 
     width: 100%; 
     max-width: 100vw; 
-    order: 2; 
+    order: 2;
+    min-height: 100vh; /* GARANTIT L'EFFET PLEINE PAGE */
   }
   
   .reservation-form { width: 100%; box-sizing: border-box; height: auto; }
