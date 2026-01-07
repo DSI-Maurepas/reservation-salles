@@ -154,18 +154,19 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
 
       <div className="filter-buttons">
         <button onClick={() => filterReservations('all')} className={`filter-btn ${filter === 'all' ? 'active' : ''}`}>📅 Toutes ({reservations.length})</button>
-        
-        {/* BOUTON AVEC CLASSE btn-past POUR CIBLAGE CSS RESPONSIVE */}
         <button onClick={() => filterReservations('past')} className={`filter-btn btn-past ${filter === 'past' ? 'active' : ''}`}>📜 Passées ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureFin || r.heureDebut}`) < new Date()).length})</button>
-        
         <button onClick={() => filterReservations('today')} className={`filter-btn ${filter === 'today' ? 'active' : ''}`}>📆 Aujourd'hui ({reservations.filter(r => { const d = new Date(r.dateDebut); return d.toDateString() === new Date().toDateString(); }).length})</button>
         <button onClick={() => filterReservations('upcoming')} className={`filter-btn ${filter === 'upcoming' ? 'active' : ''}`}>🔜 À venir ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) > new Date()).length})</button>
       </div>
 
-      <div className="export-section">
+      {/* SECTION EXPORT DESKTOP (Cachee sur mobile) */}
+      <div className="export-section desktop-export">
         <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}><option value="ical">📅 iCalendar (.ics)</option><option value="csv">📊 CSV</option><option value="xlsx">📗 Excel (.xls)</option></select>
         <button onClick={handleExport} className="export-btn">⬇️ Exporter</button>
       </div>
+
+      {/* SECTION EXPORT MOBILE (Unique Bouton ICS) */}
+      <button onClick={exportToICalendar} className="mobile-export-btn">📅 iCalendar (.ics)</button>
 
       {filteredReservations.length === 0 ? <div className="no-reservations"><p>Aucune réservation trouvée</p></div> : (
         <div className="table-container">

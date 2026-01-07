@@ -1,5 +1,5 @@
 /* src/components/ReservationGrid.css */
-/* VERSION FINALE : GESTION LEGENDES DESKTOP VS MOBILE & FADING POPUP & CENTRAGE MOBILE & NOMS COURTS */
+/* VERSION CORRIGÉE : FIX EMPILAGE MOBILE, SUPPRESSION INSTRUCTION, HEADER CENTRÉ */
 
 .reservation-grid-container {
   background: transparent !important;
@@ -38,23 +38,7 @@
 .nav-day-button:hover, .nav-week-button:hover, .nav-today-button:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .date-display h2 { margin: 0; color: #1565c0; font-size: 1.2rem; font-weight: 800; text-transform: capitalize; min-width: 250px; text-align: center; letter-spacing: -0.5px; }
 
-/* INSTRUCTION MOBILE */
-.mobile-instruction {
-  display: none; 
-  text-align: center;
-  margin-bottom: 20px;
-  background-color: #cdf6ff; /* Bleu ciel demandé */
-  color: #1e3a8a; 
-  font-size: 0.9rem;
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-.mobile-instruction p { margin: 0; line-height: 1.4; }
-.mobile-instruction p:first-child { margin-bottom: 0.5rem; }
-
 /* LAYOUT */
-/* FIX: align-items: start pour ne pas étirer la grille */
 .reservation-content { 
   display: grid; 
   grid-template-columns: minmax(900px, 1fr) 350px; 
@@ -71,7 +55,7 @@
 .grid-corner { background: #f1f5f9; color: #64748b; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; position: sticky; top: 0; left: 0; z-index: 30; border-bottom: 1px solid #64748b; border-right: 1px solid #64748b; }
 .salle-header { background: #1976d2; color: white !important; padding: 0.2rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; border-right: 1px solid rgba(255,255,255,0.3); border-bottom: 1px solid #64748b; position: sticky; top: 0; z-index: 20; }
 
-/* Classes utilitaires pour Desktop/Mobile (Géré par CSS) */
+/* Affichage Nom Mobile */
 .desktop-view { display: block; }
 .mobile-view { display: none; }
 
@@ -95,7 +79,6 @@
 .desktop-legend { display: block; }
 
 /* Styles formulaire */
-/* FIX: height auto pour grandir naturellement */
 .reservation-form { background: white; padding: 1rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; height: auto; max-height: none; overflow-y: auto; box-sizing: border-box; }
 .reservation-form h3 { color: #1e293b; font-size: 1.1rem; margin-bottom: 0.8rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.4rem; }
 .form-row { display: flex; gap: 0.8rem; width: 100%; }
@@ -164,9 +147,15 @@
 
 @media (max-width: 1280px) {
   .reservation-grid-container { padding: 1rem; }
-  .reservation-content { display: flex; flexDirection: column !important; gap: 1.5rem; }
   
-  /* 1. HEADER 3 LIGNES (L1:Retour, L2:Date, L3:Boutons) */
+  /* FIX FLEX DIRECTION */
+  .reservation-content { 
+    display: flex !important; 
+    flex-direction: column !important;
+    gap: 1.5rem; 
+  }
+  
+  /* HEADER 3 LIGNES */
   .date-navigation-bar { 
     display: flex; 
     flex-direction: column; 
@@ -175,37 +164,32 @@
     padding: 1rem; 
   }
 
-  /* LIGNE 1 : RETOUR + TITRE */
   .nav-group-left { 
     width: 100%; 
     justify-content: center; 
-    grid-column: auto; 
     margin-bottom: 0.5rem; 
-    order: 1; /* Premier */
+    order: 1; 
   }
 
-  /* GROUPE CENTRAL : DATE (L2) + BOUTONS (L3) */
   .nav-group-center { 
     width: 100%; 
     display: flex; 
     flex-wrap: wrap; 
     justify-content: center; 
     gap: 0.5rem; 
-    order: 2; /* Second */
+    order: 2; 
   }
 
-  /* LIGNE 2 : DATE */
   .date-display { 
     width: 100%; 
     text-align: center; 
-    order: 1; /* Premier dans le groupe central */
+    order: 1; 
     margin-bottom: 0.5rem; 
   }
   .date-display h2 { font-size: 1.1rem; }
 
-  /* LIGNE 3 : BOUTONS */
   .nav-day-button, .nav-week-button, .nav-today-button {
-    order: 2; /* Second dans le groupe central */
+    order: 2; 
     padding: 0.4rem 0.6rem; 
     font-size: 0.75rem; 
     min-width: auto;
@@ -213,25 +197,30 @@
   
   .nav-group-right { display: none !important; }
 
-  /* 2. ORDONNANCEMENT DES BLOCS */
-  /* Grille en premier */
-  .grid-column { width: 100%; display: block; overflow-x: auto; order: 1; }
+  /* ORDONNANCEMENT DES BLOCS */
+  .grid-column { 
+    width: 100%; 
+    display: block; 
+    overflow-x: auto; 
+    order: 1; 
+  }
   .reservation-grid { min-width: 900px; }
   
-  /* ORDRE FLEX POUR LEGENDE MOBILE */
-  .mobile-instruction { display: block; order: 2; }
-  .form-column { width: 100%; max-width: 100vw; order: 3; }
+  /* LÉGENDE/FORMULAIRE SOUS LA GRILLE */
+  .form-column { 
+    width: 100%; 
+    max-width: 100vw; 
+    order: 2; 
+  }
   
-  /* MODIF: height auto en mobile */
   .reservation-form { width: 100%; box-sizing: border-box; height: auto; }
   
-  /* GESTION AFFICHAGE NOM/CAPACITE MOBILE */
-  .desktop-view { display: none !important; } /* Caché sur mobile */
-  .mobile-view { display: block !important; } /* Visible sur mobile */
+  .desktop-view { display: none !important; }
+  .mobile-view { display: block !important; }
   
   .desktop-legend { display: none !important; }
 
-  /* CENTRAGE POPUP SUR MOBILE (IMPORTANT) */
+  /* CENTRAGE POPUP SUR MOBILE */
   .reservation-popup-card {
     top: 50% !important;
     left: 50% !important;

@@ -101,7 +101,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     if (selections.length === 0) return alert('Aucune sélection'); 
     if (!formData.nom || !formData.email || !formData.service || !formData.objet) return alert('Champs manquants'); 
     
-    // VALIDATIONS
+    // VALIDATIONS OBLIGATOIRES
     const selectedSalles = [...new Set(selections.map(s => s.salle))];
     if (selectedSalles.length > 0) {
       const room = selectedSalles[0];
@@ -221,11 +221,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         <div className="nav-group-right"></div>
       </div>
 
-      <div className="mobile-instruction">
-        {/* TEXTE MODIFIÉ POUR MOBILE */}
-        <p>👆 Cliquez sur une salle pour afficher ses propriétés en bas de page</p>
-        <p>ℹ️ Cliquez sur un créneau pour en connaître les propriétés</p>
-      </div>
+      {/* BLOC MOBILE INSTRUCTION TOTALEMENT RETIRÉ */}
 
       <div className="reservation-content" onMouseUp={handleMouseUp}>
         <div className="grid-column">
