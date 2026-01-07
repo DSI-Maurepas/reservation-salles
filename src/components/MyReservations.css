@@ -162,6 +162,10 @@
   gap: 1rem;
 }
 
+/* Styles des cellules et double affichage */
+.desktop-view { display: block; }
+.mobile-view { display: none; }
+
 .reservation-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border: 2px solid #e2e8f0;
@@ -356,8 +360,12 @@
   cursor: pointer;
 }
 
-/* Responsive */
+/* ------------------------------------------------ */
+/* RESPONSIVE (MODIFIÉ POUR VERSION COMPACTE) */
+/* ------------------------------------------------ */
+
 @media (max-width: 768px) {
+  /* Recherche empilée */
   .search-section form {
     flex-direction: column;
   }
@@ -366,11 +374,46 @@
     grid-template-columns: 1fr;
   }
 
+  .export-section {
+    flex-direction: column;
+  }
+
+  /* 1. CENTRAGE BOUTONS FILTRES */
   .filter-buttons {
+    justify-content: center;
     gap: 0.5rem;
   }
 
-  .export-section {
-    flex-direction: column;
+  /* 2. TABLEAU COMPACT */
+  /* Cacher les colonnes Service et Objet */
+  .col-service, .col-objet {
+    display: none !important;
+  }
+
+  /* 3. BASCULE AFFICHAGE TEXTE */
+  .desktop-view { display: none !important; }
+  .mobile-view { display: block !important; }
+
+  /* Centrer Salle et Capacité */
+  .salle-nom, .salle-capacite {
+    text-align: center;
+  }
+
+  /* 4. ACTIONS COMPACTES (ICONES SEULEMENT) */
+  .btn-label {
+    display: none;
+  }
+
+  .edit-button, .delete-button {
+    padding: 0.5rem;
+    font-size: 1.1rem; /* Emojis plus gros */
+  }
+
+  /* Ajustements généraux tableau mobile */
+  .reservations-table th, 
+  .reservations-table td {
+    padding: 0.5rem 0.2rem; /* Réduire padding */
+    font-size: 0.85rem; /* Police légèrement plus petite */
+    text-align: center; /* Tout centrer */
   }
 }
