@@ -1,5 +1,5 @@
 // src/components/SingleRoomGrid.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
@@ -20,9 +20,10 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [showForm, setShowForm] = useState(false);
   const [hoveredReservation, setHoveredReservation] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
-  
-  // NOUVEL ÉTAT POUR L'EFFET DE DISSOLUTION
   const [isFading, setIsFading] = useState(false);
+
+  // REFERENCE POUR SCROLL AUTO
+  const sidebarRef = useRef(null);
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
   const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
@@ -60,6 +61,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const handleMouseEnter = (dayIndex, hour, date) => { if (!dragStart) return; if (!isDragging && mouseDownPos) { if (dayIndex !== mouseDownPos.dayIndex || hour !== mouseDownPos.hour) setIsDragging(true); else return; } if (!isDragging) return; if (isSlotReserved(dayIndex, hour) || isDimanche(date) || isJourFerie(date) || isDateInPast(date)) return; const newSelections = [...selections]; const minDay = Math.min(dragStart.dayIndex, dayIndex); const maxDay = Math.max(dragStart.dayIndex, dayIndex); const minHour = Math.min(dragStart.hour, hour); const maxHour = Math.max(dragStart.hour, hour); for (let d = minDay; d <= maxDay; d++) { const dayDate = dates[d]; if (!isDimanche(dayDate) && !isJourFerie(dayDate) && !isDateInPast(dayDate)) { for (let h = minHour; h <= maxHour; h += 0.5) { const exists = newSelections.some(sel => sel.dayIndex === d && sel.hour === h); if (!exists && !isSlotReserved(d, h)) newSelections.push({ dayIndex: d, hour: h, date: dates[d] }); } } } setSelections(newSelections); };
   
   const handleMouseUp = () => { 
+    let shouldScroll = false;
     if (!isDragging && mouseDownPos) { 
       const { dayIndex, hour, date } = mouseDownPos; 
       const alreadySelected = selections.some(sel => sel.dayIndex === dayIndex && sel.hour === hour); 
@@ -70,14 +72,18 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       } else { 
         setSelections([...selections, { dayIndex, hour, date }]); 
         setShowForm(true);
-        // SCROLL VERS LE HAUT
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        shouldScroll = true;
       } 
     } else if (isDragging && selections.length > 0) {
-      setShowForm(true); 
-      // SCROLL VERS LE HAUT
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setShowForm(true);
+      shouldScroll = true;
     }
+    
+    // SCROLL AUTOMATIQUE SUR LA BARRE LATÉRALE
+    if (shouldScroll && sidebarRef.current) {
+        sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     setIsDragging(false); 
     setDragStart(null); 
     setMouseDownPos(null); 
@@ -136,17 +142,17 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
           <div className="nav-group-right-spacer"></div>
         </div>
 
-        {/* INSTRUCTION MOBILE */}
+        {/* INSTRUCTION MOBILE AJOUTÉE (Caché sur Desktop via CSS) */}
         <div className="mobile-instruction">
           <p>Cliquez sur un créneau pour le sélectionner</p>
         </div>
 
         <div className="single-room-layout">
-          <div className="room-sidebar">
+          <div className="room-sidebar" ref={sidebarRef}>
             {!showForm && (
               <>
                 <SalleCard salle={selectedRoom} />
-                {/* INSTRUCTION BUREAU */}
+                {/* INSTRUCTION BUREAU (Caché sur Mobile via CSS) */}
                 <div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div>
               </>
             )}
@@ -166,9 +172,9 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                   <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez l'objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
                   {dispositions && (
                     <>
-                      {/* VALIDATION */}
+                      {/* VALIDATION: Ajout de 'required' */}
                       <select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})} required><option value="">Disposition souhaitée *</option>{dispositions.map(d => <option key={d} value={d}>{d}</option>)}</select>
-                      {/* VALIDATION */}
+                      {/* VALIDATION: Ajout de 'required', 'min' et 'max' dynamique */}
                       {(selectedRoom.includes('Conseil') || selectedRoom.includes('Mariages')) && <input type="number" className="form-input" placeholder={`Nombre de personnes prévues (max ${selectedRoom.includes('Mariages') ? 30 : 100}) *`} value={formData.nbPersonnes} onChange={e => setFormData({...formData, nbPersonnes: e.target.value})} required min="1" max={selectedRoom.includes('Mariages') ? 30 : 100} />}
                     </>
                   )}
@@ -230,7 +236,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                         onMouseEnter={(e) => { 
                           handleMouseEnter(dayIndex, slot, date); 
                           if (reserved && reservation) { 
-                            const rect = e.currentTarget.getBoundingClientRect(); 
                             setHoveredReservation(reservation); 
                             // MODIFICATION : POSITIONNEMENT RELATIF À LA SOURIS (Base à 50px au-dessus)
                             setPopupPosition({ x: e.clientX, y: e.clientY - 50 }); 

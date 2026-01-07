@@ -1,206 +1,171 @@
-// src/components/MyReservations.js
-import React, { useState, useEffect } from 'react';
+// src/components/ReservationGrid.js
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom'; // IMPORT PORTAL
 import googleSheetsService from '../services/googleSheetsService';
-import emailService from '../services/emailService';
-import { MOTIFS_ANNULATION, COULEURS_OBJETS } from '../config/googleSheets';
-import './MyReservations.css';
+import icalService from '../services/icalService';
+import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS, COULEURS_OBJETS, JOURS_FERIES } from '../config/googleSheets';
+import { sallesData } from '../data/sallesData';
+import ColorLegend from './ColorLegend';
+import SalleCard from './SalleCard';
+import './ReservationGrid.css';
 
-// Fonction pour convertir couleurs en pastel
-const toPastel = (hexColor) => {
-  if (!hexColor || hexColor === '#f9f9f9') return '#f9f9f9';
-  const r = parseInt(hexColor.slice(1, 3), 16);
-  const g = parseInt(hexColor.slice(3, 5), 16);
-  const b = parseInt(hexColor.slice(5, 7), 16);
-  const pastelR = Math.round(r * 0.3 + 255 * 0.7);
-  const pastelG = Math.round(g * 0.3 + 255 * 0.7);
-  const pastelB = Math.round(b * 0.3 + 255 * 0.7);
-  return `#${pastelR.toString(16).padStart(2, '0')}${pastelG.toString(16).padStart(2, '0')}${pastelB.toString(16).padStart(2, '0')}`;
-};
-
-function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
+function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess }) {
+  const [currentDate, setCurrentDate] = useState(selectedDate);
   const [reservations, setReservations] = useState([]);
-  const [filteredReservations, setFilteredReservations] = useState([]);
-  const [filter, setFilter] = useState('all'); 
-  const [loading, setLoading] = useState(false);
-  const [searchEmail, setSearchEmail] = useState(userEmail);
-  const [exportFormat, setExportFormat] = useState('ical');
-  const [sortColumn, setSortColumn] = useState(null);
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [selections, setSelections] = useState([]);
+  const [currentSelection, setCurrentSelection] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [hoveredObjet, setHoveredObjet] = useState(null);
+  const [hoveredSalle, setHoveredSalle] = useState(null);
+  const [hoveredReservation, setHoveredReservation] = useState(null);
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const [isFading, setIsFading] = useState(false);
   
-  const [confirmModal, setConfirmModal] = useState({ show: false, type: '', reservation: null, motif: '' });
-  const [cancelModal, setCancelModal] = useState({ show: false, reservation: null });
-  const [selectedMotif, setSelectedMotif] = useState('');
+  // États classiques (edit, loading, modal...)
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingReservation, setEditingReservation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
+  const [successModal, setSuccessModal] = useState({ show: false, reservations: [], message: '' });
+  const [blockedDayModal, setBlockedDayModal] = useState(false);
+  const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, salle: '', slot: null, password: '' });
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+  const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [] });
+  const [formData, setFormData] = useState({ nom: '', prenom: '', email: localStorage.getItem('userEmail') || '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceJusquau: '', recurrenceType: 'weekly', agencement: '', nbPersonnes: '' });
+  const ADMIN_PASSWORD = 'R3sa@Morepas78';
 
+  // TIMER 4 SECONDES
   useEffect(() => {
-    if (userEmail) loadUserReservations();
-  }, [userEmail]);
-
-  const loadUserReservations = async () => {
-    setLoading(true);
-    try {
-      const allReservations = await googleSheetsService.getAllReservations();
-      const userReservations = allReservations.filter(res => res.email.toLowerCase() === userEmail.toLowerCase());
-      userReservations.sort((a, b) => {
-        const dateA = new Date(`${a.dateDebut}T${a.heureDebut}`);
-        const dateB = new Date(`${b.dateDebut}T${b.heureDebut}`);
-        return dateB - dateA;
-      });
-      setReservations(userReservations);
-      setFilteredReservations(userReservations);
-    } catch (error) { console.error(error); alert('Erreur chargement réservations'); } finally { setLoading(false); }
-  };
-
-  const handleSearch = (e) => { e.preventDefault(); if (!searchEmail) return; setUserEmail(searchEmail); };
-
-  const filterReservations = (filterType) => {
-    const now = new Date();
-    setFilter(filterType);
-    if (filterType === 'all') setFilteredReservations(reservations);
-    else if (filterType === 'upcoming') setFilteredReservations(reservations.filter(res => new Date(`${res.dateDebut}T${res.heureDebut}`) > now));
-    else if (filterType === 'past') setFilteredReservations(reservations.filter(res => new Date(`${res.dateDebut}T${res.heureFin || res.heureDebut}`) < now));
-    else if (filterType === 'today') setFilteredReservations(reservations.filter(res => new Date(res.dateDebut).toDateString() === now.toDateString()));
-  };
-
-  const getSortedReservations = () => {
-    if (!sortColumn) return filteredReservations;
-    return [...filteredReservations].sort((a, b) => {
-      let aVal = a[sortColumn];
-      let bVal = b[sortColumn];
-      if (sortColumn === 'dateDebut') { aVal = new Date(aVal); bVal = new Date(bVal); }
-      if (sortDirection === 'asc') return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-      else return bVal > aVal ? 1 : bVal < aVal ? -1 : 0;
-    });
-  };
-
-  const handleSort = (column) => {
-    if (sortColumn === column) setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    else { setSortColumn(column); setSortDirection('asc'); }
-  };
-
-  const renderSortIcon = (column) => { if (sortColumn !== column) return null; return sortDirection === 'asc' ? ' ▲' : ' ▼'; };
-
-  const handleEdit = (reservation) => {
-    if (onEditReservation && typeof onEditReservation === 'function') { onEditReservation(reservation); return; }
-    try {
-      const dateStr = reservation.dateDebut;
-      const newHash = `#?date=${dateStr}&edit=${reservation.id}`;
-      window.location.hash = newHash;
-      setTimeout(() => { if (!window.location.hash.includes('edit=')) window.location.href = `${window.location.origin}${window.location.pathname}${newHash}`; }, 200);
-    } catch (err) { console.error(err); }
-  };
-
-  const handleDeleteClick = (reservation) => { setCancelModal({ show: true, reservation: reservation }); setSelectedMotif(''); };
-
-  const handleDeleteConfirm = async () => {
-    const reservation = cancelModal.reservation;
-    const motif = selectedMotif || 'Aucun motif fourni';
-    setCancelModal({ show: false, reservation: null });
-    try {
-      await googleSheetsService.deleteReservation(reservation.id);
-      setConfirmModal({ show: true, type: 'cancel', reservation: reservation, motif: motif });
-      try { await loadUserReservations(); } catch (e) {}
-      try { await emailService.sendCancellationEmail({ ...reservation, motif: motif }); } catch (e) {}
-    } catch (error) {
-      setConfirmModal({ show: true, type: 'cancel', reservation: reservation, motif: motif + ' (Erreur suppression)' });
-      try { await loadUserReservations(); } catch (e) {}
+    let fadeTimer, removeTimer;
+    if (hoveredReservation) {
+      setIsFading(false);
+      fadeTimer = setTimeout(() => { setIsFading(true); removeTimer = setTimeout(() => { setHoveredReservation(null); setIsFading(false); }, 400); }, 4000);
     }
+    return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
+  }, [hoveredReservation]);
+
+  const normalizeRoomName = (name) => name ? name.split(' - ')[0].trim().toLowerCase() : '';
+  const isDateInPast = (date) => { const today = new Date(); today.setHours(0,0,0,0); const check = new Date(date); check.setHours(0,0,0,0); return check < today; };
+  const isAdminOnlyRoom = (salle) => SALLES_ADMIN_ONLY.includes(salle);
+  const isDateBlocked = useCallback((date) => date.getDay() === 0 || JOURS_FERIES.includes(googleSheetsService.formatDate(date)), []);
+
+  const handlePrevDay = () => { const d = new Date(currentDate); d.setDate(d.getDate()-1); setCurrentDate(d); setSelections([]); };
+  const handleNextDay = () => { const d = new Date(currentDate); d.setDate(d.getDate()+1); setCurrentDate(d); setSelections([]); };
+  const handleToday = () => { setCurrentDate(new Date()); setSelections([]); };
+  const handleWeekPrev = () => { const d = new Date(currentDate); d.setDate(d.getDate()-7); setCurrentDate(d); setSelections([]); };
+  const handleWeekNext = () => { const d = new Date(currentDate); d.setDate(d.getDate()+7); setCurrentDate(d); setSelections([]); };
+
+  const loadReservations = useCallback(async () => { setLoading(true); try { if (isDateBlocked(currentDate)) setBlockedDayModal(true); const all = await googleSheetsService.getAllReservations(); const dStr = googleSheetsService.formatDate(currentDate); let dayRes = all.filter(res => { if (res.statut === 'cancelled') return false; const isSameDay = res.dateDebut === dStr; const isMultiDay = (res.dateDebut <= dStr && res.dateFin >= dStr); return isSameDay || isMultiDay; }); if (editingReservation?.id) dayRes = dayRes.filter(r => r.id !== editingReservation.id); setReservations(dayRes); } catch (e) { console.error(e); } finally { setLoading(false); } }, [currentDate, editingReservation, isDateBlocked]);
+  useEffect(() => { loadReservations(); }, [loadReservations]);
+  useEffect(() => { const loadEdit = async () => { if (editReservationId) { const all = await googleSheetsService.getAllReservations(); const res = all.find(r => r.id === editReservationId); if (res) { setEditingReservation(res); setIsEditMode(true); setSelections([]); setCurrentSelection(null); setFormData({ nom: res.nom, prenom: res.prenom, email: res.email, telephone: res.telephone, service: res.service, objet: res.objet, description: res.description, recurrence: false, recurrenceJusquau: '', recurrenceType: 'weekly', agencement: res.agencement || '', nbPersonnes: res.nbPersonnes || '' }); } } }; if (editReservationId) loadEdit(); }, [editReservationId]);
+
+  const isSlotReserved = (salle, slotStart) => { const slotEnd = slotStart + 0.5; return reservations.some(res => { if (normalizeRoomName(res.salle) !== normalizeRoomName(salle)) return false; const resStart = googleSheetsService.timeToFloat(res.heureDebut); const resEnd = googleSheetsService.timeToFloat(res.heureFin); return (slotStart < resEnd && slotEnd > resStart); }); };
+  const getReservation = (salle, slotStart) => { const slotEnd = slotStart + 0.5; return reservations.find(res => { if (normalizeRoomName(res.salle) !== normalizeRoomName(salle)) return false; const resStart = googleSheetsService.timeToFloat(res.heureDebut); const resEnd = googleSheetsService.timeToFloat(res.heureFin); return (slotStart < resEnd && slotEnd > resStart); }); };
+  const isSlotSelected = (salle, hour) => { return selections.some(sel => sel.salle === salle && hour >= sel.startHour && hour < sel.endHour); };
+
+  const handleMouseDown = (salle, hour) => { if (isDateBlocked(currentDate)) { setBlockedDayModal(true); return; } if (isDateInPast(currentDate)) { alert('Date passée.'); return; } if (isSlotReserved(salle, hour)) return; if (isAdminOnlyRoom(salle) && !isAdminUnlocked) { setAdminPasswordModal({ show: true, salle, slot: {salle, hour}, password: '' }); return; } setIsDragging(true); setCurrentSelection({ salle, startHour: hour, endHour: hour + 0.5 }); };
+  const handleMouseEnter = (salle, hour) => { if (!isDragging || !currentSelection) return; if (currentSelection.salle !== salle) return; const currentEnd = hour + 0.5; let start = currentSelection.startHour; let end = currentSelection.endHour; if (hour < start) start = hour; if (currentEnd > end) end = currentEnd; for (let h = start; h < end; h += 0.5) { if (isSlotReserved(salle, h)) return; } setCurrentSelection({ ...currentSelection, startHour: start, endHour: end }); };
+  const handleMouseUp = () => { if (isDragging && currentSelection) { setSelections(prev => { const exists = prev.some(s => s.salle === currentSelection.salle && Math.abs(s.startHour - currentSelection.startHour) < 0.001 && Math.abs(s.endHour - currentSelection.endHour) < 0.001); const overlap = prev.some(s => s.salle === currentSelection.salle && !exists && ((currentSelection.startHour < s.endHour) && (currentSelection.endHour > s.startHour))); if (overlap) { alert("Chevauchement détecté."); return prev; } if (exists) { return prev; } return [...prev, currentSelection]; }); setCurrentSelection(null); } setIsDragging(false); };
+  const removeMergedSelection = (mergedSlot) => { setSelections(currentSelections => currentSelections.filter(sel => { if (sel.salle !== mergedSlot.salle) return true; const isInside = (sel.startHour >= mergedSlot.startHour - 0.001) && (sel.endHour <= mergedSlot.endHour + 0.001); return !isInside; })); };
+  const handleAdminPasswordSubmit = () => { if (adminPasswordModal.password === ADMIN_PASSWORD) { setIsAdminUnlocked(true); setAdminPasswordModal({ show: false, salle: '', slot: null, password: '' }); } else { alert('Mot de passe incorrect'); } };
+  
+  const preMergeSelections = (selections) => { const bySalle = {}; selections.forEach(sel => { if (!bySalle[sel.salle]) bySalle[sel.salle] = []; bySalle[sel.salle].push(sel); }); const merged = []; for (const salle in bySalle) { const slots = bySalle[salle].sort((a, b) => a.startHour - b.startHour); let i = 0; while (i < slots.length) { const current = { ...slots[i] }; while (i + 1 < slots.length && Math.abs(current.endHour - slots[i + 1].startHour) < 0.01) { current.endHour = slots[i + 1].endHour; i++; } merged.push(current); i++; } } return merged; };
+  const generateRecurrenceDates = (startDate, endDate, type) => { const dates = []; const current = new Date(startDate); const end = new Date(endDate); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); while (current <= end) { dates.push(new Date(current)); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); } return dates; };
+  const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (normalizeRoomName(existing.salle) !== normalizeRoomName(candidate.salle)) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
+  const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '' }); setSelections([]); loadReservations(); } catch (error) { alert("Erreur : " + error.message); } finally { setIsSubmitting(false); } };
+  const handleSubmit = async (e) => { e.preventDefault(); if (selections.length === 0) return alert('Aucune sélection'); if (!formData.nom || !formData.email || !formData.service || !formData.objet) return alert('Champs manquants'); const selectedSalles = [...new Set(selections.map(s => s.salle))]; if (selectedSalles.length > 0) { const room = selectedSalles[0]; const isConseil = room.includes('Conseil'); const isMariages = room.includes('Mariages'); if (isConseil || isMariages) { if (!formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); if (!formData.nbPersonnes) return alert('⚠️ Veuillez indiquer le nombre de personnes.'); const nb = parseInt(formData.nbPersonnes, 10); const max = isMariages ? 30 : 100; if (nb > max) { return alert(`⚠️ La capacité maximale pour la salle ${isMariages ? 'des Mariages' : 'du Conseil'} est de ${max} personnes.`); } } } setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(currentDate); const baseRes = { salle: sel.salle, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.startHour), heureFin: googleSheetsService.formatTime(sel.endHour), nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, service: formData.service, objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement, nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const dates = generateRecurrenceDates(currentDate, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (e) { alert("Erreur : " + e.message); setIsSubmitting(false); } };
+  
+  const handleReservationMouseEnter = (res, e) => { 
+    const rect = e.currentTarget.getBoundingClientRect(); 
+    setPopupPosition({ x: rect.left + (rect.width / 2), y: rect.top }); 
+    setHoveredReservation(res); 
   };
 
-  const handleExport = () => {
-    if (exportFormat === 'csv') exportToCSV();
-    else if (exportFormat === 'xlsx') exportToXLSX();
-    else exportToICalendar();
-  };
-
-  const exportToCSV = () => {
-    const headers = ['Salle', 'Date', 'Heure Début', 'Heure Fin', 'Service', 'Objet'];
-    const rows = filteredReservations.map(res => [res.salle, new Date(res.dateDebut).toLocaleDateString('fr-FR'), res.heureDebut, res.heureFin, res.service, res.objet]);
-    const csvContent = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `reservations_${userEmail}.csv`; link.click();
-  };
-
-  const exportToXLSX = () => {
-    const headers = ['Salle', 'Date', 'Horaire', 'Agent', 'Service', 'Objet', 'Email', 'Téléphone', 'Description', 'Récurrence'];
-    const rows = filteredReservations.map(res => [res.salle, new Date(res.dateDebut).toLocaleDateString('fr-FR'), `${res.heureDebut} - ${res.heureFin}`, `${res.prenom || ''} ${res.nom || ''}`.trim(), res.service, res.objet, res.email || '', res.telephone || '', res.description || '', res.recurrence ? `OUI (jusqu'au ${res.recurrenceJusquau || 'N/A'})` : 'NON']);
-    const xmlContent = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Réservations"><Table><Row>${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('')}</Row>${rows.map(row => `<Row>${row.map(cell => `<Cell><Data ss:Type="String">${String(cell).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</Data></Cell>`).join('')}</Row>`).join('')}</Table></Worksheet></Workbook>`;
-    const blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `reservations_${userEmail}.xls`; link.click();
-  };
-
-  const exportToICalendar = () => {
-    const events = filteredReservations.map(res => {
-      const startDate = new Date(`${res.dateDebut}T${res.heureDebut}:00`);
-      const endDate = new Date(`${res.dateDebut}T${res.heureFin}:00`);
-      return ['BEGIN:VEVENT', `DTSTART:${formatICalDate(startDate)}`, `DTEND:${formatICalDate(endDate)}`, `SUMMARY:${res.salle} - ${res.objet}`, `DESCRIPTION:Service: ${res.service}`, `LOCATION:${res.salle}`, 'END:VEVENT'].join('\r\n');
+  const renderGrid = () => {
+    const grid = [];
+    grid.push(<div key="corner" className="grid-corner">Heure</div>);
+    SALLES.forEach((salle, idx) => {
+      const parts = salle.split(' - ');
+      const nomSalle = parts[0]; const capaSalle = parts[1] || '';
+      const mobileNom = nomSalle.replace('Salle Conseil', 'Conseil').replace('Salle Mariages', 'Mariages');
+      const mobileCapa = capaSalle.replace('Personnes', 'Pers.');
+      grid.push(<div key={`h-${idx}`} className="salle-header" style={{gridColumn: idx+2}} onMouseEnter={() => setHoveredSalle(salle)} onMouseLeave={() => setHoveredSalle(null)}><span className="salle-name desktop-view">{nomSalle}</span><span className="salle-capacity desktop-view">{capaSalle}</span><span className="salle-name mobile-view">{mobileNom}</span><span className="salle-capacity mobile-view">{mobileCapa}</span></div>);
     });
-    const icalContent = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mairie//FR', ...events, 'END:VCALENDAR'].join('\r\n');
-    const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `reservations_${userEmail}.ics`; link.click();
+    for (let h = HORAIRES.HEURE_DEBUT; h < HORAIRES.HEURE_FIN; h += 0.5) {
+      const row = (h - HORAIRES.HEURE_DEBUT) / 0.5 + 2; const isFullHour = h % 1 === 0;
+      if (isFullHour) { grid.push(<div key={`t-${h}`} className="time-label" style={{gridRow: `${row} / span 2`}}>{h}h</div>); } 
+      SALLES.forEach((salle, idx) => {
+        const reserved = isSlotReserved(salle, h); const res = reserved ? getReservation(salle, h) : null; const selected = isSlotSelected(salle, h); const isBlockedDay = isDateBlocked(currentDate); const isLunch = (h >= 12 && h < 14); const isAdmin = isAdminOnlyRoom(salle); const past = isDateInPast(currentDate);
+        let classes = `time-slot`; classes += isFullHour ? ' full-hour-start' : ' half-hour-start';
+        if (isBlockedDay) classes += ' blocked'; else if (reserved) classes += ' reserved occupied'; else if (past) classes += ' past-date'; else if (selected) classes += ' selected'; else if (isAdmin && !isAdminUnlocked) classes += ' admin-only-locked'; if (isLunch) classes += ' lunch-break';
+        let style = { gridColumn: idx+2, gridRow: row }; if (reserved && res) { style.backgroundColor = COULEURS_OBJETS[res.objet] || '#ccc'; style.color = 'white'; }
+        grid.push(<div key={`c-${salle}-${h}`} className={classes} style={style} onMouseDown={() => handleMouseDown(salle, h)} onMouseEnter={(e) => { handleMouseEnter(salle, h); if(reserved && res) handleReservationMouseEnter(res, e); }}>{isAdmin && !isAdminUnlocked && !reserved && <span className="lock-icon">🔒</span>}</div>);
+      });
+    }
+    return grid;
   };
 
-  const formatICalDate = (date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-  const formatMobileRoomName = (name) => { if (!name) return ''; return name.replace('Salle Conseil', 'Conseil').replace('Salle Mariages', 'Mariages').replace('Salle N°', 'Salle ').replace('Salle CCAS', 'CCAS'); };
+  const mergedSelectionsForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
+  const getFormTitle = () => { const count = mergedSelectionsForDisplay.length; if (count > 1) return `Réservation de ${count} créneaux`; return "Réservation d'un créneau"; };
 
-  if (loading) return <div className="my-reservations-container"><div className="loading-container"><div className="spinner"></div><p>Chargement...</p></div></div>;
+  // POPUP CONTENU
+  const popupContent = hoveredReservation ? (
+    <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}>
+      <div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div>
+      <div className="popup-card-body">
+        {hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}
+        {hoveredReservation.service && <div className="popup-info-line"><span className="popup-info-icon">🏢</span><span className="popup-info-text">{hoveredReservation.service}</span></div>}
+        <div className="popup-info-line"><span className="popup-info-icon">📅</span><span className="popup-info-text">{new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</span></div>
+        {(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (<>{hoveredReservation.agencement && (<div className="popup-info-line"><span className="popup-info-icon">🪑</span><span className="popup-info-text">Disposition : {hoveredReservation.agencement}</span></div>)}{hoveredReservation.nbPersonnes && (<div className="popup-info-line"><span className="popup-info-icon">👥</span><span className="popup-info-text">{hoveredReservation.nbPersonnes} pers.</span></div>)}</>)}
+      </div>
+    </div>
+  ) : null;
+
+  if (loading) return <div className="loading-container"><div className="spinner"></div><p>Chargement...</p></div>;
 
   return (
     <>
-      <div className="my-reservations-container">
-      <h1>📋 Mes Réservations</h1>
-      <div className="search-section">
-        <form onSubmit={handleSearch}><input type="email" placeholder="Entrez votre email" value={searchEmail} onChange={(e) => setSearchEmail(e.target.value)} required /><button type="submit">🔍 Rechercher</button></form>
+    <div className="reservation-grid-container">
+      {/* PORTAL POUR POPUP */}
+      {hoveredReservation && createPortal(popupContent, document.body)}
+
+      <div className="date-navigation-bar">
+        <div className="nav-group-left"><button className="back-button-small" onClick={onBack}>◀ Calendrier</button></div>
+        <div className="nav-group-center"><button className="nav-week-button" onClick={handleWeekPrev}>◀◀</button><button className="nav-day-button" onClick={handlePrevDay}>◀</button><button className="nav-today-button" onClick={handleToday}>Aujourd'hui</button><div className="date-display"><h2>{currentDate.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2></div><button className="nav-day-button" onClick={handleNextDay}>▶</button><button className="nav-week-button" onClick={handleWeekNext}>▶▶</button></div>
+        <div className="nav-group-right"></div>
       </div>
 
-      <div className="filter-buttons">
-        <button onClick={() => filterReservations('all')} className={`filter-btn ${filter === 'all' ? 'active' : ''}`}>📅 Toutes ({reservations.length})</button>
-        <button onClick={() => filterReservations('past')} className={`filter-btn btn-past ${filter === 'past' ? 'active' : ''}`}>📜 Passées ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureFin || r.heureDebut}`) < new Date()).length})</button>
-        <button onClick={() => filterReservations('today')} className={`filter-btn ${filter === 'today' ? 'active' : ''}`}>📆 Aujourd'hui ({reservations.filter(r => { const d = new Date(r.dateDebut); return d.toDateString() === new Date().toDateString(); }).length})</button>
-        <button onClick={() => filterReservations('upcoming')} className={`filter-btn ${filter === 'upcoming' ? 'active' : ''}`}>🔜 À venir ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) > new Date()).length})</button>
-      </div>
-
-      {/* SECTION EXPORT DESKTOP (Cachee sur mobile) */}
-      <div className="export-section desktop-export">
-        <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}><option value="ical">📅 iCalendar (.ics)</option><option value="csv">📊 CSV</option><option value="xlsx">📗 Excel (.xls)</option></select>
-        <button onClick={handleExport} className="export-btn">⬇️ Exporter</button>
-      </div>
-
-      {/* SECTION EXPORT MOBILE (Unique Bouton ICS) */}
-      <button onClick={exportToICalendar} className="mobile-export-btn">📅 iCalendar (.ics)</button>
-
-      {filteredReservations.length === 0 ? <div className="no-reservations"><p>Aucune réservation trouvée</p></div> : (
-        <div className="table-container">
-          <table className="reservations-table">
-            <thead>
-              <tr>
-                <th onClick={() => handleSort('salle')} style={{cursor: 'pointer'}}>Salle{renderSortIcon('salle')}</th>
-                <th onClick={() => handleSort('dateDebut')} style={{cursor: 'pointer'}}>Date{renderSortIcon('dateDebut')}</th>
-                <th onClick={() => handleSort('heureDebut')} style={{cursor: 'pointer'}}>Heure{renderSortIcon('heureDebut')}</th>
-                <th className="col-service" onClick={() => handleSort('service')} style={{cursor: 'pointer'}}>Service{renderSortIcon('service')}</th>
-                <th className="col-objet" onClick={() => handleSort('objet')} style={{cursor: 'pointer'}}>Objet{renderSortIcon('objet')}</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {getSortedReservations().map((reservation, index) => (
-                <tr key={index} style={{ backgroundColor: toPastel(COULEURS_OBJETS[reservation.objet] || '#f9f9f9') }}>
-                  <td>{(() => { const parts = reservation.salle.split(' - '); return (<><div className="salle-nom desktop-view">{parts[0]}</div><div className="salle-nom mobile-view">{formatMobileRoomName(parts[0])}</div>{parts[1] && (<><div className="salle-capacite desktop-view">{parts[1]}</div><div className="salle-capacite mobile-view">{parts[1].replace('Personnes', 'Pers.')}</div></>)}</>); })()}</td>
-                  <td><span className="desktop-view">{new Date(reservation.dateDebut).toLocaleDateString('fr-FR')}</span><span className="mobile-view">{new Date(reservation.dateDebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span></td>
-                  <td><span className="desktop-view">{reservation.heureDebut} - {reservation.heureFin}</span><span className="mobile-view">{reservation.heureDebut} {reservation.heureFin}</span></td>
-                  <td className="col-service">{reservation.service}</td>
-                  <td className="col-objet">{reservation.objet}</td>
-                  <td className="actions-cell"><button onClick={() => handleEdit(reservation)} className="edit-button">✏️<span className="btn-label"> Modifier</span></button><button onClick={() => handleDeleteClick(reservation)} className="delete-button">🗑️<span className="btn-label"> Annuler</span></button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="reservation-content" onMouseUp={handleMouseUp}>
+        <div className="grid-column"><div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>{renderGrid()}</div></div>
+        <div className="form-column">
+          {selections.length > 0 ? (
+            <div className="reservation-form">
+                <h3>{getFormTitle()}</h3>
+                <div className="selections-summary"><h4 style={{margin:'0 0 0.5rem 0', color:'#2e7d32', fontSize:'0.9rem'}}>📍 Créneaux sélectionnés</h4>{mergedSelectionsForDisplay.map((sel, i) => (<div key={i} className="selection-item"><div className="selection-info"><p><strong>{sel.salle.split(' - ')[0]}</strong></p><p>{new Date(currentDate).toLocaleDateString('fr-FR')} : {googleSheetsService.formatTime(sel.startHour)} - {googleSheetsService.formatTime(sel.endHour)}</p></div><button className="remove-selection-btn" onClick={() => removeMergedSelection(sel)}>✕</button></div>))}</div>
+                <form onSubmit={handleSubmit}>
+                    <div className="form-row"><input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required style={{flex:1}} /><input className="form-input" placeholder="Prénom" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} style={{flex:1}} /></div>
+                    <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required /><input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} />
+                    <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service...</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                    <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez l'objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
+                    {(() => { const salles = [...new Set(selections.map(s => s.salle))]; if (salles.length === 1 && (salles[0].includes('Conseil') || salles[0].includes('Mariages'))) { const info = sallesData.find(s => salles[0].includes(s.nom)); const isMariages = salles[0].includes('Mariages'); return ( <> <select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})} required><option value="">Disposition souhaitée *</option>{info.dispositions && info.dispositions.map(d => <option key={d} value={d}>{d}</option>)}</select> <input type="number" className="form-input" placeholder={`Nombre de personnes prévues (max ${isMariages ? 30 : 100}) *`} value={formData.nbPersonnes} onChange={e => setFormData({...formData, nbPersonnes: e.target.value})} required min="1" max={isMariages ? 30 : 100} /> </> ); } return null; })()}
+                    <textarea className="form-textarea" placeholder="Description (facultative)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                    <div className="recurrence-section-styled"><div className="recurrence-box"><input type="checkbox" id="recurrence" checked={formData.recurrence} onChange={e=>setFormData({...formData, recurrence:e.target.checked})} /><label htmlFor="recurrence">Réservation récurrente</label></div>{formData.recurrence && (<div className="recurrence-options slide-down"><div className="form-group"><select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}><option value="weekly">Chaque semaine</option><option value="biweekly">Une semaine sur 2</option><option value="monthly">Chaque mois</option></select></div><div className="form-group" style={{marginBottom:0}}><label>Jusqu'au :</label><input type="date" className="form-input" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(new Date())} required={formData.recurrence} /></div></div>)}</div>
+                    <div className="form-actions"><button type="button" className="cancel-button" onClick={() => setSelections([])}>Annuler</button><button type="submit" className="submit-button" disabled={isSubmitting}>Valider</button></div>
+                </form>
+            </div>
+          ) : (
+            hoveredSalle ? (<><SalleCard salle={hoveredSalle} /><div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div></>) : (<><ColorLegend onHoverColor={setHoveredObjet} /><div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div></>)
+          )}
         </div>
-      )}
+      </div>
+      {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><h2>Fermé</h2><p>Dimanche/Férié fermé.</p><button className="blocked-close-button" onClick={() => setBlockedDayModal(false)}>Fermer</button></div></div>}
+      {adminPasswordModal.show && <div className="modal-overlay"><div className="modal-content"><h3>Admin</h3><input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" /><div className="modal-footer"><button className="cancel-button" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button><button className="submit-button" onClick={handleAdminPasswordSubmit}>Valider</button></div></div></div>}
+      {successModal.show && (<div className="success-modal-overlay" onClick={() => setSuccessModal({show:false, reservations:[], message:''})}><div className="success-modal" onClick={e => e.stopPropagation()}><div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div><div className="success-modal-body"><p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p><div className="reservations-list">{successModal.reservations.map((res, i) => (<div key={i} className="reservation-item-success"><span className="calendar-icon">📅 </span>{res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin}</div>))}</div><div className="ical-download-section"><button className="download-ical-button" onClick={(e) => { e.stopPropagation(); icalService.generateAndDownload(successModal.reservations); }}>📥 Télécharger le fichier .ics</button></div></div><div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({show:false, reservations:[], message:''})}>Fermer</button></div></div></div>)}
+      {warningModal.show && <div className="modal-overlay"><div className="warning-modal"><div className="warning-modal-header"><h2>⚠️ Attention !</h2></div><div className="warning-modal-body"><p>{warningModal.conflicts.length > 1 ? "Les dates suivantes..." : "La date suivante..."}</p><ul className="conflict-list">{warningModal.conflicts.map((res, i) => (<li key={i}>{new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin}</li>))}</ul><p>Voulez-vous quand même poursuivre ?</p></div><div className="warning-modal-footer"><button className="cancel-button" onClick={() => setWarningModal({ show: false, conflicts: [], validReservations: [] })}>Non, annuler</button><button className="submit-button" onClick={() => finalizeReservation(warningModal.validReservations)}>Oui, poursuivre</button></div></div></div>}
     </div>
-    {cancelModal.show && (<div className="cancel-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}><div className="cancel-modal" onClick={(e) => e.stopPropagation()}><h3>⚠️ Confirmer l'annulation</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {cancelModal.reservation.salle}</p><p><strong>📝 Objet :</strong> {cancelModal.reservation.objet}</p></div><div className="motif-selection"><label><strong>💬 Motif :</strong></label><select value={selectedMotif} onChange={(e) => setSelectedMotif(e.target.value)} className="motif-select"><option value="">-- Motif --</option>{MOTIFS_ANNULATION.map((m, i) => <option key={i} value={m}>{m}</option>)}</select></div><div className="modal-actions"><button onClick={() => setCancelModal({ show: false, reservation: null })} className="cancel-action-btn">Annuler</button><button onClick={handleDeleteConfirm} className="confirm-action-btn" disabled={!selectedMotif}>Confirmer</button></div></div></div>)}
-    {confirmModal.show && (<div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}><div className="confirmation-modal" onClick={(e) => e.stopPropagation()}><h3>{confirmModal.type === 'cancel' ? '✅ Annulation confirmée' : '✅ Modification confirmée'}</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>{confirmModal.motif && <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>}</div><button onClick={() => setConfirmModal({ ...confirmModal, show: false })}>Fermer</button></div></div>)}
     </>
   );
 }
 
-export default MyReservations;
+export default ReservationGrid;
