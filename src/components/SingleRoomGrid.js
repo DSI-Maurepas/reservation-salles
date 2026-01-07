@@ -70,12 +70,12 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       } else { 
         setSelections([...selections, { dayIndex, hour, date }]); 
         setShowForm(true);
-        // CORRECTION: Remonter en haut de page lors d'une nouvelle sélection
+        // SCROLL VERS LE HAUT
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } 
     } else if (isDragging && selections.length > 0) {
       setShowForm(true); 
-      // CORRECTION: Remonter en haut de page après un "drag"
+      // SCROLL VERS LE HAUT
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     setIsDragging(false); 
@@ -136,7 +136,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
           <div className="nav-group-right-spacer"></div>
         </div>
 
-        {/* INSTRUCTION MOBILE AJOUTÉE (Caché sur Desktop via CSS) */}
+        {/* INSTRUCTION MOBILE */}
         <div className="mobile-instruction">
           <p>Cliquez sur un créneau pour le sélectionner</p>
         </div>
@@ -146,7 +146,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
             {!showForm && (
               <>
                 <SalleCard salle={selectedRoom} />
-                {/* INSTRUCTION BUREAU (Caché sur Mobile via CSS) */}
+                {/* INSTRUCTION BUREAU */}
                 <div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div>
               </>
             )}
@@ -166,9 +166,9 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                   <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez l'objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
                   {dispositions && (
                     <>
-                      {/* VALIDATION: Ajout de 'required' */}
+                      {/* VALIDATION */}
                       <select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})} required><option value="">Disposition souhaitée *</option>{dispositions.map(d => <option key={d} value={d}>{d}</option>)}</select>
-                      {/* VALIDATION: Ajout de 'required', 'min' et 'max' dynamique */}
+                      {/* VALIDATION */}
                       {(selectedRoom.includes('Conseil') || selectedRoom.includes('Mariages')) && <input type="number" className="form-input" placeholder={`Nombre de personnes prévues (max ${selectedRoom.includes('Mariages') ? 30 : 100}) *`} value={formData.nbPersonnes} onChange={e => setFormData({...formData, nbPersonnes: e.target.value})} required min="1" max={selectedRoom.includes('Mariages') ? 30 : 100} />}
                     </>
                   )}

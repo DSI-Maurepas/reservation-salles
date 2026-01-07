@@ -1,5 +1,5 @@
 /* src/components/ReservationGrid.css */
-/* VERSION FINALE : GESTION LEGENDES DESKTOP VS MOBILE & FADING POPUP & CENTRAGE MOBILE & NOMS COURTS */
+/* VERSION FINALE : BUGFIX SYNTAXE + CENTRAGE POPUP MOBILE */
 
 .reservation-grid-container {
   background: transparent !important;
@@ -206,7 +206,7 @@
   }
   .reservation-grid { min-width: 900px; }
   
-  /* LÉGENDE/FORMULAIRE SOUS LA GRILLE (IMPORTANT) */
+  /* LÉGENDE/FORMULAIRE SOUS LA GRILLE */
   .form-column { 
     width: 100%; 
     max-width: 100vw; 
@@ -220,13 +220,15 @@
   
   .desktop-legend { display: none !important; }
 
-  /* CENTRAGE POPUP SUR MOBILE (IMPORTANT) */
+  /* FIX CRITIQUE : CENTRAGE POPUP SUR MOBILE (FORCE) */
   .reservation-popup-card {
+    /* Écrase le style inline (top/left) calculé par le JS */
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     position: fixed !important;
-    width: 90% !important; 
+    width: 80% !important; 
     max-width: 320px;
+    z-index: 10002 !important; /* Au-dessus de tout */
   }
 }
