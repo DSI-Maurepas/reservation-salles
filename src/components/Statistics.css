@@ -130,6 +130,11 @@
   overflow-y: auto;
 }
 
+/* CORRECTION : LÉGENDE DU GRAPHIQUE MOIS (PLEINE HAUTEUR) */
+.month-chart-card .chart-legend {
+  max-height: none; /* Affiche tous les mois sans scroll */
+}
+
 .legend-item {
   display: flex;
   align-items: center;
@@ -271,6 +276,12 @@
     padding: 1rem;
   }
 
+  .statistics-container h2 {
+    font-size: 1.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
   .charts-grid {
     grid-template-columns: 1fr;
   }
@@ -291,6 +302,18 @@
   .occupation-label {
     width: 100px;
     font-size: 0.8rem;
+  }
+
+  /* Sur mobile, on laisse toutes les cartes grandir si besoin */
+  .chart-card {
+    height: auto;
+    overflow: visible; 
+  }
+
+  .chart-legend {
+    max-height: none; 
+    overflow: visible; 
+    margin-top: 1rem; 
   }
 }
 

@@ -137,7 +137,8 @@ function Statistics({ reservations }) {
   }
 
   // Fonction pour générer un graphique en camembert
-  const PieChart = ({ data, title, colors, sortOrder = 'alpha' }) => {
+  // Modification : Ajout prop 'className'
+  const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '' }) => {
     let entries = Object.entries(data);
     
     // Ordres de référence
@@ -188,7 +189,7 @@ function Statistics({ reservations }) {
     });
 
     return (
-      <div className="chart-card">
+      <div className={`chart-card ${className}`}>
         <h3>{title}</h3>
         <div className="chart-content">
           <svg viewBox="0 0 100 100" className="pie-chart">
@@ -286,32 +287,6 @@ function Statistics({ reservations }) {
           sortOrder="alpha"
         />
         
-        <PieChart 
-          data={stats.parMois} 
-          title="📅 Répartition par mois"
-          colors={colors3}
-          sortOrder="mois"
-        />
-        
-        <PieChart 
-          data={stats.parHoraire} 
-          title="🕐 Répartition par horaire"
-          colors={colors2}
-        />
-        
-        <div className="chart-card">
-          <h3>👥 Top 10 utilisateurs</h3>
-          <div className="top-users-list">
-            {stats.topUtilisateurs.map(([nom, count], i) => (
-              <div key={i} className="top-user-item">
-                <span className="user-rank">{i + 1}</span>
-                <span className="user-name">{nom}</span>
-                <span className="user-count">{count} réservations</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        
         <div className="chart-card">
           <h3>📊 Taux d'occupation</h3>
           <div className="occupation-bars">
@@ -331,6 +306,34 @@ function Statistics({ reservations }) {
                   </div>
                   <div className="occupation-value">{taux}%</div>
                 </div>
+            ))}
+          </div>
+        </div>
+        
+        <PieChart 
+          data={stats.parHoraire} 
+          title="🕐 Répartition par horaire"
+          colors={colors2}
+        />
+        
+        {/* INTERVERSION : MOIS ICI AVEC CLASSE SPÉCIFIQUE */}
+        <PieChart 
+          data={stats.parMois} 
+          title="📅 Répartition par mois"
+          colors={colors3}
+          sortOrder="mois"
+          className="month-chart-card" // AJOUT CLASSE SPÉCIALE
+        />
+        
+        <div className="chart-card">
+          <h3>👥 Top 10 utilisateurs</h3>
+          <div className="top-users-list">
+            {stats.topUtilisateurs.map(([nom, count], i) => (
+              <div key={i} className="top-user-item">
+                <span className="user-rank">{i + 1}</span>
+                <span className="user-name">{nom}</span>
+                <span className="user-count">{count} réservations</span>
+              </div>
             ))}
           </div>
         </div>

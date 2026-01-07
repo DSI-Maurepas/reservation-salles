@@ -516,16 +516,8 @@ function AdminPanel() {
                     <td>{res.prenom} {res.nom}</td>
                     <td>{res.service}</td>
                     <td>
-                      <span style={{
-                        backgroundColor: getObjetColor(res.objet),
-                        padding: '0.3rem 0.6rem',
-                        borderRadius: '6px',
-                        color: 'white',
-                        fontWeight: '600',
-                        fontSize: '0.85rem'
-                      }}>
-                        {res.objet}
-                      </span>
+                      {/* MODIFICATION : Suppression du span stylisé, affichage texte brut */}
+                      {res.objet}
                     </td>
                     <td>{res.email}</td>
                     <td className="actions-cell">

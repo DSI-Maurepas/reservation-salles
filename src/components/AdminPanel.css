@@ -1,3 +1,4 @@
+/* src/components/AdminPanel.css */
 
 /* ===== BOUTON TÉLÉCHARGER EXCEL ===== */
 
@@ -337,7 +338,7 @@
   transform: translateY(-2px);
 }
 
-/* CORRECTION #12: Style headers tableau avec icônes tri */
+/* Style headers tableau avec icônes tri */
 thead th {
   background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%) !important;
   color: white !important;
@@ -357,4 +358,38 @@ thead th[style*="cursor: pointer"]:hover {
 
 thead th[style*="cursor: pointer"]:active {
   transform: translateY(0);
+}
+
+/* ---------------------------------------------------- */
+/* MEDIA QUERY - RESPONSIVE MOBILE                      */
+/* ---------------------------------------------------- */
+
+@media (max-width: 768px) {
+  
+  /* 1. Masquer le bouton de téléchargement Excel */
+  .download-excel-btn {
+    display: none;
+  }
+
+  /* 2. Masquer le bloc Filtres et Recherche */
+  .filters-section {
+    display: none;
+  }
+
+  /* 3. Masquer le tableau des réservations */
+  .reservations-section {
+    display: none;
+  }
+
+  /* Ajustement de l'en-tête pour le mobile */
+  .admin-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .admin-header-actions {
+    width: 100%;
+    justify-content: center;
+  }
 }
