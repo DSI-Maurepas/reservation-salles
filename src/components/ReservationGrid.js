@@ -157,15 +157,15 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         <div className="nav-group-right"></div>
       </div>
 
-      {/* --- INSTRUCTION MOBILE (BLEU STANDARD + 2 PHRASES) --- */}
-      <div className="mobile-instruction">
-        <p>Cliquez sur le nom d'une salle pour en connaître les propriétés</p>
-        <p>Cliquez sur un créneau pour en connaître ses propriétés</p>
-      </div>
-
       <div className="reservation-content" onMouseUp={handleMouseUp}>
         <div className="grid-column">
           <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>{renderGrid()}</div>
+        </div>
+
+        {/* --- INSTRUCTION MOBILE (DÉPLACÉE ICI POUR GESTION ORDRE FLEX) --- */}
+        <div className="mobile-instruction">
+          <p>Cliquez sur le nom d'une salle pour en connaître les propriétés</p>
+          <p>Cliquez sur un créneau pour en connaître les propriétés</p>
         </div>
 
         <div className="form-column">
