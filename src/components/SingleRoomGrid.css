@@ -1,5 +1,5 @@
 /* src/components/SingleRoomGrid.css */
-/* VERSION CORRIGÉE : RESPONSIVE 3 LIGNES, BOUTONS, ABRÉVIATIONS ET FADING */
+/* VERSION CORRIGÉE : BORDER-COLLAPSE SEPARATE, GRILLE INDÉPENDANTE EN HAUTEUR */
 
 .single-room-container { width: 100%; padding: 1rem 2rem; padding-bottom: 80px; }
 
@@ -19,8 +19,8 @@
   display: none; 
   text-align: center;
   margin-bottom: 20px;
-  background-color: #1976d2; /* Bleu Standard */
-  color: white; 
+  background-color: #cdf6ff;
+  color: #1e3a8a;
   font-size: 0.9rem;
   padding: 1rem;
   border-radius: 8px;
@@ -29,28 +29,79 @@
 .mobile-instruction p { margin: 0; line-height: 1.4; }
 
 /* LAYOUT (Desktop) */
+/* CORRECTIF: align-items: start pour désolidariser la grille du formulaire */
 .single-room-layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: start; }
-.room-sidebar { position: sticky; top: 1rem; z-index: 10; }
+.room-sidebar { position: sticky; top: 1rem; z-index: 10; display: flex; flex-direction: column; }
 
 /* GRILLE */
 .week-grid-container { background: white; border-radius: 16px; padding: 1rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); overflow-x: auto; }
-.week-grid { display: table !important; width: 100%; border-collapse: collapse; table-layout: fixed; user-select: none; -webkit-user-select: none; }
+
+/* TABLEAU : BORDER-COLLAPSE SEPARATE POUR FOND COLORÉ SOUS POINTILLÉS */
+.week-grid { 
+  display: table !important; 
+  width: 100%; 
+  border-collapse: separate; 
+  border-spacing: 0; 
+  table-layout: fixed; 
+  user-select: none; 
+  -webkit-user-select: none; 
+}
+
 .week-grid th { display: table-cell !important; height: 50px !important; padding: 0 !important; background: #1976d2; color: white; border: 1px solid #1565c0; text-align: center; vertical-align: middle; }
 .hour-header { width: 52px; background: white !important; color: #1976d2 !important; border: 1px solid #e2e8f0 !important; text-align: center !important; vertical-align: middle !important; padding: 0 !important; }
 .day-header .day-name { display: block; font-weight: 800; text-transform: uppercase; font-size: 0.85rem; text-align: center; }
 .day-header .day-date { font-size: 0.8rem; color: white !important; text-align: center; display: block; margin-top: 2px; }
 
-/* CLASSES ABRÉVIATIONS (Par défaut Desktop : Full visible, Short caché) */
+/* CLASSES ABRÉVIATIONS */
 .name-short { display: none; }
 .name-full { display: inline; }
 
-.week-grid td { display: table-cell !important; height: 25px; padding: 0; vertical-align: middle; position: relative; border-right: 1px solid #e2e8f0; }
+/* CELLULES */
+.week-grid td { 
+  display: table-cell !important; 
+  height: 25px; 
+  padding: 0; 
+  vertical-align: middle; 
+  position: relative; 
+  border-right: 1px solid #94a3b8; 
+}
+
+/* Bordure bas du tableau */
 .week-grid tr:last-child td { border-bottom: 1px solid #64748b !important; }
-.hour-cell-full { background: white; color: #94a3b8; font-size: 0.75rem; font-weight: 600; text-align: center !important; vertical-align: middle !important; padding: 0 !important; border-bottom: none !important; border-right: 1px solid #e2e8f0; }
-.hour-cell-half { background: white; border-top: none !important; border-bottom: 1px solid #64748b !important; border-right: 1px solid #e2e8f0; text-align: center !important; }
+
+/* COLONNE HEURE */
+.hour-cell-full { 
+  background: white; 
+  color: #94a3b8; 
+  font-size: 0.75rem; 
+  font-weight: 600; 
+  text-align: center !important; 
+  vertical-align: middle !important; 
+  padding: 0 !important; 
+  border-bottom: none !important; 
+  border-right: 1px solid #64748b !important; 
+}
+
+.hour-cell-half { 
+  background: white; 
+  border-top: none !important; 
+  border-bottom: 1px solid #64748b !important; 
+  border-right: 1px solid #64748b !important; 
+  text-align: center !important; 
+}
+
+/* LIGNES HORIZONTALES */
 .full-hour-border { border-top: 1px solid #64748b; }
 .half-hour-border { border-top: 1px dotted rgba(0, 0, 0, 0.3); }
-.time-slot { width: 100%; height: 100%; cursor: pointer; transition: background-color 0.1s; }
+
+.time-slot { 
+  width: 100%; 
+  height: 100%; 
+  cursor: pointer; 
+  transition: background-color 0.1s;
+  background-clip: border-box; 
+}
+
 .time-slot:hover:not(.occupied):not(.blocked):not(.past-date) { background-color: #e0f2fe; }
 .time-slot.selected { background-color: #2196f3 !important; border: 2px solid #1976d2; }
 .time-slot.blocked { background-color: #f1f5f9; background-image: repeating-linear-gradient(45deg, #e2e8f0, #e2e8f0 10px, #f1f5f9 10px, #f1f5f9 20px); cursor: not-allowed; }
@@ -59,10 +110,22 @@
 .time-slot.admin-only-locked { background-color: #ffebee; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .admin-only-locked::after { content: '🔒'; font-size: 0.8rem; opacity: 0.5; }
 
-/* LEGENDE BUREAU (Visible par défaut) */
+/* LEGENDE BUREAU */
 .desktop-legend { display: block; }
 
-.room-form-container { background: white; border-radius: 16px; padding: 1rem 1.2rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 1.5rem; max-height: 650px; overflow-y: auto; }
+/* CORRECTIF: height: auto pour grandir avec le contenu (au lieu de 100%) */
+.room-form-container { 
+  background: white; 
+  border-radius: 16px; 
+  padding: 1rem 1.2rem; 
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+  margin-top: 0; 
+  height: auto; 
+  max-height: none; 
+  overflow-y: auto; 
+  box-sizing: border-box; 
+}
+
 .form-title { color: #1e293b; font-size: 1.1rem; margin-bottom: 0.8rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
 .form-row { display: flex; gap: 0.8rem; width: 100%; }
 .form-group { margin-bottom: 0.6rem; width: 100%; }
@@ -101,7 +164,7 @@
   opacity: 0;
 }
 
-.popup-card-header { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); padding: 0.8rem; font-weight: 700; color: white; border-bottom: none; display: flex; align-items: center; gap: 0.5rem; }
+.popup-card-header { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); padding: 0.8rem; font-weight: 700; color: white; border-bottom: none; display: flex; align-items: center; gap: 0.8rem; }
 .popup-card-body { padding: 1rem; color: #475569; font-size: 0.9rem; }
 .popup-info-line { margin-bottom: 0.6rem; display: flex; align-items: flex-start; gap: 0.8rem; }
 .popup-info-icon { font-size: 1.1rem; width: 24px; text-align: center; }
@@ -196,13 +259,14 @@
     position: static; 
   }
   
-  .room-form-container { max-height: none; }
+  /* CORRECTIF RESPONSIVE : Hauteur auto pour s'adapter au contenu */
+  .room-form-container { max-height: none; height: auto; }
 
   /* 5. ABRÉVIATIONS JOURS */
   .name-short { display: inline; }
   .name-full { display: none; }
 
   /* 6. GESTION INSTRUCTION/LEGENDE */
-  .mobile-instruction { display: block; }
+  .mobile-instruction { display: block; order: 2; }
   .desktop-legend { display: none !important; }
 }

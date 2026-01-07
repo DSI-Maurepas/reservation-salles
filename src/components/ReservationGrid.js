@@ -63,12 +63,12 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       fadeTimer = setTimeout(() => {
         setIsFading(true); // Déclencher le fade-out CSS
 
-        // 2. Attendre la fin de la transition CSS (0.5s)
+        // 2. Attendre la fin de la transition CSS (0.4s)
         removeTimer = setTimeout(() => {
           setHoveredReservation(null);
           setIsFading(false);
-        }, 500); 
-      }, 4000); // 4000ms = 4 secondes
+        }, 400); 
+      }, 4000); 
     }
 
     return () => {
@@ -105,12 +105,40 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const preMergeSelections = (selections) => { const bySalle = {}; selections.forEach(sel => { if (!bySalle[sel.salle]) bySalle[sel.salle] = []; bySalle[sel.salle].push(sel); }); const merged = []; for (const salle in bySalle) { const slots = bySalle[salle].sort((a, b) => a.startHour - b.startHour); let i = 0; while (i < slots.length) { const current = { ...slots[i] }; while (i + 1 < slots.length && Math.abs(current.endHour - slots[i + 1].startHour) < 0.01) { current.endHour = slots[i + 1].endHour; i++; } merged.push(current); i++; } } return merged; };
   const generateRecurrenceDates = (startDate, endDate, type) => { const dates = []; const current = new Date(startDate); const end = new Date(endDate); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); while (current <= end) { dates.push(new Date(current)); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); } return dates; };
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (normalizeRoomName(existing.salle) !== normalizeRoomName(candidate.salle)) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
-  const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '' }); setSelections([]); loadReservations(); } catch (error) { alert("Erreur : " + error.message); } finally { setIsSubmitting(false); } };
-  const handleSubmit = async (e) => { e.preventDefault(); if (selections.length === 0) return alert('Aucune sélection'); if (!formData.nom || !formData.email || !formData.service || !formData.objet) return alert('Champs manquants'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(currentDate); const baseRes = { salle: sel.salle, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.startHour), heureFin: googleSheetsService.formatTime(sel.endHour), nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, service: formData.service, objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement, nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const dates = generateRecurrenceDates(currentDate, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (e) { alert("Erreur : " + e.message); setIsSubmitting(false); } };
+  const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '✅ Réservation confirmée !' }); setSelections([]); setShowForm(false); loadWeekReservations(); } catch (error) { alert("Erreur : " + error.message); } finally { setIsSubmitting(false); } };
   
-  // MODIFICATION : Positionnement par rapport à la souris (50px au-dessus)
+  const handleSubmit = async (e) => { 
+    e.preventDefault(); 
+    if (selections.length === 0) return alert('Aucune sélection'); 
+    if (!formData.nom || !formData.email || !formData.service || !formData.objet) return alert('Champs manquants'); 
+    
+    // --- VALIDATION AGENCEMENT ET CAPACITÉ ---
+    const selectedSalles = [...new Set(selections.map(s => s.salle))];
+    if (selectedSalles.length > 0) {
+      const room = selectedSalles[0];
+      const isConseil = room.includes('Conseil');
+      const isMariages = room.includes('Mariages');
+
+      if (isConseil || isMariages) {
+        if (!formData.agencement) return alert('⚠️ Veuillez choisir une disposition.');
+        if (!formData.nbPersonnes) return alert('⚠️ Veuillez indiquer le nombre de personnes.');
+        
+        const nb = parseInt(formData.nbPersonnes, 10);
+        const max = isMariages ? 30 : 100;
+        
+        if (nb > max) {
+          return alert(`⚠️ La capacité maximale pour la salle ${isMariages ? 'des Mariages' : 'du Conseil'} est de ${max} personnes.`);
+        }
+      }
+    }
+    // ------------------------------------------
+
+    setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(currentDate); const baseRes = { salle: sel.salle, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.startHour), heureFin: googleSheetsService.formatTime(sel.endHour), nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, service: formData.service, objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement, nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const dates = generateRecurrenceDates(currentDate, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (e) { alert("Erreur : " + e.message); setIsSubmitting(false); } 
+  };
+  
   const handleReservationMouseEnter = (res, e) => { 
-    setPopupPosition({ x: e.clientX, y: e.clientY - 50 }); 
+    const rect = e.currentTarget.getBoundingClientRect(); 
+    setPopupPosition({ x: rect.left + (rect.width / 2), y: rect.top }); 
     setHoveredReservation(res); 
   };
 
@@ -157,7 +185,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
               handleMouseEnter(salle, h); 
               if(reserved && res) handleReservationMouseEnter(res, e); 
             }}
-            // On ne met PAS onMouseLeave ici pour laisser le timer gérer
           >
             {isAdmin && !isAdminUnlocked && !reserved && <span className="lock-icon">🔒</span>}
           </div>
@@ -193,8 +220,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       </div>
 
       <div className="mobile-instruction">
-        <p>Cliquez sur le nom d'une salle pour en connaître les propriétés</p>
-        <p>Cliquez sur un créneau pour en connaître les propriétés</p>
+        <p>👆 Cliquez sur le nom d'une salle pour en connaître les propriétés</p>
+        <p>ℹ️ Cliquez sur un créneau pour en connaître les propriétés</p>
       </div>
 
       <div className="reservation-content" onMouseUp={handleMouseUp}>
@@ -228,10 +255,11 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
                       const salles = [...new Set(selections.map(s => s.salle))];
                       if (salles.length === 1 && (salles[0].includes('Conseil') || salles[0].includes('Mariages'))) {
                          const info = sallesData.find(s => salles[0].includes(s.nom));
+                         const isMariages = salles[0].includes('Mariages');
                          return (
                            <>
-                             <select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})}><option value="">Disposition souhaitée</option>{info.dispositions && info.dispositions.map(d => <option key={d} value={d}>{d}</option>)}</select>
-                             <input type="number" className="form-input" placeholder="Nombre de personnes prévues" value={formData.nbPersonnes} onChange={e => setFormData({...formData, nbPersonnes: e.target.value})} />
+                             <select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})} required><option value="">Disposition souhaitée *</option>{info.dispositions && info.dispositions.map(d => <option key={d} value={d}>{d}</option>)}</select>
+                             <input type="number" className="form-input" placeholder={`Nombre de personnes prévues (max ${isMariages ? 30 : 100}) *`} value={formData.nbPersonnes} onChange={e => setFormData({...formData, nbPersonnes: e.target.value})} required min="1" max={isMariages ? 30 : 100} />
                            </>
                          );
                       }
