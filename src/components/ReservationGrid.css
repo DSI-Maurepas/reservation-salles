@@ -1,5 +1,5 @@
 /* src/components/ReservationGrid.css */
-/* VERSION FINALE : COULEURS ET AFFICHAGE STRICT (DESKTOP/MOBILE) */
+/* VERSION FINALE : GESTION LEGENDES DESKTOP VS MOBILE & FADING POPUP */
 
 .reservation-grid-container {
   background: transparent !important;
@@ -38,13 +38,13 @@
 .nav-day-button:hover, .nav-week-button:hover, .nav-today-button:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .date-display h2 { margin: 0; color: #1565c0; font-size: 1.2rem; font-weight: 800; text-transform: capitalize; min-width: 250px; text-align: center; letter-spacing: -0.5px; }
 
-/* INSTRUCTION MOBILE (DÉSACTIVÉE SUR DESKTOP) */
+/* INSTRUCTION MOBILE */
 .mobile-instruction {
   display: none; 
   text-align: center;
   margin-bottom: 20px;
-  background-color: #1976d2; /* BLEU STANDARD */
-  color: white; 
+  background-color: #cdf6ff; /* CORRECTION COULEUR */
+  color: #1e3a8a; /* Texte foncé pour lisibilité */
   font-size: 0.9rem;
   padding: 1rem;
   border-radius: 8px;
@@ -54,7 +54,14 @@
 .mobile-instruction p:first-child { margin-bottom: 0.5rem; }
 
 /* LAYOUT */
-.reservation-content { display: grid; grid-template-columns: minmax(900px, 1fr) 350px; gap: 20px; align-items: start; }
+/* FIX: start pour ne pas étirer la grille */
+.reservation-content { 
+  display: grid; 
+  grid-template-columns: minmax(900px, 1fr) 350px; 
+  gap: 20px; 
+  align-items: start; 
+}
+
 .grid-column { width: 100%; height: auto; min-height: 650px; overflow: visible; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); background: white; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 10px; }
 .form-column { width: 100%; height: auto; display: flex; flex-direction: column; gap: 20px; }
 .form-column > * { margin-top: 0 !important; margin-bottom: 0 !important; }
@@ -81,11 +88,23 @@
 .time-slot.admin-only-locked { background: repeating-linear-gradient(45deg, #fee2e2, #fee2e2 10px, #fecaca 10px, #fecaca 20px); }
 .lock-icon { font-size: 0.8rem; opacity: 0.5; }
 
-/* LEGENDE DESKTOP (VISIBLE PAR DEFAUT) */
+/* LEGENDE DESKTOP */
 .desktop-legend { display: block; }
 
 /* Styles formulaire */
-.reservation-form { background: white; padding: 1rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; height: auto; max-height: 800px; overflow-y: auto; }
+/* FIX: height auto pour grandir naturellement */
+.reservation-form { 
+  background: white; 
+  padding: 1rem; 
+  border-radius: 16px; 
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
+  border: 1px solid #e2e8f0; 
+  height: auto; 
+  max-height: none; 
+  overflow-y: auto; 
+  box-sizing: border-box; 
+}
+
 .reservation-form h3 { color: #1e293b; font-size: 1.1rem; margin-bottom: 0.8rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.4rem; }
 .form-row { display: flex; gap: 0.8rem; width: 100%; }
 .form-group { margin-bottom: 0.6rem; width: 100%; } 
@@ -163,12 +182,15 @@
   .nav-day-button, .nav-week-button, .nav-today-button { order: 2; padding: 0.4rem 0.6rem; font-size: 0.75rem; min-width: auto; }
   .grid-column { width: 100%; display: block; overflow-x: auto; order: 1; }
   .reservation-grid { min-width: 900px; }
-  .form-column { width: 100%; max-width: 100vw; order: 2; }
-  .reservation-form { width: 100%; box-sizing: border-box; }
+  
+  /* ORDRE FLEX POUR LEGENDE MOBILE */
+  .mobile-instruction { display: block; order: 2; }
+  .form-column { width: 100%; max-width: 100vw; order: 3; }
+  
+  /* MODIF: height auto en mobile */
+  .reservation-form { width: 100%; box-sizing: border-box; height: auto; }
   .desktop-name { display: none; }
   .mobile-name { display: block; }
   
-  /* AFFICHER INSTRUCTION MOBILE ET MASQUER LÉGENDE DESKTOP */
-  .mobile-instruction { display: block; }
   .desktop-legend { display: none !important; }
 }
