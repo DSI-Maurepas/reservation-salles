@@ -1,93 +1,34 @@
 // src/components/Statistics.js
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import './Statistics.css';
 
 function Statistics({ reservations }) {
   
-  // Calcul des statistiques
   const stats = useMemo(() => {
-    if (!reservations || reservations.length === 0) {
-      return null;
-    }
+    if (!reservations || reservations.length === 0) return null;
 
-    // 1. Répartition par salle
     const parSalle = {};
-    reservations.forEach(res => {
-      parSalle[res.salle] = (parSalle[res.salle] || 0) + 1;
-    });
+    reservations.forEach(res => { parSalle[res.salle] = (parSalle[res.salle] || 0) + 1; });
 
-    // 2. Répartition par jour de la semaine
-    const parJour = {
-      'Lundi': 0,
-      'Mardi': 0,
-      'Mercredi': 0,
-      'Jeudi': 0,
-      'Vendredi': 0,
-      'Samedi': 0,
-      'Dimanche': 0
-    };
+    const parJour = { 'Lundi': 0, 'Mardi': 0, 'Mercredi': 0, 'Jeudi': 0, 'Vendredi': 0, 'Samedi': 0, 'Dimanche': 0 };
     const joursNoms = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-    reservations.forEach(res => {
-      const date = new Date(res.dateDebut);
-      const jour = joursNoms[date.getDay()];
-      parJour[jour]++;
-    });
+    reservations.forEach(res => { const date = new Date(res.dateDebut); parJour[joursNoms[date.getDay()]]++; });
 
-    // 3. Top 10 utilisateurs
     const parUtilisateur = {};
-    reservations.forEach(res => {
-      // Ordre demandé : Prénom Nom
-      const key = `${res.prenom} ${res.nom}`.trim();
-      parUtilisateur[key] = (parUtilisateur[key] || 0) + 1;
-    });
-    const topUtilisateurs = Object.entries(parUtilisateur)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 10);
+    reservations.forEach(res => { const key = `${res.prenom} ${res.nom}`.trim(); parUtilisateur[key] = (parUtilisateur[key] || 0) + 1; });
+    const topUtilisateurs = Object.entries(parUtilisateur).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
-    // 4. Répartition par objet
     const parObjet = {};
-    reservations.forEach(res => {
-      const objet = res.objet || 'Non spécifié';
-      parObjet[objet] = (parObjet[objet] || 0) + 1;
-    });
+    reservations.forEach(res => { const objet = res.objet || 'Non spécifié'; parObjet[objet] = (parObjet[objet] || 0) + 1; });
 
-    // 5. Répartition par service
     const parService = {};
-    reservations.forEach(res => {
-      parService[res.service] = (parService[res.service] || 0) + 1;
-    });
+    reservations.forEach(res => { parService[res.service] = (parService[res.service] || 0) + 1; });
 
-    // 6. Répartition par mois
-    const parMois = {
-      'Janvier': 0,
-      'Février': 0,
-      'Mars': 0,
-      'Avril': 0,
-      'Mai': 0,
-      'Juin': 0,
-      'Juillet': 0,
-      'Août': 0,
-      'Septembre': 0,
-      'Octobre': 0,
-      'Novembre': 0,
-      'Décembre': 0
-    };
+    const parMois = { 'Janvier': 0, 'Février': 0, 'Mars': 0, 'Avril': 0, 'Mai': 0, 'Juin': 0, 'Juillet': 0, 'Août': 0, 'Septembre': 0, 'Octobre': 0, 'Novembre': 0, 'Décembre': 0 };
     const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    reservations.forEach(res => {
-      const date = new Date(res.dateDebut);
-      const mois = moisNoms[date.getMonth()];
-      parMois[mois]++;
-    });
+    reservations.forEach(res => { const date = new Date(res.dateDebut); parMois[moisNoms[date.getMonth()]]++; });
 
-    // 7. Répartition par horaire (plages de 2h)
-    const parHoraire = {
-      '08h-10h': 0,
-      '10h-12h': 0,
-      '12h-14h': 0,
-      '14h-16h': 0,
-      '16h-18h': 0,
-      '18h-19h': 0
-    };
+    const parHoraire = { '08h-10h': 0, '10h-12h': 0, '12h-14h': 0, '14h-16h': 0, '16h-18h': 0, '18h-19h': 0 };
     reservations.forEach(res => {
       const heure = parseInt(res.heureDebut.split(':')[0]);
       if (heure >= 8 && heure < 10) parHoraire['08h-10h']++;
@@ -98,24 +39,16 @@ function Statistics({ reservations }) {
       else if (heure >= 18) parHoraire['18h-19h']++;
     });
 
-    // 7. Durée moyenne des réservations (CORRIGÉ & PRÉCIS)
     let totalMinutes = 0;
     let countRes = 0;
     reservations.forEach(res => {
       if (!res.heureDebut || !res.heureFin) return;
-
       const [hStart, mStart] = res.heureDebut.split(':').map(Number);
       const [hEnd, mEnd] = res.heureFin.split(':').map(Number);
-      
       const startMins = hStart * 60 + mStart;
       const endMins = hEnd * 60 + mEnd;
-      
       const duration = endMins - startMins;
-      
-      if (duration > 0) {
-        totalMinutes += duration;
-        countRes++;
-      }
+      if (duration > 0) { totalMinutes += duration; countRes++; }
     });
     
     let dureeMoyenne = "0h00m";
@@ -126,80 +59,71 @@ function Statistics({ reservations }) {
         dureeMoyenne = `${avgH}h${avgM.toString().padStart(2, '0')}m`;
     }
 
-    // 8. Taux d'occupation
     const tauxOccupation = {};
     const durationByRoom = {};
     let minTime = Infinity;
     let maxTime = -Infinity;
 
-    // A. Calculer la durée occupée par salle
     reservations.forEach(res => {
       if (!res.heureDebut || !res.heureFin) return;
-
       const [hStart, mStart] = res.heureDebut.split(':').map(Number);
       const [hEnd, mEnd] = res.heureFin.split(':').map(Number);
       const startMins = hStart * 60 + mStart;
       const endMins = hEnd * 60 + mEnd;
-      
       const durationHours = Math.max(0, (endMins - startMins) / 60);
-      
       durationByRoom[res.salle] = (durationByRoom[res.salle] || 0) + durationHours;
-
       const dateTs = new Date(res.dateDebut).getTime();
       if (dateTs < minTime) minTime = dateTs;
       if (dateTs > maxTime) maxTime = dateTs;
     });
 
-    // B. Calculer la capacité totale théorique sur la période
     const oneDay = 24 * 60 * 60 * 1000;
     const diffDays = maxTime !== -Infinity ? Math.floor((maxTime - minTime) / oneDay) + 1 : 1;
     const nbWeeks = Math.max(1, diffDays / 7);
-    const totalCapacityHours = nbWeeks * 55; // 55h par semaine
+    const totalCapacityHours = nbWeeks * 55;
 
-    // C. Calcul du pourcentage
     Object.keys(durationByRoom).forEach(salle => {
       const totalDuration = durationByRoom[salle];
       const taux = Math.min(100, Math.round((totalDuration / totalCapacityHours) * 100));
       tauxOccupation[salle] = taux;
     });
 
-    return {
-      total: reservations.length,
-      parSalle,
-      parJour,
-      topUtilisateurs,
-      parObjet,
-      parService,
-      parMois,
-      parHoraire,
-      dureeMoyenne,
-      tauxOccupation
-    };
+    return { total: reservations.length, parSalle, parJour, topUtilisateurs, parObjet, parService, parMois, parHoraire, dureeMoyenne, tauxOccupation };
   }, [reservations]);
 
-  if (!stats) {
-    return (
-      <div className="statistics-container">
-        <p className="no-data">Aucune donnée disponible pour les statistiques.</p>
-      </div>
-    );
-  }
+  // --- GESTION POPUP CAMEMBERT ---
+  const [hoveredSlice, setHoveredSlice] = useState(null);
+  const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
+  const [isFading, setIsFading] = useState(false);
 
-  // Fonction pour générer un graphique en camembert
+  useEffect(() => {
+    let fadeTimer;
+    let removeTimer;
+    if (hoveredSlice) {
+      setIsFading(false);
+      fadeTimer = setTimeout(() => {
+        setIsFading(true);
+        removeTimer = setTimeout(() => {
+          setHoveredSlice(null);
+          setIsFading(false);
+        }, 400); 
+      }, 3000); 
+    }
+    return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
+  }, [hoveredSlice]);
+
+  if (!stats) return <div className="statistics-container"><p className="no-data">Aucune donnée disponible.</p></div>;
+
   const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '' }) => {
     let entries = Object.entries(data);
-    
     const jourOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const moisOrder = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    
     if (sortOrder === 'alpha') entries.sort(([a], [b]) => a.localeCompare(b));
     else if (sortOrder === 'asc') entries.sort(([, a], [, b]) => a - b);
     else if (sortOrder === 'desc') entries.sort(([, a], [, b]) => b - a);
     else if (sortOrder === 'jours') entries.sort(([a], [b]) => jourOrder.indexOf(a) - jourOrder.indexOf(b));
     else if (sortOrder === 'mois') entries.sort(([a], [b]) => moisOrder.indexOf(a) - moisOrder.indexOf(b));
-    
     const total = entries.reduce((sum, [, value]) => sum + value, 0);
-    
     if (total === 0) return null;
 
     let currentAngle = 0;
@@ -209,19 +133,25 @@ function Statistics({ reservations }) {
       const startAngle = currentAngle;
       const endAngle = currentAngle + angle;
       currentAngle = endAngle;
-
       const startX = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
       const startY = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
       const endX = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
       const endY = 50 + 40 * Math.sin((endAngle - 90) * Math.PI / 180);
       const largeArc = angle > 180 ? 1 : 0;
+      
+      const handleInteraction = (e) => {
+        // Positionnement pour mobile (touch) ou desktop (souris)
+        const x = e.clientX || (e.touches && e.touches[0].clientX);
+        const y = e.clientY || (e.touches && e.touches[0].clientY);
+        setPopupPos({ x: x, y: y - 50 });
+        setHoveredSlice({ label, value, percentage: percentage.toFixed(1), color: colors[index % colors.length] });
+      };
 
       return {
-        label,
-        value,
-        percentage: percentage.toFixed(1),
+        label, value, percentage: percentage.toFixed(1),
         path: `M 50 50 L ${startX} ${startY} A 40 40 0 ${largeArc} 1 ${endX} ${endY} Z`,
-        color: colors[index % colors.length]
+        color: colors[index % colors.length],
+        handleInteraction
       };
     });
 
@@ -231,9 +161,17 @@ function Statistics({ reservations }) {
         <div className="chart-content">
           <svg viewBox="0 0 100 100" className="pie-chart">
             {segments.map((segment, i) => (
-              <path key={i} d={segment.path} fill={segment.color} stroke="white" strokeWidth="0.5">
-                <title>{`${segment.label}: ${segment.value} (${segment.percentage}%)`}</title>
-              </path>
+              <path 
+                key={i} 
+                d={segment.path} 
+                fill={segment.color} 
+                stroke="white" 
+                strokeWidth="0.5"
+                onMouseEnter={segment.handleInteraction} /* Desktop */
+                onClick={segment.handleInteraction}      /* Mobile tap */
+                onTouchStart={segment.handleInteraction} /* Mobile touch */
+                style={{cursor: 'pointer'}}
+              />
             ))}
           </svg>
           <div className="chart-legend">
@@ -257,64 +195,26 @@ function Statistics({ reservations }) {
   return (
     <div className="statistics-container">
       <h2>📊 Statistiques détaillées</h2>
-      
       <div className="stats-summary">
-        <div className="summary-card">
-          <div className="summary-icon">📅</div>
-          <div className="summary-content">
-            <div className="summary-value">{stats.total}</div>
-            <div className="summary-label">Réservations totales</div>
-          </div>
-        </div>
-        <div className="summary-card">
-          <div className="summary-icon">⏱️</div>
-          <div className="summary-content">
-            <div className="summary-value">{stats.dureeMoyenne}</div>
-            <div className="summary-label">Durée moyenne</div>
-          </div>
-        </div>
-        <div className="summary-card">
-          <div className="summary-icon">🏆</div>
-          <div className="summary-content">
-            <div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div>
-            <div className="summary-label">Top utilisateur</div>
-          </div>
-        </div>
-        <div className="summary-card">
-          <div className="summary-icon">🏢</div>
-          <div className="summary-content">
-            <div className="summary-value">{Object.keys(stats.parSalle).length}</div>
-            <div className="summary-label">Salles utilisées</div>
-          </div>
-        </div>
+        <div className="summary-card"><div className="summary-icon">📅</div><div className="summary-content"><div className="summary-value">{stats.total}</div><div className="summary-label">Réservations totales</div></div></div>
+        <div className="summary-card"><div className="summary-icon">⏱️</div><div className="summary-content"><div className="summary-value">{stats.dureeMoyenne}</div><div className="summary-label">Durée moyenne</div></div></div>
+        <div className="summary-card"><div className="summary-icon">🏆</div><div className="summary-content"><div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div><div className="summary-label">Top utilisateur</div></div></div>
+        <div className="summary-card"><div className="summary-icon">🏢</div><div className="summary-content"><div className="summary-value">{Object.keys(stats.parSalle).length}</div><div className="summary-label">Salles utilisées</div></div></div>
       </div>
 
       <div className="charts-grid">
         <PieChart data={stats.parSalle} title="📍 Répartition par salle" colors={colors1} />
-        
         <PieChart data={stats.parJour} title="📆 Répartition par jour" colors={colors2} sortOrder="jours" />
-        
         <PieChart data={stats.parService} title="🏛️ Répartition par service" colors={colors3} sortOrder="alpha" />
-        
         <PieChart data={stats.parObjet} title="📝 Répartition par objet" colors={colors1} sortOrder="alpha" />
         
         <div className="chart-card">
           <h3>📊 Taux d'occupation</h3>
           <div className="occupation-bars">
-            {Object.entries(stats.tauxOccupation)
-              .sort((a, b) => b[1] - a[1])
-              .map(([salle, taux], i) => (
+            {Object.entries(stats.tauxOccupation).sort((a, b) => b[1] - a[1]).map(([salle, taux], i) => (
                 <div key={i} className="occupation-item">
                   <div className="occupation-label">{salle}</div>
-                  <div className="occupation-bar-container">
-                    <div 
-                      className="occupation-bar" 
-                      style={{ 
-                        width: `${taux}%`,
-                        backgroundColor: taux > 80 ? '#f44336' : taux > 50 ? '#ff9800' : '#4caf50'
-                      }}
-                    ></div>
-                  </div>
+                  <div className="occupation-bar-container"><div className="occupation-bar" style={{ width: `${taux}%`, backgroundColor: taux > 80 ? '#f44336' : taux > 50 ? '#ff9800' : '#4caf50' }}></div></div>
                   <div className="occupation-value">{taux}%</div>
                 </div>
             ))}
@@ -322,28 +222,30 @@ function Statistics({ reservations }) {
         </div>
         
         <PieChart data={stats.parHoraire} title="🕐 Répartition par horaire" colors={colors2} />
-        
-        <PieChart 
-          data={stats.parMois} 
-          title="📅 Répartition par mois" 
-          colors={colors3} 
-          sortOrder="mois" 
-          className="month-chart-card" 
-        />
+        <PieChart data={stats.parMois} title="📅 Répartition par mois" colors={colors3} sortOrder="mois" className="month-chart-card" />
         
         <div className="chart-card">
           <h3>👥 Top 10 utilisateurs</h3>
           <div className="top-users-list">
             {stats.topUtilisateurs.map(([nom, count], i) => (
-              <div key={i} className="top-user-item">
-                <span className="user-rank">{i + 1}</span>
-                <span className="user-name">{nom}</span>
-                <span className="user-count">{count} réservations</span>
-              </div>
+              <div key={i} className="top-user-item"><span className="user-rank">{i + 1}</span><span className="user-name">{nom}</span><span className="user-count">{count} réservations</span></div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* POPUP POUR CAMEMBERTS */}
+      {hoveredSlice && (
+        <div className={`stats-popup ${isFading ? 'fading-out' : ''}`} style={{ top: popupPos.y, left: popupPos.x }}>
+          <div className="stats-popup-header" style={{ borderLeft: `5px solid ${hoveredSlice.color}` }}>
+            {hoveredSlice.label}
+          </div>
+          <div className="stats-popup-body">
+            <div><strong>Nombre :</strong> {hoveredSlice.value}</div>
+            <div><strong>Part :</strong> {hoveredSlice.percentage}%</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
