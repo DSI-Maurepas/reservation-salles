@@ -22,7 +22,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
 
-  // REFERENCE POUR SCROLL AUTO
+  // REFERENCE POUR LE BLOC LATERAL (Photo/Formulaire)
   const sidebarRef = useRef(null);
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
@@ -79,9 +79,13 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       shouldScroll = true;
     }
     
-    // SCROLL AUTOMATIQUE SUR LA BARRE LATÉRALE
+    // CORRECTION : SCROLL SUR LA BARRE LATÉRALE (Bloc Salle + Propriétés)
+    // 'block: start' assure que le HAUT du bloc s'aligne avec le HAUT de l'écran
     if (shouldScroll && sidebarRef.current) {
-        sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Petit timeout pour laisser le temps au DOM de se mettre à jour (ex: affichage du formulaire)
+        setTimeout(() => {
+            sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
     }
 
     setIsDragging(false); 
@@ -148,6 +152,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
         </div>
 
         <div className="single-room-layout">
+          {/* CIBLE DU SCROLL VIA LA REF */}
           <div className="room-sidebar" ref={sidebarRef}>
             {!showForm && (
               <>
@@ -236,6 +241,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                         onMouseEnter={(e) => { 
                           handleMouseEnter(dayIndex, slot, date); 
                           if (reserved && reservation) { 
+                            const rect = e.currentTarget.getBoundingClientRect(); 
                             setHoveredReservation(reservation); 
                             // MODIFICATION : POSITIONNEMENT RELATIF À LA SOURIS (Base à 50px au-dessus)
                             setPopupPosition({ x: e.clientX, y: e.clientY - 50 }); 

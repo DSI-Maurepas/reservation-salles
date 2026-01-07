@@ -256,7 +256,9 @@
   .room-sidebar { 
     order: 2; /* Formulaire en dessous */
     width: 100%; 
-    position: static; 
+    position: static; /* Pas de sticky sur mobile */
+    min-height: 100vh; /* Force la sensation de pleine page */
+    padding-bottom: 50px;
   }
   
   .room-form-container { max-height: none; height: auto; } /* Reset hauteur mobile */
