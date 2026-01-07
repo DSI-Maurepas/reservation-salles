@@ -1,0 +1,34 @@
+# 1. Navigation vers le dossier du projet
+# (Note : sur Git Bash, C: devient /c/)
+cd /c/dev/reservation-salles
+
+# 2. Compilation de l'application
+# Cela va créer un dossier 'build' optimisé pour la production
+echo "🔨 Démarrage de la compilation..."
+npm run build
+
+# 3. Préparation du dossier 'docs'
+# On supprime l'ancien dossier docs s'il existe pour éviter les conflits
+if [ -d "docs" ]; then
+  rm -rf docs
+fi
+
+# On renomme le dossier 'build' (ou 'dist') fraîchement créé en 'docs'
+if [ -d "build" ]; then
+  mv build docs
+  echo "✅ Dossier 'build' renommé en 'docs'"
+elif [ -d "dist" ]; then
+  mv dist docs
+  echo "✅ Dossier 'dist' renommé en 'docs'"
+else
+  echo "❌ Erreur : La compilation semble avoir échoué (pas de dossier build/dist)."
+  exit 1
+fi
+
+# 4. Envoi sur GitHub (Git)
+echo "📦 Envoi vers GitHub..."
+git add .
+git commit -m "Mise à jour : Compilation et déploiement vers /docs"
+git push origin main
+
+echo "🚀 Terminé ! Votre application a été compilée et envoyée."
