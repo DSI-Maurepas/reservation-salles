@@ -1,5 +1,5 @@
 /* src/components/ReservationGrid.css */
-/* VERSION FINALE : COULEURS ET AFFICHAGE STRICT (DESKTOP/MOBILE) */
+/* VERSION RESPONSIVE : 3 LIGNES HEADER + LÉGENDE SOUS LA GRILLE */
 
 .reservation-grid-container {
   background: transparent !important;
@@ -13,7 +13,7 @@
 
 @keyframes slideIn { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
 
-/* HEADER */
+/* HEADER DESKTOP */
 .date-navigation-bar {
   display: flex; 
   align-items: center;
@@ -38,7 +38,7 @@
 .nav-day-button:hover, .nav-week-button:hover, .nav-today-button:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .date-display h2 { margin: 0; color: #1565c0; font-size: 1.2rem; font-weight: 800; text-transform: capitalize; min-width: 250px; text-align: center; letter-spacing: -0.5px; }
 
-/* INSTRUCTION MOBILE (BLEU STANDARD, MASQUÉ SUR DESKTOP) */
+/* INSTRUCTION MOBILE (MASQUÉE SUR DESKTOP) */
 .mobile-instruction {
   display: none; 
   text-align: center;
@@ -131,24 +131,92 @@
 .conflict-list li { font-size: 0.9rem; margin-bottom: 0.5rem; color: #e65100; font-weight: 600; }
 .warning-modal-footer { padding: 1.5rem; background: #f9f9f9; display: flex; justify-content: space-between; gap: 1rem; }
 
+/* ----------------------------------------------------------------- */
+/* MEDIA QUERIES - RESPONSIVE DESIGN (3 LIGNES + LEGENDE SOUS GRILLE) */
+/* ----------------------------------------------------------------- */
+
 @media (max-width: 1280px) {
   .reservation-grid-container { padding: 1rem; }
-  .reservation-content { display: flex; flexDirection: column !important; gap: 1.5rem; }
-  .date-navigation-bar { display: flex; flexDirection: column; gap: 0.5rem; height: auto; padding: 1rem; }
-  .nav-group-left { position: static; transform: none; width: 100%; justify-content: center; margin-bottom: 0.5rem; order: 1; }
-  .nav-group-center { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; order: 2; }
-  .nav-group-right { display: none !important; }
-  .date-display { width: 100%; text-align: center; order: 1; margin-bottom: 0.5rem; }
-  .date-display h2 { font-size: 1.1rem; }
-  .nav-day-button, .nav-week-button, .nav-today-button { order: 2; padding: 0.4rem 0.6rem; font-size: 0.75rem; min-width: auto; }
-  .grid-column { width: 100%; display: block; overflow-x: auto; order: 1; }
-  .reservation-grid { min-width: 900px; }
-  .form-column { width: 100%; max-width: 100vw; order: 2; }
-  .reservation-form { width: 100%; box-sizing: border-box; }
-  .desktop-name { display: none; }
-  .mobile-name { display: block; }
   
-  /* AFFICHER INSTRUCTION MOBILE ET MASQUER LÉGENDE DESKTOP */
-  .mobile-instruction { display: block; }
+  /* 1. EMPILEMENT VERTICAL */
+  .reservation-content { 
+    display: flex; 
+    flex-direction: column !important; 
+    gap: 1.5rem; 
+  }
+
+  /* 2. HEADER 3 LIGNES */
+  .date-navigation-bar { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 0.5rem; 
+    height: auto; 
+    padding: 1rem; 
+  }
+
+  /* LIGNE 1 : CALENDRIER */
+  .nav-group-left { 
+    position: static; 
+    transform: none; 
+    width: 100%; 
+    justify-content: center; 
+    margin-bottom: 0.5rem; 
+    order: 1; 
+  }
+
+  /* LIGNE 2 et 3 : DATE puis BOUTONS */
+  .nav-group-center { 
+    width: 100%; 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 0.5rem; 
+    order: 2; 
+  }
+
+  .nav-group-right { display: none !important; }
+
+  /* DATE (Ligne 2) */
+  .date-display { 
+    width: 100%; 
+    text-align: center; 
+    order: 1; 
+    margin-bottom: 0.5rem; 
+  }
+  .date-display h2 { font-size: 1.1rem; }
+
+  /* BOUTONS (Ligne 3) */
+  .nav-day-button, .nav-week-button, .nav-today-button {
+    order: 2; 
+    padding: 0.4rem 0.6rem; 
+    font-size: 0.75rem; 
+    min-width: auto;
+  }
+
+  /* 3. GRILLE AVEC SCROLL */
+  .grid-column { 
+    width: 100%; 
+    display: block; 
+    overflow-x: auto; 
+    order: 1; /* Premier */
+  }
+  .reservation-grid { min-width: 900px; }
+
+  /* 4. LEGENDE MOBILE (SOUS LA GRILLE) */
+  .mobile-instruction { 
+    display: block; 
+    order: 2; /* Deuxième */
+  }
+
+  /* 5. FORMULAIRE (EN BAS) */
+  .form-column { 
+    width: 100%; 
+    max-width: 100vw; 
+    order: 3; /* Troisième */
+  }
+  
+  .reservation-form { width: 100%; box-sizing: border-box; }
+  
+  /* MASQUER LEGENDE DESKTOP */
   .desktop-legend { display: none !important; }
 }
