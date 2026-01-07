@@ -36,7 +36,8 @@ function Statistics({ reservations }) {
     // 3. Top 10 utilisateurs
     const parUtilisateur = {};
     reservations.forEach(res => {
-      const key = `${res.nom} ${res.prenom}`.trim();
+      // Ordre demandé : Prénom Nom
+      const key = `${res.prenom} ${res.nom}`.trim();
       parUtilisateur[key] = (parUtilisateur[key] || 0) + 1;
     });
     const topUtilisateurs = Object.entries(parUtilisateur)
@@ -97,21 +98,69 @@ function Statistics({ reservations }) {
       else if (heure >= 18) parHoraire['18h-19h']++;
     });
 
-    // 7. Durée moyenne des réservations
-    let dureeTotale = 0;
+    // 7. Durée moyenne des réservations (CORRIGÉ & PRÉCIS)
+    let totalMinutes = 0;
+    let countRes = 0;
     reservations.forEach(res => {
-      const debut = parseInt(res.heureDebut.split(':')[0]);
-      const fin = parseInt(res.heureFin.split(':')[0]);
-      dureeTotale += (fin - debut);
-    });
-    const dureeMoyenne = (dureeTotale / reservations.length).toFixed(1);
+      if (!res.heureDebut || !res.heureFin) return;
 
-    // 8. Taux d'occupation par salle (estimé sur 11h x 5 jours = 55h/semaine)
+      const [hStart, mStart] = res.heureDebut.split(':').map(Number);
+      const [hEnd, mEnd] = res.heureFin.split(':').map(Number);
+      
+      const startMins = hStart * 60 + mStart;
+      const endMins = hEnd * 60 + mEnd;
+      
+      const duration = endMins - startMins;
+      
+      if (duration > 0) {
+        totalMinutes += duration;
+        countRes++;
+      }
+    });
+    
+    let dureeMoyenne = "0h00m";
+    if (countRes > 0) {
+        const avgMinutes = totalMinutes / countRes;
+        const avgH = Math.floor(avgMinutes / 60);
+        const avgM = Math.round(avgMinutes % 60);
+        dureeMoyenne = `${avgH}h${avgM.toString().padStart(2, '0')}m`;
+    }
+
+    // 8. Taux d'occupation
     const tauxOccupation = {};
-    Object.keys(parSalle).forEach(salle => {
-      const nbRes = parSalle[salle];
-      const tauxEstime = Math.min(100, Math.round((nbRes / 55) * 100));
-      tauxOccupation[salle] = tauxEstime;
+    const durationByRoom = {};
+    let minTime = Infinity;
+    let maxTime = -Infinity;
+
+    // A. Calculer la durée occupée par salle
+    reservations.forEach(res => {
+      if (!res.heureDebut || !res.heureFin) return;
+
+      const [hStart, mStart] = res.heureDebut.split(':').map(Number);
+      const [hEnd, mEnd] = res.heureFin.split(':').map(Number);
+      const startMins = hStart * 60 + mStart;
+      const endMins = hEnd * 60 + mEnd;
+      
+      const durationHours = Math.max(0, (endMins - startMins) / 60);
+      
+      durationByRoom[res.salle] = (durationByRoom[res.salle] || 0) + durationHours;
+
+      const dateTs = new Date(res.dateDebut).getTime();
+      if (dateTs < minTime) minTime = dateTs;
+      if (dateTs > maxTime) maxTime = dateTs;
+    });
+
+    // B. Calculer la capacité totale théorique sur la période
+    const oneDay = 24 * 60 * 60 * 1000;
+    const diffDays = maxTime !== -Infinity ? Math.floor((maxTime - minTime) / oneDay) + 1 : 1;
+    const nbWeeks = Math.max(1, diffDays / 7);
+    const totalCapacityHours = nbWeeks * 55; // 55h par semaine
+
+    // C. Calcul du pourcentage
+    Object.keys(durationByRoom).forEach(salle => {
+      const totalDuration = durationByRoom[salle];
+      const taux = Math.min(100, Math.round((totalDuration / totalCapacityHours) * 100));
+      tauxOccupation[salle] = taux;
     });
 
     return {
@@ -137,28 +186,17 @@ function Statistics({ reservations }) {
   }
 
   // Fonction pour générer un graphique en camembert
-  // Modification : Ajout prop 'className'
   const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '' }) => {
     let entries = Object.entries(data);
     
-    // Ordres de référence
     const jourOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const moisOrder = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
     
-    // Tri selon le type demandé
-    if (sortOrder === 'alpha') {
-      entries = entries.sort(([a], [b]) => a.localeCompare(b)); // Alphabétique
-    } else if (sortOrder === 'asc') {
-      entries = entries.sort(([, a], [, b]) => a - b); // Croissant (nombre)
-    } else if (sortOrder === 'desc') {
-      entries = entries.sort(([, a], [, b]) => b - a); // Décroissant (nombre)
-    } else if (sortOrder === 'jours') {
-      // Tri par ordre des jours de la semaine
-      entries = entries.sort(([a], [b]) => jourOrder.indexOf(a) - jourOrder.indexOf(b));
-    } else if (sortOrder === 'mois') {
-      // Tri par ordre des mois de l'année
-      entries = entries.sort(([a], [b]) => moisOrder.indexOf(a) - moisOrder.indexOf(b));
-    }
+    if (sortOrder === 'alpha') entries.sort(([a], [b]) => a.localeCompare(b));
+    else if (sortOrder === 'asc') entries.sort(([, a], [, b]) => a - b);
+    else if (sortOrder === 'desc') entries.sort(([, a], [, b]) => b - a);
+    else if (sortOrder === 'jours') entries.sort(([a], [b]) => jourOrder.indexOf(a) - jourOrder.indexOf(b));
+    else if (sortOrder === 'mois') entries.sort(([a], [b]) => moisOrder.indexOf(a) - moisOrder.indexOf(b));
     
     const total = entries.reduce((sum, [, value]) => sum + value, 0);
     
@@ -172,7 +210,6 @@ function Statistics({ reservations }) {
       const endAngle = currentAngle + angle;
       currentAngle = endAngle;
 
-      // Calcul du chemin SVG
       const startX = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
       const startY = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
       const endX = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
@@ -194,13 +231,7 @@ function Statistics({ reservations }) {
         <div className="chart-content">
           <svg viewBox="0 0 100 100" className="pie-chart">
             {segments.map((segment, i) => (
-              <path
-                key={i}
-                d={segment.path}
-                fill={segment.color}
-                stroke="white"
-                strokeWidth="0.5"
-              >
+              <path key={i} d={segment.path} fill={segment.color} stroke="white" strokeWidth="0.5">
                 <title>{`${segment.label}: ${segment.value} (${segment.percentage}%)`}</title>
               </path>
             ))}
@@ -219,7 +250,6 @@ function Statistics({ reservations }) {
     );
   };
 
-  // Palettes de couleurs
   const colors1 = ['#2196f3', '#4caf50', '#ff9800', '#e91e63', '#9c27b0', '#00bcd4', '#cddc39', '#795548', '#607d8b'];
   const colors2 = ['#3f51b5', '#009688', '#ffc107', '#f44336', '#673ab7', '#03a9f4', '#8bc34a', '#ff5722', '#9e9e9e'];
   const colors3 = ['#1976d2', '#388e3c', '#f57c00', '#c2185b', '#7b1fa2', '#0097a7', '#afb42b', '#5d4037', '#455a64'];
@@ -239,7 +269,7 @@ function Statistics({ reservations }) {
         <div className="summary-card">
           <div className="summary-icon">⏱️</div>
           <div className="summary-content">
-            <div className="summary-value">{stats.dureeMoyenne}h</div>
+            <div className="summary-value">{stats.dureeMoyenne}</div>
             <div className="summary-label">Durée moyenne</div>
           </div>
         </div>
@@ -260,32 +290,13 @@ function Statistics({ reservations }) {
       </div>
 
       <div className="charts-grid">
-        <PieChart 
-          data={stats.parSalle} 
-          title="📍 Répartition par salle"
-          colors={colors1}
-        />
+        <PieChart data={stats.parSalle} title="📍 Répartition par salle" colors={colors1} />
         
-        <PieChart 
-          data={stats.parJour} 
-          title="📆 Répartition par jour"
-          colors={colors2}
-          sortOrder="jours"
-        />
+        <PieChart data={stats.parJour} title="📆 Répartition par jour" colors={colors2} sortOrder="jours" />
         
-        <PieChart 
-          data={stats.parService} 
-          title="🏛️ Répartition par service"
-          colors={colors3}
-          sortOrder="alpha"
-        />
+        <PieChart data={stats.parService} title="🏛️ Répartition par service" colors={colors3} sortOrder="alpha" />
         
-        <PieChart 
-          data={stats.parObjet} 
-          title="📝 Répartition par objet"
-          colors={colors1}
-          sortOrder="alpha"
-        />
+        <PieChart data={stats.parObjet} title="📝 Répartition par objet" colors={colors1} sortOrder="alpha" />
         
         <div className="chart-card">
           <h3>📊 Taux d'occupation</h3>
@@ -310,19 +321,14 @@ function Statistics({ reservations }) {
           </div>
         </div>
         
-        <PieChart 
-          data={stats.parHoraire} 
-          title="🕐 Répartition par horaire"
-          colors={colors2}
-        />
+        <PieChart data={stats.parHoraire} title="🕐 Répartition par horaire" colors={colors2} />
         
-        {/* INTERVERSION : MOIS ICI AVEC CLASSE SPÉCIFIQUE */}
         <PieChart 
           data={stats.parMois} 
-          title="📅 Répartition par mois"
-          colors={colors3}
-          sortOrder="mois"
-          className="month-chart-card" // AJOUT CLASSE SPÉCIALE
+          title="📅 Répartition par mois" 
+          colors={colors3} 
+          sortOrder="mois" 
+          className="month-chart-card" 
         />
         
         <div className="chart-card">
