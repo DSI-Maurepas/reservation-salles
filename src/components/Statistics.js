@@ -2,8 +2,124 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import './Statistics.css';
 
+// --- SOUS-COMPOSANT DÉFINI À L'EXTÉRIEUR POUR ÉVITER LE "REMONTAGE" (CLIGNOTEMENT) ---
+const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', onHover, activeLabel }) => {
+  let entries = Object.entries(data);
+  const jourOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+  const moisOrder = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+  // Tri des données
+  if (sortOrder === 'alpha') entries.sort(([a], [b]) => a.localeCompare(b));
+  else if (sortOrder === 'asc') entries.sort(([, a], [, b]) => a - b);
+  else if (sortOrder === 'desc') entries.sort(([, a], [, b]) => b - a);
+  else if (sortOrder === 'jours') entries.sort(([a], [b]) => jourOrder.indexOf(a) - jourOrder.indexOf(b));
+  else if (sortOrder === 'mois') entries.sort(([a], [b]) => moisOrder.indexOf(a) - moisOrder.indexOf(b));
+
+  const total = entries.reduce((sum, [, value]) => sum + value, 0);
+  if (total === 0) return null;
+
+  let currentAngle = 0;
+  const segments = entries.map(([label, value], index) => {
+    const percentage = (value / total) * 100;
+    const angle = (value / total) * 360;
+    const startAngle = currentAngle;
+    const endAngle = currentAngle + angle;
+    const midAngle = startAngle + angle / 2; // Angle médian pour l'éclatement
+    currentAngle = endAngle;
+
+    // Calcul des coordonnées du secteur
+    const r = 40; // Rayon
+    const cx = 50; // Centre X
+    const cy = 50; // Centre Y
+    
+    // Conversion degrés -> radians (svg utilise radians, -90° pour commencer en haut)
+    const startRad = (startAngle - 90) * Math.PI / 180;
+    const endRad = (endAngle - 90) * Math.PI / 180;
+    const midRad = (midAngle - 90) * Math.PI / 180;
+
+    const startX = cx + r * Math.cos(startRad);
+    const startY = cy + r * Math.sin(startRad);
+    const endX = cx + r * Math.cos(endRad);
+    const endY = cy + r * Math.sin(endRad);
+    
+    const largeArc = angle > 180 ? 1 : 0;
+
+    // Calcul du vecteur d'éclatement (5 unités vers l'extérieur)
+    const isActive = activeLabel === label;
+    const explodeDist = isActive ? 4 : 0;
+    const transX = explodeDist * Math.cos(midRad);
+    const transY = explodeDist * Math.sin(midRad);
+
+    const color = colors[index % colors.length];
+
+    // Handler unifié
+    const handleInteraction = (e) => {
+      // Si c'est un clic, on arrête la propagation pour ne pas fermer tout de suite
+      if (e.type === 'click') e.stopPropagation();
+      
+      const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+      const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+      onHover({
+        label,
+        value,
+        percentage: percentage.toFixed(1),
+        color,
+        x: clientX,
+        y: clientY
+      });
+    };
+
+    return {
+      label, value, percentage: percentage.toFixed(1), color,
+      path: `M ${cx} ${cy} L ${startX} ${startY} A ${r} ${r} 0 ${largeArc} 1 ${endX} ${endY} Z`,
+      transform: `translate(${transX}, ${transY})`,
+      handleInteraction,
+      isActive
+    };
+  });
+
+  return (
+    <div className={`chart-card ${className}`}>
+      <h3>{title}</h3>
+      <div className="chart-content">
+        <svg viewBox="0 0 100 100" className="pie-chart">
+          {segments.map((segment, i) => (
+            <path 
+              key={i} 
+              d={segment.path} 
+              fill={segment.color} 
+              stroke="white" 
+              strokeWidth="0.5"
+              transform={segment.transform} /* Application de l'éclatement */
+              onClick={segment.handleInteraction}
+              onMouseEnter={segment.handleInteraction}
+              style={{cursor: 'pointer', transition: 'transform 0.3s ease-out'}}
+            />
+          ))}
+        </svg>
+        <div className="chart-legend">
+          {segments.map((segment, i) => (
+            <div 
+              key={i} 
+              className={`legend-item ${segment.isActive ? 'active' : ''}`}
+              onClick={segment.handleInteraction} /* Clic sur légende active aussi */
+              style={{cursor: 'pointer'}}
+            >
+              <span className="legend-color" style={{ backgroundColor: segment.color }}></span>
+              <span className="legend-label">{segment.label}</span>
+              <span className="legend-value">{segment.value} ({segment.percentage}%)</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function Statistics({ reservations }) {
   
+  // Calcul des stats (inchangé)
   const stats = useMemo(() => {
     if (!reservations || reservations.length === 0) return null;
 
@@ -91,109 +207,49 @@ function Statistics({ reservations }) {
     return { total: reservations.length, parSalle, parJour, topUtilisateurs, parObjet, parService, parMois, parHoraire, dureeMoyenne, tauxOccupation };
   }, [reservations]);
 
-  // --- GESTION POPUP CAMEMBERT ---
+  // --- GESTION POPUP ET TIMER (3s + 0.4s fade) ---
   const [hoveredSlice, setHoveredSlice] = useState(null);
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
 
+  // Fonction de mise à jour appelée par le PieChart
+  const handleSliceHover = (sliceData) => {
+    setHoveredSlice(sliceData);
+    setPopupPos({ x: sliceData.x, y: sliceData.y - 50 }); // Position desktop (offset)
+    setIsFading(false); // Reset fading à chaque nouvelle interaction
+  };
+
   useEffect(() => {
     let fadeTimer;
     let removeTimer;
+
     if (hoveredSlice) {
-      setIsFading(false);
+      // 1. Attendre 3 secondes sans bouger
       fadeTimer = setTimeout(() => {
-        setIsFading(true);
+        setIsFading(true); // Déclencher le fade-out CSS
+
+        // 2. Attendre la fin de la transition CSS (0.4s)
         removeTimer = setTimeout(() => {
           setHoveredSlice(null);
           setIsFading(false);
         }, 400); 
       }, 3000); 
     }
-    return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
-  }, [hoveredSlice]);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [hoveredSlice]); // Se relance si on change de slice (hoveredSlice change)
 
   if (!stats) return <div className="statistics-container"><p className="no-data">Aucune donnée disponible.</p></div>;
-
-  const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '' }) => {
-    let entries = Object.entries(data);
-    const jourOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-    const moisOrder = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    if (sortOrder === 'alpha') entries.sort(([a], [b]) => a.localeCompare(b));
-    else if (sortOrder === 'asc') entries.sort(([, a], [, b]) => a - b);
-    else if (sortOrder === 'desc') entries.sort(([, a], [, b]) => b - a);
-    else if (sortOrder === 'jours') entries.sort(([a], [b]) => jourOrder.indexOf(a) - jourOrder.indexOf(b));
-    else if (sortOrder === 'mois') entries.sort(([a], [b]) => moisOrder.indexOf(a) - moisOrder.indexOf(b));
-    const total = entries.reduce((sum, [, value]) => sum + value, 0);
-    if (total === 0) return null;
-
-    let currentAngle = 0;
-    const segments = entries.map(([label, value], index) => {
-      const percentage = (value / total) * 100;
-      const angle = (value / total) * 360;
-      const startAngle = currentAngle;
-      const endAngle = currentAngle + angle;
-      currentAngle = endAngle;
-      const startX = 50 + 40 * Math.cos((startAngle - 90) * Math.PI / 180);
-      const startY = 50 + 40 * Math.sin((startAngle - 90) * Math.PI / 180);
-      const endX = 50 + 40 * Math.cos((endAngle - 90) * Math.PI / 180);
-      const endY = 50 + 40 * Math.sin((endAngle - 90) * Math.PI / 180);
-      const largeArc = angle > 180 ? 1 : 0;
-      
-      const handleInteraction = (e) => {
-        // Positionnement pour mobile (touch) ou desktop (souris)
-        const x = e.clientX || (e.touches && e.touches[0].clientX);
-        const y = e.clientY || (e.touches && e.touches[0].clientY);
-        setPopupPos({ x: x, y: y - 50 });
-        setHoveredSlice({ label, value, percentage: percentage.toFixed(1), color: colors[index % colors.length] });
-      };
-
-      return {
-        label, value, percentage: percentage.toFixed(1),
-        path: `M 50 50 L ${startX} ${startY} A 40 40 0 ${largeArc} 1 ${endX} ${endY} Z`,
-        color: colors[index % colors.length],
-        handleInteraction
-      };
-    });
-
-    return (
-      <div className={`chart-card ${className}`}>
-        <h3>{title}</h3>
-        <div className="chart-content">
-          <svg viewBox="0 0 100 100" className="pie-chart">
-            {segments.map((segment, i) => (
-              <path 
-                key={i} 
-                d={segment.path} 
-                fill={segment.color} 
-                stroke="white" 
-                strokeWidth="0.5"
-                onMouseEnter={segment.handleInteraction} /* Desktop */
-                onClick={segment.handleInteraction}      /* Mobile tap */
-                onTouchStart={segment.handleInteraction} /* Mobile touch */
-                style={{cursor: 'pointer'}}
-              />
-            ))}
-          </svg>
-          <div className="chart-legend">
-            {segments.map((segment, i) => (
-              <div key={i} className="legend-item">
-                <span className="legend-color" style={{ backgroundColor: segment.color }}></span>
-                <span className="legend-label">{segment.label}</span>
-                <span className="legend-value">{segment.value} ({segment.percentage}%)</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   const colors1 = ['#2196f3', '#4caf50', '#ff9800', '#e91e63', '#9c27b0', '#00bcd4', '#cddc39', '#795548', '#607d8b'];
   const colors2 = ['#3f51b5', '#009688', '#ffc107', '#f44336', '#673ab7', '#03a9f4', '#8bc34a', '#ff5722', '#9e9e9e'];
   const colors3 = ['#1976d2', '#388e3c', '#f57c00', '#c2185b', '#7b1fa2', '#0097a7', '#afb42b', '#5d4037', '#455a64'];
 
   return (
-    <div className="statistics-container">
+    <div className="statistics-container" onClick={() => setHoveredSlice(null)}>
       <h2>📊 Statistiques détaillées</h2>
       <div className="stats-summary">
         <div className="summary-card"><div className="summary-icon">📅</div><div className="summary-content"><div className="summary-value">{stats.total}</div><div className="summary-label">Réservations totales</div></div></div>
@@ -203,10 +259,10 @@ function Statistics({ reservations }) {
       </div>
 
       <div className="charts-grid">
-        <PieChart data={stats.parSalle} title="📍 Répartition par salle" colors={colors1} />
-        <PieChart data={stats.parJour} title="📆 Répartition par jour" colors={colors2} sortOrder="jours" />
-        <PieChart data={stats.parService} title="🏛️ Répartition par service" colors={colors3} sortOrder="alpha" />
-        <PieChart data={stats.parObjet} title="📝 Répartition par objet" colors={colors1} sortOrder="alpha" />
+        <PieChart data={stats.parSalle} title="📍 Répartition par salle" colors={colors1} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parJour} title="📆 Répartition par jour" colors={colors2} sortOrder="jours" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parService} title="🏛️ Répartition par service" colors={colors3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parObjet} title="📝 Répartition par objet" colors={colors1} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         
         <div className="chart-card">
           <h3>📊 Taux d'occupation</h3>
@@ -221,8 +277,8 @@ function Statistics({ reservations }) {
           </div>
         </div>
         
-        <PieChart data={stats.parHoraire} title="🕐 Répartition par horaire" colors={colors2} />
-        <PieChart data={stats.parMois} title="📅 Répartition par mois" colors={colors3} sortOrder="mois" className="month-chart-card" />
+        <PieChart data={stats.parHoraire} title="🕐 Répartition par horaire" colors={colors2} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parMois} title="📅 Répartition par mois" colors={colors3} sortOrder="mois" className="month-chart-card" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         
         <div className="chart-card">
           <h3>👥 Top 10 utilisateurs</h3>
@@ -234,7 +290,7 @@ function Statistics({ reservations }) {
         </div>
       </div>
 
-      {/* POPUP POUR CAMEMBERTS */}
+      {/* POPUP POUR CAMEMBERTS (Structure Fiche) */}
       {hoveredSlice && (
         <div className={`stats-popup ${isFading ? 'fading-out' : ''}`} style={{ top: popupPos.y, left: popupPos.x }}>
           <div className="stats-popup-header" style={{ borderLeft: `5px solid ${hoveredSlice.color}` }}>
