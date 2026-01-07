@@ -106,7 +106,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const generateRecurrenceDates = (startDate, endDate, type) => { const dates = []; const current = new Date(startDate); const end = new Date(endDate); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); while (current <= end) { dates.push(new Date(current)); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); } return dates; };
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (normalizeRoomName(existing.salle) !== normalizeRoomName(candidate.salle)) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
   
-  // CORRECTIF : Suppression des appels SingleRoomGrid incorrects (setShowForm, loadWeekReservations)
   const finalizeReservation = async (reservationsToSave) => { 
     setIsSubmitting(true); 
     setSubmissionProgress({ current: 0, total: reservationsToSave.length }); 
@@ -119,8 +118,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); 
       } 
       setSuccessModal({ show: true, reservations: createdReservations, message: '' }); 
-      setSelections([]); // Vide la sélection, ce qui cache le formulaire
-      loadReservations(); // Recharge les données de la grille (Par Date)
+      setSelections([]); 
+      loadReservations(); 
     } catch (error) { 
       alert("Erreur : " + error.message); 
     } finally { 
@@ -136,7 +135,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     // --- VALIDATION AGENCEMENT ET CAPACITÉ ---
     const selectedSalles = [...new Set(selections.map(s => s.salle))];
     if (selectedSalles.length > 0) {
-      // Pour Par Date, on vérifie la première salle sélectionnée (cas standard)
       const room = selectedSalles[0];
       const isConseil = room.includes('Conseil');
       const isMariages = room.includes('Mariages');
@@ -242,7 +240,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
       </div>
 
       <div className="mobile-instruction">
-        <p>👆 Cliquez sur le nom d'une salle pour en connaître les propriétés</p>
+        {/* TEXTE MODIFIÉ POUR MOBILE */}
+        <p>👆 Cliquez sur une salle pour afficher ses propriétés en bas de page</p>
         <p>ℹ️ Cliquez sur un créneau pour en connaître les propriétés</p>
       </div>
 

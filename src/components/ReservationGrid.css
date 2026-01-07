@@ -43,8 +43,8 @@
   display: none; 
   text-align: center;
   margin-bottom: 20px;
-  background-color: #cdf6ff; /* CORRECTION COULEUR */
-  color: #1e3a8a; /* Texte foncé pour lisibilité */
+  background-color: #cdf6ff; /* Bleu ciel demandé */
+  color: #1e3a8a; 
   font-size: 0.9rem;
   padding: 1rem;
   border-radius: 8px;
@@ -54,7 +54,7 @@
 .mobile-instruction p:first-child { margin-bottom: 0.5rem; }
 
 /* LAYOUT */
-/* FIX: start pour ne pas étirer la grille */
+/* FIX: align-items: start pour ne pas étirer la grille */
 .reservation-content { 
   display: grid; 
   grid-template-columns: minmax(900px, 1fr) 350px; 
@@ -93,18 +93,7 @@
 
 /* Styles formulaire */
 /* FIX: height auto pour grandir naturellement */
-.reservation-form { 
-  background: white; 
-  padding: 1rem; 
-  border-radius: 16px; 
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
-  border: 1px solid #e2e8f0; 
-  height: auto; 
-  max-height: none; 
-  overflow-y: auto; 
-  box-sizing: border-box; 
-}
-
+.reservation-form { background: white; padding: 1rem; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0; height: auto; max-height: none; overflow-y: auto; box-sizing: border-box; }
 .reservation-form h3 { color: #1e293b; font-size: 1.1rem; margin-bottom: 0.8rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.4rem; }
 .form-row { display: flex; gap: 0.8rem; width: 100%; }
 .form-group { margin-bottom: 0.6rem; width: 100%; } 
@@ -173,13 +162,53 @@
 @media (max-width: 1280px) {
   .reservation-grid-container { padding: 1rem; }
   .reservation-content { display: flex; flexDirection: column !important; gap: 1.5rem; }
-  .date-navigation-bar { display: flex; flexDirection: column; gap: 0.5rem; height: auto; padding: 1rem; }
-  .nav-group-left { position: static; transform: none; width: 100%; justify-content: center; margin-bottom: 0.5rem; order: 1; }
-  .nav-group-center { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; order: 2; }
-  .nav-group-right { display: none !important; }
-  .date-display { width: 100%; text-align: center; order: 1; margin-bottom: 0.5rem; }
+  
+  /* 1. HEADER 3 LIGNES (L1:Retour, L2:Date, L3:Boutons) */
+  .date-navigation-bar { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 0.5rem; 
+    height: auto; 
+    padding: 1rem; 
+  }
+
+  /* LIGNE 1 : RETOUR + TITRE */
+  .nav-group-left { 
+    width: 100%; 
+    justify-content: center; 
+    grid-column: auto; 
+    margin-bottom: 0.5rem; 
+    order: 1; /* Premier */
+  }
+
+  /* GROUPE CENTRAL : DATE (L2) + BOUTONS (L3) */
+  .nav-group-center { 
+    width: 100%; 
+    display: flex; 
+    flex-wrap: wrap; 
+    justify-content: center; 
+    gap: 0.5rem; 
+    order: 2; /* Second */
+  }
+
+  /* LIGNE 2 : DATE */
+  .date-display { 
+    width: 100%; 
+    text-align: center; 
+    order: 1; /* Premier dans le groupe central */
+    margin-bottom: 0.5rem; 
+  }
   .date-display h2 { font-size: 1.1rem; }
-  .nav-day-button, .nav-week-button, .nav-today-button { order: 2; padding: 0.4rem 0.6rem; font-size: 0.75rem; min-width: auto; }
+
+  /* LIGNE 3 : BOUTONS */
+  .nav-day-button, .nav-week-button, .nav-today-button {
+    order: 2; /* Second dans le groupe central */
+    padding: 0.4rem 0.6rem; 
+    font-size: 0.75rem; 
+    min-width: auto;
+  }
+  
+  /* 2. LAYOUT : COLONNE */
   .grid-column { width: 100%; display: block; overflow-x: auto; order: 1; }
   .reservation-grid { min-width: 900px; }
   
