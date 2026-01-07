@@ -20,6 +20,10 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [showForm, setShowForm] = useState(false);
   const [hoveredReservation, setHoveredReservation] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  
+  // NOUVEL ÉTAT POUR L'EFFET DE DISSOLUTION
+  const [isFading, setIsFading] = useState(false);
+
   const [blockedDayModal, setBlockedDayModal] = useState(false);
   const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
@@ -63,6 +67,29 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const handleFormSubmit = async (e) => { e.preventDefault(); if (dispositions && !formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(sel.date); const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); const dates = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } };
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
   const successModalContent = successModal.show ? ( <div className="success-modal-overlay" onClick={() => setSuccessModal({ ...successModal, show: false })} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '70px' }}> <div className="success-modal" onClick={e => e.stopPropagation()}> <div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div> <div className="success-modal-body"> <p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p> <div className="reservations-list"> {successModal.reservations.map((res, i) => ( <div key={i} className="reservation-item-success"> <span className="calendar-icon">📅</span> {res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin} </div> ))} </div> <div className="ical-download-section"> <button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Télécharger .ics</button> </div> </div> <div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({ ...successModal, show: false })}>Fermer</button></div> </div> </div> ) : null;
+
+  // --- GESTION DU TIMER DE DISPARITION (4 SECONDES) ---
+  useEffect(() => {
+    let fadeTimer;
+    let removeTimer;
+
+    if (hoveredReservation) {
+      setIsFading(false); // Reset
+
+      fadeTimer = setTimeout(() => {
+        setIsFading(true); // Fade out start
+        removeTimer = setTimeout(() => {
+          setHoveredReservation(null);
+          setIsFading(false);
+        }, 400); // Wait for transition
+      }, 3000); // 3 sec delay
+    }
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+    };
+  }, [hoveredReservation]);
 
   return (
     <>
@@ -127,13 +154,12 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
             )}
           </div>
           <div className="week-grid-container">
-            <table className="week-grid" onMouseLeave={handleMouseUp} onMouseUp={handleMouseUp}>
+            <table className="week-grid" onMouseLeave={() => { /* Rien ici */ }} onMouseUp={handleMouseUp}>
               <thead>
                 <tr>
                   <th className="hour-header">Heure</th>
                   {dates.map((date, idx) => (
                     <th key={idx} className="day-header">
-                      {/* Structure pour double affichage (CSS gère la bascule) */}
                       <div className="day-name">
                         <span className="name-full">{weekDays[idx]}</span>
                         <span className="name-short">{weekDays[idx].slice(0, 3)}</span>
@@ -177,12 +203,12 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                         onMouseEnter={(e) => { 
                           handleMouseEnter(dayIndex, slot, date); 
                           if (reserved && reservation) { 
-                            const rect = e.currentTarget.getBoundingClientRect(); 
                             setHoveredReservation(reservation); 
-                            setPopupPosition({ x: rect.left + rect.width / 2, y: rect.top }); 
+                            // MODIFICATION : POSITIONNEMENT RELATIF À LA SOURIS (Base à 50px au-dessus)
+                            setPopupPosition({ x: e.clientX, y: e.clientY - 50 }); 
                           } 
                         }} 
-                        onMouseLeave={() => setHoveredReservation(null)}
+                        // On retire le onMouseLeave ici pour laisser le timer gérer
                       >
                       </td>
                     ); 
@@ -192,7 +218,15 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
             </table>
           </div>
         </div>
-        {hoveredReservation && <div className="reservation-popup-card" style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}><div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div><div className="popup-card-body">{hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}{hoveredReservation.service && <div className="popup-info-line"><span className="popup-info-icon">🏢</span><span className="popup-info-text">{hoveredReservation.service}</span></div>}<div className="popup-info-line"><span className="popup-info-icon">📅</span><span className="popup-info-text">{new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</span></div></div></div>}
+        
+        {hoveredReservation && (
+          // CLASSE DYNAMIQUE POUR L'ANIMATION DE DISPARITION
+          <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}>
+            <div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div>
+            <div className="popup-card-body">{hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}{hoveredReservation.service && <div className="popup-info-line"><span className="popup-info-icon">🏢</span><span className="popup-info-text">{hoveredReservation.service}</span></div>}<div className="popup-info-line"><span className="popup-info-icon">📅</span><span className="popup-info-text">{new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</span></div>{(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (<>{hoveredReservation.agencement && (<div className="popup-info-line"><span className="popup-info-icon">🪑</span><span className="popup-info-text">Disposition : {hoveredReservation.agencement}</span></div>)}{hoveredReservation.nbPersonnes && (<div className="popup-info-line"><span className="popup-info-icon">👥</span><span className="popup-info-text">{hoveredReservation.nbPersonnes} pers.</span></div>)}</>)}</div>
+          </div>
+        )}
+        
         {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><h2>Fermé</h2><p>Dimanche/Férié fermé.</p><button className="blocked-close-button" onClick={() => setBlockedDayModal(false)}>Fermer</button></div></div>}
         {adminPasswordModal.show && <div className="modal-overlay"><div className="modal-content"><h3>Admin</h3><input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" /><button className="btn-submit" onClick={handleAdminPasswordSubmit}>Valider</button></div></div>}
         {isSubmitting && <div className="modal-overlay"><div className="modal-content"><h3>Enregistrement...</h3><div className="progress-bar-container" style={{width:'100%', height:'10px', background:'#eee', borderRadius:'5px', margin:'1rem 0', overflow:'hidden'}}><div style={{width: `${(submissionProgress.current / submissionProgress.total) * 100}%`, height:'100%', background:'#4caf50', transition:'width 0.3s'}}></div></div><p>{submissionProgress.current} / {submissionProgress.total} créneaux traités</p></div></div>}
