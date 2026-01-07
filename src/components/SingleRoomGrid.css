@@ -1,9 +1,9 @@
 /* src/components/SingleRoomGrid.css */
-/* VERSION FINALE : RESPONSIVE 3 LIGNES & EMPILEMENT VERTICAL */
+/* VERSION CORRIGÉE : GESTION LÉGENDE ECRAN/MOBILE */
 
 .single-room-container { width: 100%; padding: 1rem 2rem; padding-bottom: 80px; }
 
-/* NAVIGATION (Desktop) */
+/* NAVIGATION */
 .week-navigation { display: grid; grid-template-columns: 350px 2rem 1fr; align-items: center; margin-bottom: 1.5rem; padding: 0.8rem 1.5rem; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); gap: 0; }
 .nav-group-left { grid-column: 1; display: flex; align-items: center; gap: 1.2rem; justify-content: flex-start; position: relative; }
 .back-button-inline { padding: 0.6rem 1.2rem; background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 0.9rem; }
@@ -14,7 +14,21 @@
 .week-date-display { color: #1565c0; margin: 0 0.5rem; font-size: 1.1rem; font-weight: 700; text-transform: capitalize; white-space: nowrap; }
 .nav-group-right-spacer { display: none; }
 
-/* LAYOUT (Desktop) */
+/* INSTRUCTION MOBILE (MASQUÉE SUR DESKTOP) */
+.mobile-instruction {
+  display: none; 
+  text-align: center;
+  margin-bottom: 20px;
+  background-color: #1976d2; /* BLEU STANDARD */
+  color: white; 
+  font-size: 0.9rem;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.mobile-instruction p { margin: 0; line-height: 1.4; }
+
+/* LAYOUT */
 .single-room-layout { display: grid; grid-template-columns: 350px 1fr; gap: 2rem; align-items: start; }
 .room-sidebar { position: sticky; top: 1rem; z-index: 10; }
 
@@ -25,8 +39,6 @@
 .hour-header { width: 52px; background: white !important; color: #1976d2 !important; border: 1px solid #e2e8f0 !important; text-align: center !important; vertical-align: middle !important; padding: 0 !important; }
 .day-header .day-name { display: block; font-weight: 800; text-transform: uppercase; font-size: 0.85rem; text-align: center; }
 .day-header .day-date { font-size: 0.8rem; color: white !important; text-align: center; display: block; margin-top: 2px; }
-.name-short { display: none; }
-.name-full { display: inline; }
 .week-grid td { display: table-cell !important; height: 25px; padding: 0; vertical-align: middle; position: relative; border-right: 1px solid #e2e8f0; }
 .week-grid tr:last-child td { border-bottom: 1px solid #64748b !important; }
 .hour-cell-full { background: white; color: #94a3b8; font-size: 0.75rem; font-weight: 600; text-align: center !important; vertical-align: middle !important; padding: 0 !important; border-bottom: none !important; border-right: 1px solid #e2e8f0; }
@@ -41,6 +53,11 @@
 .time-slot.lunch-break { border-bottom: 2px dashed #cbd5e1; }
 .time-slot.admin-only-locked { background-color: #ffebee; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .admin-only-locked::after { content: '🔒'; font-size: 0.8rem; opacity: 0.5; }
+
+/* LEGENDE DESKTOP (VISIBLE PAR DEFAUT) */
+.desktop-legend { display: block; }
+
+/* Styles formulaire */
 .room-form-container { background: white; border-radius: 16px; padding: 1rem 1.2rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); margin-top: 1.5rem; max-height: 650px; overflow-y: auto; }
 .form-title { color: #1e293b; font-size: 1.1rem; margin-bottom: 0.8rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
 .form-row { display: flex; gap: 0.8rem; width: 100%; }
@@ -82,85 +99,14 @@
 .conflict-list li { font-size: 0.9rem; margin-bottom: 0.5rem; color: #e65100; font-weight: 600; }
 .warning-modal-footer { padding: 1.5rem; background: #f9f9f9; display: flex; justify-content: space-between; gap: 1rem; }
 
-/* ----------------------------------------------------------------- */
-/* MEDIA QUERIES - RESPONSIVE DESIGN (CORRIGÉ & STACKED) */
-/* ----------------------------------------------------------------- */
-
-@media (max-width: 1280px) {
-  .single-room-container {
-    padding: 1rem;
-  }
-
-  /* 1. Navigation Header : Mode Colonne avec Ordre Spécifique */
-  .week-navigation {
-    display: flex;
-    flex-direction: column; 
-    gap: 0.5rem;
-    height: auto;
-    padding: 1rem;
-  }
-
-  /* LIGNE 1 : RETOUR + TITRE */
-  .nav-group-left {
-    width: 100%;
-    justify-content: center; 
-    grid-column: auto;
-    margin-bottom: 0.5rem;
-    order: 1; /* Premier */
-  }
-
-  /* GROUPE CENTRAL : DATE (L2) + BOUTONS (L3) */
-  .nav-group-center {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap; 
-    justify-content: center;
-    gap: 0.5rem;
-    order: 2; /* Deuxième */
-  }
-
-  /* LIGNE 2 : LA DATE SEULE */
-  .week-date-display {
-    width: 100%; 
-    text-align: center;
-    order: 1; /* Premier dans le groupe central */
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
-  }
-
-  /* LIGNE 3 : LES 5 BOUTONS */
-  .week-nav-btn {
-    order: 2; /* Second dans le groupe central */
-    padding: 0.3rem 0.5rem; /* Boutons compacts */
-    font-size: 0.7rem;
-    white-space: nowrap;
-  }
+@media (max-width: 1024px) { 
+  .single-room-layout { grid-template-columns: 1fr; } 
+  .room-sidebar { position: static; order: 2; } 
+  .week-grid-container { order: 1; } 
   
-  /* 2. Layout principal : EMPILEMENT VERTICAL */
-  .single-room-layout {
-    display: flex;
-    flex-direction: column !important; /* Force l'empilement */
-    gap: 1.5rem;
-  }
-
-  /* 3. Ordre : Grille en premier (1), Propriétés en dessous (2) */
-  .week-grid-container {
-    order: 1;
-    width: 100%;
-    overflow-x: auto; 
-  }
-
-  .room-sidebar {
-    order: 2; /* Force l'affichage SOUS la grille */
-    width: 100%;
-    position: static; 
-  }
+  /* AFFICHER INSTRUCTION MOBILE */
+  .mobile-instruction { display: block; }
   
-  .room-form-container {
-    max-height: none;
-  }
-
-  /* Noms Jours Courts */
-  .name-short { display: inline; }
-  .name-full { display: none; }
+  /* MASQUER LEGENDE DESKTOP */
+  .desktop-legend { display: none !important; }
 }
