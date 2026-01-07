@@ -105,7 +105,28 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const preMergeSelections = (selections) => { const bySalle = {}; selections.forEach(sel => { if (!bySalle[sel.salle]) bySalle[sel.salle] = []; bySalle[sel.salle].push(sel); }); const merged = []; for (const salle in bySalle) { const slots = bySalle[salle].sort((a, b) => a.startHour - b.startHour); let i = 0; while (i < slots.length) { const current = { ...slots[i] }; while (i + 1 < slots.length && Math.abs(current.endHour - slots[i + 1].startHour) < 0.01) { current.endHour = slots[i + 1].endHour; i++; } merged.push(current); i++; } } return merged; };
   const generateRecurrenceDates = (startDate, endDate, type) => { const dates = []; const current = new Date(startDate); const end = new Date(endDate); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); while (current <= end) { dates.push(new Date(current)); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); } return dates; };
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (normalizeRoomName(existing.salle) !== normalizeRoomName(candidate.salle)) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
-  const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '✅ Réservation confirmée !' }); setSelections([]); setShowForm(false); loadWeekReservations(); } catch (error) { alert("Erreur : " + error.message); } finally { setIsSubmitting(false); } };
+  
+  // CORRECTIF : Suppression des appels SingleRoomGrid incorrects (setShowForm, loadWeekReservations)
+  const finalizeReservation = async (reservationsToSave) => { 
+    setIsSubmitting(true); 
+    setSubmissionProgress({ current: 0, total: reservationsToSave.length }); 
+    setWarningModal({ show: false, conflicts: [], validReservations: [] }); 
+    try { 
+      const createdReservations = []; 
+      for (const res of reservationsToSave) { 
+        const result = await googleSheetsService.addReservation(res); 
+        createdReservations.push({ ...res, id: result.id }); 
+        setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); 
+      } 
+      setSuccessModal({ show: true, reservations: createdReservations, message: '' }); 
+      setSelections([]); // Vide la sélection, ce qui cache le formulaire
+      loadReservations(); // Recharge les données de la grille (Par Date)
+    } catch (error) { 
+      alert("Erreur : " + error.message); 
+    } finally { 
+      setIsSubmitting(false); 
+    } 
+  };
   
   const handleSubmit = async (e) => { 
     e.preventDefault(); 
@@ -115,6 +136,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
     // --- VALIDATION AGENCEMENT ET CAPACITÉ ---
     const selectedSalles = [...new Set(selections.map(s => s.salle))];
     if (selectedSalles.length > 0) {
+      // Pour Par Date, on vérifie la première salle sélectionnée (cas standard)
       const room = selectedSalles[0];
       const isConseil = room.includes('Conseil');
       const isMariages = room.includes('Mariages');
