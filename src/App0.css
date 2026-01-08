@@ -7,7 +7,6 @@
   display: flex;
   flex-direction: column;
   /* MODIF 3 : Dégradé plus soutenu (Foncé vers Brillant) */
-<<<<<<< HEAD
     background: linear-gradient(135deg, 
     #0a1e4a 0%, 
     #1e3a8a 25%, 
@@ -15,14 +14,10 @@
     #3b82f6 75%, 
     #60a5fa 100%
   );
-=======
-  background: linear-gradient(135deg, #021B79 0%, #0575E6 100%);
->>>>>>> d76b4726eca540897906631fdee41591ad59ace0
 }
 
 .app-header {
   /* MODIF 3 : Même dégradé pour le bandeau */
-<<<<<<< HEAD
   background: linear-gradient(135deg, 
     #0a1e4a 0%, 
     #1e3a8a 25%, 
@@ -30,18 +25,11 @@
     #3b82f6 75%, 
     #60a5fa 100%
   );
-=======
-  background: linear-gradient(135deg, #021B79 0%, #0575E6 100%);
->>>>>>> d76b4726eca540897906631fdee41591ad59ace0
   color: white;
   /* MODIF 2 : Réduction de la hauteur (padding réduit de moitié) */
   padding: 0.5rem 2rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-<<<<<<< HEAD
   border-bottom: 2px solid rgba(96, 165, 250, 0.3);
-=======
-  border-bottom: 1px solid rgba(255,255,255,0.1);
->>>>>>> d76b4726eca540897906631fdee41591ad59ace0
 }
 
 .header-content {
@@ -62,15 +50,9 @@
 
 .blason-maurepas {
   /* MODIF 2 : Logo réduit pour réduire la hauteur du bandeau */
-<<<<<<< HEAD
   height: 35px;
   width: auto;
   filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.1));
-=======
-  height: 45px;
-  width: auto;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
->>>>>>> d76b4726eca540897906631fdee41591ad59ace0
 }
 
 /* NAVIGATION */

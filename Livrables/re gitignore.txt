@@ -1,0 +1,33 @@
+# Voici la procédure pour le reconnecter de force et envoyer votre version actuelle sur GitHub. 
+# Copiez-collez ces lignes une par une dans votre terminal Git Bash :
+
+# 1. Réinitialiser le cerveau Git local
+
+git init
+
+
+# 2. Reconnecter au dépôt distant (DSI-Maurepas)
+
+git remote add origin https://github.com/DSI-Maurepas/reservation-salles.git
+
+
+# 3. Préparer tous les fichiers actuels (y compris docs)
+
+git add .
+
+
+# 4. Créer le point de sauvegarde
+
+git commit -m "Restauration depot local et mise a jour site"
+
+
+# 5. S'assurer qu'on est sur la branche 'main'
+
+git branch -M main
+
+
+# 6. Forcer l'envoi sur GitHub
+# Attention : Cette commande va imposer votre version locale comme la vérité absolue sur GitHub.
+
+git push -u origin main --force
+

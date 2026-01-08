@@ -10,6 +10,10 @@
     "react": "^18.2.0",
     "react-beautiful-dnd": "^13.1.1",
     "react-big-calendar": "^1.8.5",
+<<<<<<< HEAD
+=======
+    "react-calendar": "^6.0.0",
+>>>>>>> d76b4726eca540897906631fdee41591ad59ace0
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
     "xlsx": "^0.18.5"
@@ -42,4 +46,8 @@
   "devDependencies": {
     "gh-pages": "^6.0.0"
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> d76b4726eca540897906631fdee41591ad59ace0
