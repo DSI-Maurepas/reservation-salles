@@ -14,10 +14,12 @@ function ReservationGrid({ selectedDate, onBack }) {
   const [currentSelection, setCurrentSelection] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredSalle, setHoveredSalle] = useState(null);
-  const [hoveredReservation, setHoveredReservation] = useState(null);
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ÉTATS POUR LA SÉCURITÉ ADMIN
+  const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
 
   const detailsRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -31,11 +33,27 @@ function ReservationGrid({ selectedDate, onBack }) {
     const d = new Date(currentDate); d.setDate(d.getDate() + days);
     setCurrentDate(d); setSelections([]);
   };
+
   const handleToday = () => { setCurrentDate(new Date()); setSelections([]); };
 
   const formatRoomName = (name) => {
     if (!name) return '';
     return name.replace(/Salle Conseil/gi, 'Conseil').replace(/Salle Mariages/gi, 'Mariages');
+  };
+
+  // VÉRIFICATION ADMIN SÉCURISÉE
+  const isAdminOnlyRoom = (salle) => {
+    return SALLES_ADMIN_ONLY.some(adminRoom => salle.includes(adminRoom) || adminRoom.includes(salle));
+  };
+
+  const handleAdminPasswordSubmit = () => {
+    if (adminPasswordModal.password === 'R3sa@M0rep@s78') {
+      setIsAdminUnlocked(true);
+      setAdminPasswordModal({ show: false, password: '' });
+    } else {
+      alert('❌ Mot de passe incorrect');
+      setAdminPasswordModal({ ...adminPasswordModal, password: '' });
+    }
   };
 
   const loadReservations = useCallback(async () => {
@@ -51,7 +69,13 @@ function ReservationGrid({ selectedDate, onBack }) {
   useEffect(() => { loadReservations(); }, [loadReservations]);
 
   const handleMouseDown = (salle, hour) => {
-    if (SALLES_ADMIN_ONLY.some(a => salle.includes(a))) return;
+    if (isAdminOnlyRoom(salle) && !isAdminUnlocked) {
+      setAdminPasswordModal({ show: true, password: '' });
+      return;
+    }
+    // Empêcher de glisser sur une cellule déjà réservée
+    if (reservations.find(res => res.salle.includes(salle.split(' - ')[0]) && hour >= googleSheetsService.timeToFloat(res.heureDebut) && hour < googleSheetsService.timeToFloat(res.heureFin))) return;
+
     setIsDragging(true);
     setCurrentSelection({ salle, startHour: hour, endHour: hour + 0.5 });
   };
@@ -64,9 +88,9 @@ function ReservationGrid({ selectedDate, onBack }) {
   const handleMouseUp = () => {
     if (isDragging && currentSelection) {
       setSelections(prev => [...prev, currentSelection]);
-      setCurrentSelection(null);
     }
     setIsDragging(false);
+    setCurrentSelection(null);
   };
 
   const preMergeSelections = (selections) => {
@@ -102,26 +126,24 @@ function ReservationGrid({ selectedDate, onBack }) {
       const row = (h - HORAIRES.HEURE_DEBUT) / 0.5 + 2;
       const isFullHour = h % 1 === 0;
       const isLastRow = (h === HORAIRES.HEURE_FIN - 0.5);
-
       if (isFullHour) grid.push(<div key={`t-${h}`} className="time-label" style={{ gridRow: `${row} / span 2` }}>{h}h</div>);
 
       SALLES.forEach((salle, idx) => {
         const reserved = reservations.find(res => res.salle.includes(salle.split(' - ')[0]) && h >= googleSheetsService.timeToFloat(res.heureDebut) && h < googleSheetsService.timeToFloat(res.heureFin));
-        const locked = SALLES_ADMIN_ONLY.some(a => salle.includes(a));
+        const locked = isAdminOnlyRoom(salle) && !isAdminUnlocked;
         const selected = selections.some(sel => sel.salle === salle && h >= sel.startHour && h < sel.endHour) || (currentSelection && currentSelection.salle === salle && h >= currentSelection.startHour && h < currentSelection.endHour);
         
         let classes = `time-slot ${isFullHour ? 'full-hour-start' : 'half-hour-start'} ${isLastRow ? 'last-row-slot' : ''}`;
-        if (locked) classes += ' blocked';
+        if (locked) classes += ' admin-only-locked';
         else if (reserved) classes += ' reserved occupied';
         else if (selected) classes += ' selected';
         else if (h >= 12 && h < 14) classes += ' lunch-break';
 
         grid.push(
-          <div key={`c-${salle}-${h}`} className={classes} style={{ gridColumn: idx + 2, gridRow: row, backgroundColor: reserved ? (COULEURS_OBJETS[reserved.objet] || '#ccc') : '' }}
+          <div key={`c-${salle}-${h}`} className={classes} style={{ gridColumn: idx + 2, gridRow: row, backgroundColor: (reserved && !locked) ? (COULEURS_OBJETS[reserved.objet] || '#ccc') : '' }}
             onMouseDown={() => handleMouseDown(salle, h)}
-            onMouseEnter={(e) => handleMouseEnter(salle, h)}
+            onMouseEnter={() => handleMouseEnter(salle, h)}
           >
-            {locked && <span className="lock-icon">🔒</span>}
           </div>
         );
       });
@@ -183,29 +205,27 @@ function ReservationGrid({ selectedDate, onBack }) {
                   <option value="">Objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
 
-                {/* LOGIQUE RECURRENCE RESTAURÉE DEPUIS SINGLEROOMGRID.JS */}
+                {/* LOGIQUE RECURRENCE RESTAURÉE */}
                 <div className="recurrence-section-styled">
                   <div className="recurrence-box">
                     <input type="checkbox" id="rec-grid" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} />
                     <label htmlFor="rec-grid">Réservation récurrente</label>
                   </div>
                   {formData.recurrence && (
-                    <div className="recurrence-options-fade-in">
+                    <div className="recurrence-options slide-down">
                       <select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}>
                         <option value="weekly">Toutes les semaines</option>
                         <option value="biweekly">Toutes les 2 semaines</option>
-                        <option value="monthly">Tous les mois (même date)</option>
+                        <option value="monthly">Tous les mois</option>
                       </select>
                       <div className="date-input-group">
                         <label>Jusqu'au :</label>
-                        <input type="date" className="form-input" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} required={formData.recurrence} />
+                        <input type="date" className="form-input" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} required />
                       </div>
                     </div>
                   )}
                 </div>
 
-                <textarea className="form-textarea" placeholder="Description" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
-                
                 <div className="form-actions">
                   <button type="button" className="btn-cancel" onClick={() => setSelections([])}>Annuler</button>
                   <button type="submit" className="btn-submit" disabled={isSubmitting}>Valider</button>
@@ -217,6 +237,20 @@ function ReservationGrid({ selectedDate, onBack }) {
           )}
         </div>
       </div>
+
+      {adminPasswordModal.show && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>🔑 Accès Administrateur</h3>
+            <p>Cette salle est réservée. Veuillez saisir le mot de passe :</p>
+            <input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" />
+            <div className="form-actions">
+                <button className="btn-cancel" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button>
+                <button className="btn-submit" onClick={handleAdminPasswordSubmit}>Débloquer</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
