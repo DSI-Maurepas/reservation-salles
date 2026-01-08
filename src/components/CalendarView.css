@@ -1,12 +1,11 @@
 /* src/components/CalendarView.css */
-/* VERSION OPTIMISÉE FULL HD 1920x1080 */
+/* VERSION OPTIMISÉE FULL HD 1920x1080 + LISERÉ BLEU SÉLECTEURS */
 
 /* Conteneur principal */
 .calendar-view {
   background: white;
   border-radius: 16px;
   padding: 1.2rem;
-  /* MODIF : Ombre plus marquée */
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
   animation: fadeIn 0.5s ease;
   max-width: 1000px;
@@ -22,13 +21,33 @@
 .calendar-view.room-view {
   display: flex;
   flex-direction: column;
-  /* MODIF 1 : Gap quasi nul pour coller */
-  gap: 5px;
+  gap: 5px; /* Petit gap de base */
 }
 
-/* Annule la marge des onglets pour laisser le gap gérer l'espace */
+/* Annule la marge des onglets pour laisser le gap et les marges du titre gérer l'espace */
 .calendar-view.room-view .view-tabs {
   margin-bottom: 0 !important;
+}
+
+/* TITRE SÉLECTION SALLE */
+.room-select-title {
+  text-align: center;
+  color: #021B79;
+  font-size: 1.5rem;
+  font-weight: 700;
+  
+  /* MARGE HAUT : 2.5rem (inchangé) */
+  margin-top: 2.5rem;
+  
+  /* MODIF : REMONTÉE DE 25 PIXELS (Marge négative pour tirer le contenu du dessous) */
+  margin-bottom: -25px;
+  
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0;
+  /* IMPORTANT : Position relative pour s'assurer qu'il reste au-dessus si chevauchement léger */
+  position: relative;
+  z-index: 2; 
 }
 
 /* --- ONGLETS --- */
@@ -50,7 +69,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  white-space: nowrap; /* Empêche le texte de passer à la ligne */
+  white-space: nowrap;
 }
 
 .tab-btn.active {
@@ -66,13 +85,13 @@
   align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 0.6rem;
-  border-bottom: 2px solid var(--border-color);
+  border-bottom: 2px solid #e0e0e0;
   gap: 1rem;
 }
 
 .calendar-header h2 {
   font-size: 1.3rem;
-  color: var(--primary-color);
+  color: #1976d2;
   font-weight: 700;
 }
 
@@ -82,13 +101,14 @@
   align-items: center;
 }
 
+/* LISERÉ BLEU AUTOUR DES CHAMPS MOIS ET ANNÉE */
 .month-selector, .year-selector {
   padding: 0.5rem 0.8rem;
-  border: 2px solid var(--primary-color);
+  border: 2px solid #2196f3;
   border-radius: 8px;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--primary-color);
+  color: #1565c0;
   background: white;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -99,16 +119,17 @@
 .year-selector { min-width: 80px; }
 
 .month-selector:hover, .year-selector:hover {
-  background: var(--primary-color); color: white;
+  background: #2196f3; 
+  color: white;
   box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
 }
 
 .nav-button {
-  background: var(--primary-color); color: white; border: none;
+  background: #2196f3; color: white; border: none;
   padding: 0.5rem 1rem; border-radius: 8px; font-size: 1.1rem;
   font-weight: 600; transition: all 0.3s ease; cursor: pointer; min-width: 45px;
 }
-.nav-button:hover { background: var(--secondary-color); transform: scale(1.05); }
+.nav-button:hover { background: #1976d2; transform: scale(1.05); }
 
 /* INSTRUCTIONS & LÉGENDE */
 .capacity-instructions {
@@ -125,11 +146,20 @@
   padding: 0.6rem; background: rgba(255, 255, 255, 0.9); border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
 .legend-item {
   display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem;
-  cursor: help; transition: all 0.3s ease; padding: 0.25rem 0.4rem; border-radius: 6px;
+  cursor: pointer; 
+  transition: all 0.3s ease; padding: 0.25rem 0.4rem; border-radius: 6px;
 }
 .legend-item:hover { background: rgba(33, 150, 243, 0.1); transform: translateY(-2px); }
+
+.legend-item.active-legend {
+  background-color: #e3f2fd;
+  border: 1px solid #2196f3;
+  transform: translateY(-1px);
+}
+
 .legend-color { width: 18px; height: 18px; border-radius: 4px; border: 2px solid rgba(0, 0, 0, 0.1); flex-shrink: 0; }
 .legend-color.available { background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%); }
 .legend-color.partial { background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); }
@@ -137,14 +167,33 @@
 .legend-color.full { background: linear-gradient(135deg, #ef9a9a 0%, #e57373 100%); }
 .legend-color.closed { background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%); }
 
+/* BOITE D'INFO LÉGENDE CLIQUÉE */
+.legend-info-box {
+  background: #2196f3;
+  color: white;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* CALENDRIER GRILLE */
 .calendar-grid {
   display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
   margin-bottom: 1.2rem; max-width: 800px; margin-left: auto; margin-right: auto;
 }
 .calendar-day-header {
-  text-align: center; font-weight: 700; color: var(--primary-color);
-  padding: 0.35rem; background: var(--light-bg); border-radius: 6px; font-size: 0.8rem;
+  text-align: center; font-weight: 700; color: #1976d2;
+  padding: 0.35rem; background: #f8f9fa; border-radius: 6px; font-size: 0.8rem;
 }
 .calendar-day {
   aspect-ratio: 1.8 / 1; border-radius: 8px; padding: 0.35rem;
@@ -154,24 +203,24 @@
 }
 .calendar-day.empty { cursor: default; background: transparent; }
 .calendar-day:not(.empty):hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); z-index: 10; }
-.calendar-day.today { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.2); }
+.calendar-day.today { border-color: #2196f3; box-shadow: 0 0 0 3px rgba(44, 90, 160, 0.2); }
 .calendar-day.available { background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%); color: white; }
 .calendar-day.partial { background: linear-gradient(135deg, #faad14 0%, #ffc53d 100%); color: white; }
 .calendar-day.busy { background: linear-gradient(135deg, #ff7a45 0%, #ff9c6e 100%); color: white; }
 .calendar-day.full { background: linear-gradient(135deg, #f5222d 0%, #ff4d4f 100%); color: white; cursor: not-allowed; }
 .calendar-day.closed { background: linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%); color: white; cursor: not-allowed; }
-.calendar-day.loading { background: var(--light-bg); color: var(--text-light); cursor: wait; }
+.calendar-day.loading { background: #f8f9fa; color: #aaa; cursor: wait; }
 .day-number { font-size: 0.95rem; font-weight: 700; }
 .availability-indicator { font-size: 0.6rem; margin-top: 0.15rem; opacity: 0.8; }
 
 .calendar-instructions {
   background: linear-gradient(135deg, #f0f2f5 0%, #e6e8eb 100%);
-  padding: 0.6rem; border-radius: 8px; border-left: 4px solid var(--primary-color);
+  padding: 0.6rem; border-radius: 8px; border-left: 4px solid #2196f3;
 }
-.calendar-instructions h3 { color: var(--primary-color); margin-bottom: 0.4rem; font-size: 0.85rem; }
+.calendar-instructions h3 { color: #1976d2; margin-bottom: 0.4rem; font-size: 0.85rem; }
 .calendar-instructions ul { list-style: none; padding: 0; margin: 0; }
-.calendar-instructions li { padding: 0.2rem 0; color: var(--text-dark); font-size: 0.75rem; line-height: 1.3; }
-.calendar-instructions li:before { content: "✓ "; color: var(--success-color); font-weight: bold; margin-right: 0.4rem; }
+.calendar-instructions li { padding: 0.2rem 0; color: #333; font-size: 0.75rem; line-height: 1.3; }
+.calendar-instructions li:before { content: "✓ "; color: #4caf50; font-weight: bold; margin-right: 0.4rem; }
 
 .calendar-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; gap: 1rem; }
 
@@ -180,7 +229,7 @@
 .calendar-day.past-date:hover { transform: none !important; box-shadow: none !important; z-index: 1 !important; }
 .calendar-day.past-date .day-number { color: #9e9e9e !important; font-weight: 400 !important; }
 .calendar-day.past-date .availability-indicator { opacity: 0.2 !important; }
-.calendar-day.today.past-date { background: var(--primary-color) !important; opacity: 1 !important; color: white !important; }
+.calendar-day.today.past-date { background: #2196f3 !important; opacity: 1 !important; color: white !important; }
 .calendar-day.today.past-date .day-number { color: white !important; }
 
 /* Responsive */

@@ -176,16 +176,13 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   return (
     <>
       <div className="my-reservations-container">
-      <h1>📋 Mes Réservations</h1>
       
-      {/* SECTION RECHERCHE : MASQUÉE SI EMAIL VALIDÉ (Pour faire remonter la page) */}
       {!userEmail && (
         <div className="search-section">
           <form onSubmit={handleSearch}><input type="email" placeholder="Entrez votre email" value={searchEmail} onChange={(e) => setSearchEmail(e.target.value)} required /><button type="submit">🔍 Rechercher</button></form>
         </div>
       )}
 
-      {/* BOUTONS FILTRES SUR UNE LIGNE (Texte masqué en mobile via CSS) */}
       <div className="filter-buttons">
         <button onClick={() => filterReservations('all')} className={`filter-btn ${filter === 'all' ? 'active' : ''}`}>📅 <span className="btn-label-text">Toutes</span> ({reservations.length})</button>
         <button onClick={() => filterReservations('past')} className={`filter-btn btn-past ${filter === 'past' ? 'active' : ''}`}>📜 <span className="btn-label-text">Passées</span> ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureFin || r.heureDebut}`) < new Date()).length})</button>
@@ -193,41 +190,48 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
         <button onClick={() => filterReservations('upcoming')} className={`filter-btn ${filter === 'upcoming' ? 'active' : ''}`}>🔜 <span className="btn-label-text">À venir</span> ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) > new Date()).length})</button>
       </div>
 
-      {/* SECTION EXPORT DESKTOP */}
       <div className="export-section desktop-export">
         <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}><option value="ical">📅 iCalendar (.ics)</option><option value="csv">📊 CSV</option><option value="xlsx">📗 Excel (.xls)</option></select>
         <button onClick={handleExport} className="export-btn">⬇️ Exporter</button>
       </div>
 
-      {/* SECTION EXPORT MOBILE */}
       <button onClick={exportToICalendar} className="mobile-export-btn">📅 iCalendar (.ics)</button>
 
       {filteredReservations.length === 0 ? <div className="no-reservations"><p>Aucune réservation trouvée pour cet email.</p></div> : (
-        <div className="table-container">
-          <table className="reservations-table">
-            <thead>
-              <tr>
-                <th onClick={() => handleSort('salle')} style={{cursor: 'pointer'}}>Salle{renderSortIcon('salle')}</th>
-                <th onClick={() => handleSort('dateDebut')} style={{cursor: 'pointer'}}>Date{renderSortIcon('dateDebut')}</th>
-                <th onClick={() => handleSort('heureDebut')} style={{cursor: 'pointer'}}>Heure{renderSortIcon('heureDebut')}</th>
-                <th className="col-service" onClick={() => handleSort('service')} style={{cursor: 'pointer'}}>Service{renderSortIcon('service')}</th>
-                <th className="col-objet" onClick={() => handleSort('objet')} style={{cursor: 'pointer'}}>Objet{renderSortIcon('objet')}</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {getSortedReservations().map((reservation, index) => (
-                <tr key={index} style={{ backgroundColor: toPastel(COULEURS_OBJETS[reservation.objet] || '#f9f9f9') }}>
-                  <td>{(() => { const parts = reservation.salle.split(' - '); return (<><div className="salle-nom desktop-view">{parts[0]}</div><div className="salle-nom mobile-view">{formatMobileRoomName(parts[0])}</div>{parts[1] && (<><div className="salle-capacite desktop-view">{parts[1]}</div><div className="salle-capacite mobile-view">{parts[1].replace('Personnes', 'Pers.')}</div></>)}</>); })()}</td>
-                  <td><span className="desktop-view">{new Date(reservation.dateDebut).toLocaleDateString('fr-FR')}</span><span className="mobile-view">{new Date(reservation.dateDebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span></td>
-                  <td><span className="desktop-view">{reservation.heureDebut} - {reservation.heureFin}</span><span className="mobile-view">{reservation.heureDebut} {reservation.heureFin}</span></td>
-                  <td className="col-service">{reservation.service}</td>
-                  <td className="col-objet">{reservation.objet}</td>
-                  <td className="actions-cell"><button onClick={() => handleEdit(reservation)} className="edit-button">✏️<span className="btn-label"> Modifier</span></button><button onClick={() => handleDeleteClick(reservation)} className="delete-button">🗑️<span className="btn-label"> Annuler</span></button></td>
+        
+        /* MODIF : WRAPPER CARD pour gérer l'ombre et l'arrondi proprement */
+        <div className="reservations-card">
+          <div className="table-scroll-container">
+            <table className="reservations-table">
+              <thead>
+                <tr>
+                  <th onClick={() => handleSort('salle')} style={{cursor: 'pointer'}}>Salle{renderSortIcon('salle')}</th>
+                  <th onClick={() => handleSort('dateDebut')} style={{cursor: 'pointer'}}>Date{renderSortIcon('dateDebut')}</th>
+                  <th onClick={() => handleSort('heureDebut')} style={{cursor: 'pointer'}}>Heure{renderSortIcon('heureDebut')}</th>
+                  <th className="col-service" onClick={() => handleSort('service')} style={{cursor: 'pointer'}}>Service{renderSortIcon('service')}</th>
+                  <th className="col-objet" onClick={() => handleSort('objet')} style={{cursor: 'pointer'}}>Objet{renderSortIcon('objet')}</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {getSortedReservations().map((reservation, index) => (
+                  <tr key={index} style={{ backgroundColor: toPastel(COULEURS_OBJETS[reservation.objet] || '#f9f9f9') }}>
+                    <td>{(() => { const parts = reservation.salle.split(' - '); return (<><div className="salle-nom desktop-view">{parts[0]}</div><div className="salle-nom mobile-view">{formatMobileRoomName(parts[0])}</div>{parts[1] && (<><div className="salle-capacite desktop-view">{parts[1]}</div><div className="salle-capacite mobile-view">{parts[1].replace('Personnes', 'Pers.')}</div></>)}</>); })()}</td>
+                    <td><span className="desktop-view">{new Date(reservation.dateDebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span><span className="mobile-view">{new Date(reservation.dateDebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span></td>
+                    <td><span className="desktop-view">{reservation.heureDebut} - {reservation.heureFin}</span><span className="mobile-view">{reservation.heureDebut} {reservation.heureFin}</span></td>
+                    <td className="col-service">{reservation.service}</td>
+                    <td className="col-objet">{reservation.objet}</td>
+                    <td>
+                      <div className="actions-wrapper">
+                        <button onClick={() => handleEdit(reservation)} className="edit-button">Modifier</button>
+                        <button onClick={() => handleDeleteClick(reservation)} className="delete-button">Annuler</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
