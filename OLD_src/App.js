@@ -11,14 +11,15 @@ import emailService from './services/emailService';
 
 function App() {
   const [currentView, setCurrentView] = useState('calendar');
-  const [calendarTab, setCalendarTab] = useState('date');
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [editReservationId, setEditReservationId] = useState(null);
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialisation des services
     const init = async () => {
       try {
         await googleSheetsService.initialize();
@@ -32,30 +33,52 @@ function App() {
     init();
   }, []);
 
+  // Détecter les changements de hash pour la modification de réservation
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
+      console.log('📍 Hash changé:', hash);
+      
+      // Format: #?date=2026-02-16&edit=RES_123456
       if (hash.includes('?') && hash.includes('date=') && hash.includes('edit=')) {
         const params = new URLSearchParams(hash.split('?')[1]);
         const dateParam = params.get('date');
         const editId = params.get('edit');
+        
+        console.log('📝 Paramètres édition détectés:', { dateParam, editId });
+        
         if (dateParam && editId) {
           const date = new Date(dateParam);
+          console.log('✅ Ouverture en mode édition:', { date: date.toLocaleDateString(), editId });
+          
           setSelectedDate(date);
           setEditReservationId(editId);
           setCurrentView('reservation');
-          setCalendarTab('date');
+          
+          // Nettoyer le hash après traitement
           setTimeout(() => {
             window.history.replaceState(null, '', window.location.pathname);
           }, 500);
         }
       }
     };
+
+    // Écouter les changements de hash
     window.addEventListener('hashchange', handleHashChange);
+    
+    // Vérifier au chargement initial
     handleHashChange();
-    return () => window.removeEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
+  /**
+   * Vérifie si une date est dans le passé
+   * @param {Date} date - La date à vérifier
+   * @returns {boolean} - true si la date est passée
+   */
   const isDateInPast = (date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -65,20 +88,25 @@ function App() {
   };
 
   const handleDateSelect = (date) => {
+    // BLOQUER si date dans le passé
     if (isDateInPast(date)) {
       alert('⚠️ Impossible de réserver une date passée !\n\nVeuillez sélectionner une date à partir d\'aujourd\'hui.');
       return;
     }
+    
     setSelectedDate(date);
-    setEditReservationId(null);
+    setEditReservationId(null); // Pas d'édition, nouvelle réservation
     setCurrentView('reservation');
-    setCalendarTab('date');
   };
 
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
     setCurrentView('roomview');
-    setCalendarTab('room');
+  };
+
+  const handleRoomSelection = (roomName) => {
+    setSelectedRoom(roomName);
+    setCurrentView('roomview');
   };
 
   const handleBackToCalendar = () => {
@@ -88,28 +116,27 @@ function App() {
     setEditReservationId(null);
   };
 
-  const handleBackFromRoom = () => {
-    setCalendarTab('room');
-    setCurrentView('calendar');
-    setSelectedRoom(null);
-    setEditReservationId(null);
-  };
-
   const handleReservationSuccess = () => {
     setCurrentView('calendar');
     setEditReservationId(null);
   };
 
+  // Callback pour MyReservations quand on clique sur Modifier
   const handleEditReservation = (reservation) => {
+    console.log('🔧 handleEditReservation appelé:', reservation);
     const date = new Date(reservation.dateDebut);
     setSelectedDate(date);
     setEditReservationId(reservation.id);
     setCurrentView('reservation');
-    setCalendarTab('date');
   };
 
   if (loading) {
-    return <div className="app-loading"><div className="spinner"></div><p>Chargement de l'application...</p></div>;
+    return (
+      <div className="app-loading">
+        <div className="spinner"></div>
+        <p>Chargement de l'application...</p>
+      </div>
+    );
   }
 
   return (
@@ -122,10 +149,7 @@ function App() {
               alt="Blason de Maurepas" 
               className="blason-maurepas"
             />
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', textAlign: 'left', color: 'white' }}>
-              <h1 style={{ margin: 0, lineHeight: '1.2', fontSize: '1.5rem', color: 'white' }}>Réservation de Salles</h1>
-              <div style={{ fontSize: '1rem', fontWeight: '500', color: 'white' }}>Mairie de MAUREPAS</div>
-            </div>
+            <h1>Réservation de Salles - Mairie de MAUREPAS</h1>
           </div>
           <nav className="main-nav">
             <button 
@@ -140,12 +164,11 @@ function App() {
             >
               📋 Mes Réservations
             </button>
-            {/* MODIFICATION : Ajout du texte "Admin" */}
             <button 
               className={currentView === 'admin' ? 'active' : ''}
               onClick={() => setCurrentView('admin')}
             >
-              ⚙️ Admin
+              ⚙️ Administration
             </button>
           </nav>
         </div>
@@ -157,7 +180,6 @@ function App() {
             onDateSelect={handleDateSelect}
             onRoomSelect={handleRoomSelect}
             isDateInPast={isDateInPast}
-            defaultView={calendarTab}
           />
         )}
 
@@ -173,7 +195,7 @@ function App() {
         {currentView === 'roomview' && selectedRoom && (
           <SingleRoomGrid 
             selectedRoom={selectedRoom}
-            onBack={handleBackFromRoom}
+            onBack={handleBackToCalendar}
             onSuccess={handleReservationSuccess}
           />
         )}
@@ -186,7 +208,9 @@ function App() {
           />
         )}
 
-        {currentView === 'admin' && <AdminPanel />}
+        {currentView === 'admin' && (
+          <AdminPanel />
+        )}
       </main>
 
       <footer className="app-footer">

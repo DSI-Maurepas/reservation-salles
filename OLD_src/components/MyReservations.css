@@ -76,7 +76,7 @@
 .cancel-modal-actions button { flex: 1; padding: 0.8rem; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
 
 /* ------------------------------------------------ */
-/* RESPONSIVE (MODIFIÉ POUR BOUTONS EN LIGNE ET CACHER TEXTE) */
+/* RESPONSIVE (MODIFIÉ POUR BOUTON EXPORT UNIQUE) */
 /* ------------------------------------------------ */
 
 @media (max-width: 768px) {
@@ -84,28 +84,11 @@
   .reservation-card-body { grid-template-columns: 1fr; }
   
   /* 1. GESTION DES BOUTONS EXPORT */
-  .desktop-export { display: none !important; }
-  .mobile-export-btn { display: block !important; }
+  .desktop-export { display: none !important; } /* Cache le bloc select+btn */
+  .mobile-export-btn { display: block !important; } /* Affiche le bouton unique */
 
-  /* 2. BOUTONS FILTRES SUR UNE LIGNE SANS TEXTE */
-  .filter-buttons { 
-    justify-content: space-between; /* Espace équitablement */
-    gap: 0.5rem; 
-    flex-wrap: nowrap; /* Force une seule ligne */
-  }
-
-  /* Cache le texte "Toutes", "Aujourd'hui" sur mobile */
-  .btn-label-text { display: none; }
-
-  .filter-btn {
-    padding: 0.6rem 0.5rem;
-    font-size: 0.9rem;
-    flex: 1; /* Prend toute la largeur dispo équitablement */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 4px;
-  }
+  /* 2. CENTRAGE BOUTONS FILTRES */
+  .filter-buttons { justify-content: center; gap: 0.5rem; }
 
   /* 3. MASQUAGE BOUTON PASSÉES */
   .btn-past { display: none !important; }

@@ -1,6 +1,6 @@
 // src/components/ReservationGrid.js
 import React, { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom'; // IMPORT PORTAL POUR SORTIR LA POPUP
+import { createPortal } from 'react-dom'; // IMPORT PORTAL
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
 import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, ADMINISTRATEURS, COULEURS_OBJETS, JOURS_FERIES } from '../config/googleSheets';
@@ -20,7 +20,8 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const [hoveredReservation, setHoveredReservation] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
-
+  
+  // États classiques (edit, loading, modal...)
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingReservation, setEditingReservation] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,37 +32,15 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, salle: '', slot: null, password: '' });
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [] });
-
-  const [formData, setFormData] = useState({
-    nom: '',
-    prenom: '',
-    email: localStorage.getItem('userEmail') || '',
-    telephone: '',
-    service: '',
-    objet: '',
-    description: '',
-    recurrence: false,
-    recurrenceJusquau: '',
-    recurrenceType: 'weekly',
-    agencement: '',
-    nbPersonnes: ''
-  });
-  
+  const [formData, setFormData] = useState({ nom: '', prenom: '', email: localStorage.getItem('userEmail') || '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceJusquau: '', recurrenceType: 'weekly', agencement: '', nbPersonnes: '' });
   const ADMIN_PASSWORD = 'R3sa@Morepas78';
 
-  // --- TIMER 4 SECONDES ---
+  // TIMER 4 SECONDES
   useEffect(() => {
-    let fadeTimer;
-    let removeTimer;
+    let fadeTimer, removeTimer;
     if (hoveredReservation) {
       setIsFading(false);
-      fadeTimer = setTimeout(() => {
-        setIsFading(true);
-        removeTimer = setTimeout(() => {
-          setHoveredReservation(null);
-          setIsFading(false);
-        }, 400); 
-      }, 4000); 
+      fadeTimer = setTimeout(() => { setIsFading(true); removeTimer = setTimeout(() => { setHoveredReservation(null); setIsFading(false); }, 400); }, 4000);
     }
     return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
   }, [hoveredReservation]);
@@ -121,25 +100,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         let classes = `time-slot`; classes += isFullHour ? ' full-hour-start' : ' half-hour-start';
         if (isBlockedDay) classes += ' blocked'; else if (reserved) classes += ' reserved occupied'; else if (past) classes += ' past-date'; else if (selected) classes += ' selected'; else if (isAdmin && !isAdminUnlocked) classes += ' admin-only-locked'; if (isLunch) classes += ' lunch-break';
         let style = { gridColumn: idx+2, gridRow: row }; if (reserved && res) { style.backgroundColor = COULEURS_OBJETS[res.objet] || '#ccc'; style.color = 'white'; }
-        
-        // AJOUT DE L'ÉVÉNEMENT ONCLICK POUR MOBILE
-        grid.push(
-          <div 
-            key={`c-${salle}-${h}`} 
-            className={classes} 
-            style={style} 
-            onMouseDown={() => handleMouseDown(salle, h)} 
-            onMouseEnter={(e) => { handleMouseEnter(salle, h); if(reserved && res) handleReservationMouseEnter(res, e); }}
-            onClick={(e) => { 
-                if (reserved && res) {
-                    e.stopPropagation(); // Empêche la sélection si on clique sur une résa
-                    handleReservationMouseEnter(res, e);
-                }
-            }}
-          >
-            {isAdmin && !isAdminUnlocked && !reserved && <span className="lock-icon">🔒</span>}
-          </div>
-        );
+        grid.push(<div key={`c-${salle}-${h}`} className={classes} style={style} onMouseDown={() => handleMouseDown(salle, h)} onMouseEnter={(e) => { handleMouseEnter(salle, h); if(reserved && res) handleReservationMouseEnter(res, e); }}>{isAdmin && !isAdminUnlocked && !reserved && <span className="lock-icon">🔒</span>}</div>);
       });
     }
     return grid;
@@ -148,12 +109,9 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   const mergedSelectionsForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
   const getFormTitle = () => { const count = mergedSelectionsForDisplay.length; if (count > 1) return `Réservation de ${count} créneaux`; return "Réservation d'un créneau"; };
 
-  // POPUP CONTENU (RENDU VIA PORTAL)
+  // POPUP CONTENU
   const popupContent = hoveredReservation ? (
-    <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{
-        // Les styles ici servent de fallback Desktop, le CSS mobile avec !important écrasera
-        position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001
-    }}>
+    <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}>
       <div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div>
       <div className="popup-card-body">
         {hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}
@@ -169,7 +127,7 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
   return (
     <>
     <div className="reservation-grid-container">
-      {/* PORTAL POUR AFFICHER LA POPUP HORS DU FLUX */}
+      {/* PORTAL POUR POPUP */}
       {hoveredReservation && createPortal(popupContent, document.body)}
 
       <div className="date-navigation-bar">
@@ -177,8 +135,6 @@ function ReservationGrid({ selectedDate, editReservationId, onBack, onSuccess })
         <div className="nav-group-center"><button className="nav-week-button" onClick={handleWeekPrev}>◀◀</button><button className="nav-day-button" onClick={handlePrevDay}>◀</button><button className="nav-today-button" onClick={handleToday}>Aujourd'hui</button><div className="date-display"><h2>{currentDate.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h2></div><button className="nav-day-button" onClick={handleNextDay}>▶</button><button className="nav-week-button" onClick={handleWeekNext}>▶▶</button></div>
         <div className="nav-group-right"></div>
       </div>
-
-      {/* BLOC MOBILE INSTRUCTION RETIRÉ */}
 
       <div className="reservation-content" onMouseUp={handleMouseUp}>
         <div className="grid-column"><div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>{renderGrid()}</div></div>
