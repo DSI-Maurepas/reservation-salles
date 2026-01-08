@@ -11,16 +11,19 @@ import emailService from './services/emailService';
 
 function App() {
   const [currentView, setCurrentView] = useState('calendar');
-  // ETAT AJOUTÉ : Mémorise si on est sur l'onglet 'dates' ou 'rooms'
-  const [calendarTab, setCalendarTab] = useState('dates');
   
+  // Mémorise l'onglet actif du calendrier ('date' ou 'room')
+  const [calendarTab, setCalendarTab] = useState('date');
+
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [editReservationId, setEditReservationId] = useState(null);
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Initialisation des services
     const init = async () => {
       try {
         await googleSheetsService.initialize();
@@ -34,28 +37,53 @@ function App() {
     init();
   }, []);
 
+  // Détecter les changements de hash pour la modification de réservation
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
+      console.log('📍 Hash changé:', hash);
+      
+      // Format: #?date=2026-02-16&edit=RES_123456
       if (hash.includes('?') && hash.includes('date=') && hash.includes('edit=')) {
         const params = new URLSearchParams(hash.split('?')[1]);
         const dateParam = params.get('date');
         const editId = params.get('edit');
+        
+        console.log('📝 Paramètres édition détectés:', { dateParam, editId });
+        
         if (dateParam && editId) {
           const date = new Date(dateParam);
+          console.log('✅ Ouverture en mode édition:', { date: date.toLocaleDateString(), editId });
+          
           setSelectedDate(date);
           setEditReservationId(editId);
           setCurrentView('reservation');
-          setCalendarTab('dates'); // Lien direct = vue date
-          setTimeout(() => { window.history.replaceState(null, '', window.location.pathname); }, 500);
+          setCalendarTab('date'); // Force l'onglet date en édition
+          
+          // Nettoyer le hash après traitement
+          setTimeout(() => {
+            window.history.replaceState(null, '', window.location.pathname);
+          }, 500);
         }
       }
     };
+
+    // Écouter les changements de hash
     window.addEventListener('hashchange', handleHashChange);
+    
+    // Vérifier au chargement initial
     handleHashChange();
-    return () => window.removeEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
+  /**
+   * Vérifie si une date est dans le passé
+   * @param {Date} date - La date à vérifier
+   * @returns {boolean} - true si la date est passée
+   */
   const isDateInPast = (date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -65,22 +93,32 @@ function App() {
   };
 
   const handleDateSelect = (date) => {
+    // BLOQUER si date dans le passé
     if (isDateInPast(date)) {
       alert('⚠️ Impossible de réserver une date passée !\n\nVeuillez sélectionner une date à partir d\'aujourd\'hui.');
       return;
     }
+    
     setSelectedDate(date);
-    setEditReservationId(null);
+    setEditReservationId(null); // Pas d'édition, nouvelle réservation
     setCurrentView('reservation');
-    setCalendarTab('dates'); // On vient des dates
+    setCalendarTab('date'); // Mémorise qu'on vient de l'agenda
   };
 
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
     setCurrentView('roomview');
-    setCalendarTab('rooms'); // On vient des salles
+    setCalendarTab('room'); // Mémorise qu'on vient des tuiles
   };
 
+  // Ce handler semble être un doublon du précédent dans votre code, je l'harmonise
+  const handleRoomSelection = (roomName) => {
+    setSelectedRoom(roomName);
+    setCurrentView('roomview');
+    setCalendarTab('room');
+  };
+
+  // Retour classique (depuis la grille par date)
   const handleBackToCalendar = () => {
     setCurrentView('calendar');
     setSelectedDate(null);
@@ -88,9 +126,9 @@ function App() {
     setEditReservationId(null);
   };
 
-  // --- FONCTION CLÉ : RETOUR FORCE VERS ONGLET SALLES ---
+  // --- NOUVEAU : Retour spécifique depuis une salle ---
   const handleBackFromRoom = () => {
-    setCalendarTab('rooms'); // On impose l'onglet 'rooms'
+    setCalendarTab('room'); // On force l'affichage des tuiles
     setCurrentView('calendar');
     setSelectedRoom(null);
     setEditReservationId(null);
@@ -101,28 +139,61 @@ function App() {
     setEditReservationId(null);
   };
 
+  // Callback pour MyReservations quand on clique sur Modifier
   const handleEditReservation = (reservation) => {
+    console.log('🔧 handleEditReservation appelé:', reservation);
     const date = new Date(reservation.dateDebut);
     setSelectedDate(date);
     setEditReservationId(reservation.id);
     setCurrentView('reservation');
-    setCalendarTab('dates');
+    setCalendarTab('date');
   };
 
-  if (loading) return <div className="app-loading"><div className="spinner"></div><p>Chargement de l'application...</p></div>;
+  if (loading) {
+    return (
+      <div className="app-loading">
+        <div className="spinner"></div>
+        <p>Chargement de l'application...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="App">
       <header className="app-header">
         <div className="header-content">
           <div className="header-title">
-            <img src={`${process.env.PUBLIC_URL}/images/Blason_ville_MAUREPAS.png`} alt="Blason de Maurepas" className="blason-maurepas" />
-            <h1>Réservation de Salles - Mairie de MAUREPAS</h1>
+            <img 
+              src={`${process.env.PUBLIC_URL}/images/Blason_ville_MAUREPAS.png`} 
+              alt="Blason de Maurepas" 
+              className="blason-maurepas"
+            />
+            {/* TITRE SUR 2 LIGNES */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', textAlign: 'left' }}>
+              <h1 style={{ margin: 0, lineHeight: '1.2' }}>Réservation de Salles</h1>
+              <div style={{ fontSize: '1rem', fontWeight: '500' }}>Mairie de MAUREPAS</div>
+            </div>
           </div>
           <nav className="main-nav">
-            <button className={currentView === 'calendar' ? 'active' : ''} onClick={() => setCurrentView('calendar')}>📅 Calendrier</button>
-            <button className={currentView === 'myreservations' ? 'active' : ''} onClick={() => setCurrentView('myreservations')}>📋 Mes Réservations</button>
-            <button className={currentView === 'admin' ? 'active' : ''} onClick={() => setCurrentView('admin')}>⚙️ Administration</button>
+            <button 
+              className={currentView === 'calendar' ? 'active' : ''}
+              onClick={() => setCurrentView('calendar')}
+            >
+              📅 Calendrier
+            </button>
+            <button 
+              className={currentView === 'myreservations' ? 'active' : ''}
+              onClick={() => setCurrentView('myreservations')}
+            >
+              📋 Mes Réservations
+            </button>
+            {/* BOUTON ADMIN RÉDUIT (ICÔNE SEULE) */}
+            <button 
+              className={currentView === 'admin' ? 'active' : ''}
+              onClick={() => setCurrentView('admin')}
+            >
+              ⚙️
+            </button>
           </nav>
         </div>
       </header>
@@ -133,7 +204,7 @@ function App() {
             onDateSelect={handleDateSelect}
             onRoomSelect={handleRoomSelect}
             isDateInPast={isDateInPast}
-            defaultTab={calendarTab} // ON TRANSMET L'ONGLET À OUVRIR
+            defaultView={calendarTab} // ON PASSE L'ONGLET ACTIF ICI
           />
         )}
 
@@ -149,7 +220,7 @@ function App() {
         {currentView === 'roomview' && selectedRoom && (
           <SingleRoomGrid 
             selectedRoom={selectedRoom}
-            onBack={handleBackFromRoom} // LE BOUTON RETOUR UTILISE LA FONCTION SPÉCIFIQUE
+            onBack={handleBackFromRoom} // ON UTILISE LE RETOUR SPÉCIFIQUE ICI
             onSuccess={handleReservationSuccess}
           />
         )}
@@ -162,7 +233,9 @@ function App() {
           />
         )}
 
-        {currentView === 'admin' && <AdminPanel />}
+        {currentView === 'admin' && (
+          <AdminPanel />
+        )}
       </main>
 
       <footer className="app-footer">
