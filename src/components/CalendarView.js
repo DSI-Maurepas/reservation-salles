@@ -153,6 +153,7 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
   const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
   return (
+    // AJOUT DE LA CLASSE CONDITIONNELLE
     <div className={`calendar-view ${viewMode === 'room' ? 'room-view' : ''}`}>
       <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
 

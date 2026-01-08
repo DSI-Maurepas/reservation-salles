@@ -22,7 +22,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
 
-  // REFERENCE POUR SCROLL AUTOMATIQUE FORMULAIRE
   const sidebarRef = useRef(null);
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
@@ -37,7 +36,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const salleInfo = sallesData.find(s => s.nom === salleData?.nom);
   const dispositions = salleInfo?.dispositions || null;
   
-  // FIX: Force le scroll en haut de page dès le chargement du composant
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
@@ -48,13 +46,11 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   
   const loadWeekReservations = async () => { setLoading(true); try { const allReservations = await googleSheetsService.getAllReservations(); const weekEnd = new Date(currentWeekStart); weekEnd.setDate(currentWeekStart.getDate() + 6); const filtered = allReservations.filter(res => { const resSalleName = res.salle.split(' - ')[0]; if (resSalleName !== selectedRoom && res.salle !== selectedRoom) return false; if (res.statut === 'cancelled') return false; const resDate = new Date(res.dateDebut); return resDate >= currentWeekStart && resDate <= weekEnd; }); setReservations(filtered); } catch (error) { console.error('Erreur chargement:', error); } setLoading(false); };
   
-  // --- MODIFICATION : Détéction robuste des salles admin (Conseil / Mariages) ---
   const isAdminOnlyRoom = (room) => {
     const r = room.toLowerCase();
     return r.includes('conseil') || r.includes('mariages') || SALLES_ADMIN_ONLY.some(adminSalle => adminSalle.toLowerCase().includes(r));
   };
 
-  // --- MODIFICATION : Mot de passe harmonisé avec ReservationGrid ---
   const handleAdminPasswordSubmit = () => { 
     if (adminPasswordModal.password === 'R3sa@Morepas78') { 
       setIsAdminUnlocked(true); 
@@ -85,13 +81,10 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const handleMouseDown = (dayIndex, hour, date) => { 
     if (isDateInPast(date)) return; 
     if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; } 
-    
-    // VERROUILLAGE ADMIN
     if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) { 
       setAdminPasswordModal({ show: true, password: '' }); 
       return; 
     } 
-    
     if (isSlotReserved(dayIndex, hour)) return; 
     setIsDragging(false); 
     setDragStart({ dayIndex, hour }); 
@@ -118,11 +111,9 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       setShowForm(true);
       shouldScroll = true;
     }
-    
     if (shouldScroll && sidebarRef.current) {
         setTimeout(() => { sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
     }
-
     setIsDragging(false); setDragStart(null); setMouseDownPos(null); 
   };
 
@@ -166,7 +157,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
           <div className="nav-group-right-spacer"></div>
         </div>
 
-        {/* INSTRUCTION MOBILE AJOUTÉE (Caché sur Desktop via CSS) */}
         <div className="mobile-instruction">
           <p>Cliquez sur un créneau pour le sélectionner</p>
         </div>
@@ -176,7 +166,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
             {!showForm && (
               <>
                 <SalleCard salle={selectedRoom} />
-                <div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div>
+                {/* BLOC INSTRUCTION SUPPRIMÉ ICI */}
               </>
             )}
             {showForm && selections.length > 0 && (
@@ -248,7 +238,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                     if (past) cellClass += ' past-date';
                     if (slot >= 12 && slot < 14) cellClass += ' lunch-break';
                     
-                    // GESTION VISUELLE CADENAS
                     const isLocked = isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked;
 
                     return (
