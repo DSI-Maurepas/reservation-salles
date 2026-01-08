@@ -178,14 +178,14 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
       <div className="my-reservations-container">
       <h1>📋 Mes Réservations</h1>
       
-      {/* SECTION RECHERCHE : MASQUÉE SI EMAIL VALIDÉ */}
+      {/* SECTION RECHERCHE : MASQUÉE SI EMAIL VALIDÉ (Pour faire remonter la page) */}
       {!userEmail && (
         <div className="search-section">
           <form onSubmit={handleSearch}><input type="email" placeholder="Entrez votre email" value={searchEmail} onChange={(e) => setSearchEmail(e.target.value)} required /><button type="submit">🔍 Rechercher</button></form>
         </div>
       )}
 
-      {/* BOUTONS FILTRES OPTIMISÉS */}
+      {/* BOUTONS FILTRES SUR UNE LIGNE (Texte masqué en mobile via CSS) */}
       <div className="filter-buttons">
         <button onClick={() => filterReservations('all')} className={`filter-btn ${filter === 'all' ? 'active' : ''}`}>📅 <span className="btn-label-text">Toutes</span> ({reservations.length})</button>
         <button onClick={() => filterReservations('past')} className={`filter-btn btn-past ${filter === 'past' ? 'active' : ''}`}>📜 <span className="btn-label-text">Passées</span> ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureFin || r.heureDebut}`) < new Date()).length})</button>

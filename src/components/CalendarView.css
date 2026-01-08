@@ -352,6 +352,33 @@
   color: white !important;
 }
 
+/* --- ONGLETS --- */
+.view-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.tab-btn {
+  padding: 0.8rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #555;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.tab-btn.active {
+  background: #2196f3;
+  color: white;
+  border-color: #2196f3;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .calendar-day {
@@ -401,4 +428,16 @@
     padding: 0.2rem;
     min-height: 35px;
   }
+}
+
+/* --- AJOUT : CORRECTION ESPACEMENT VUE PAR SALLE --- */
+.calendar-view.room-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Écart identique aux blocs salles */
+}
+
+/* Annule la marge existante du bouton pour laisser le gap contrôler l'espace */
+.calendar-view.room-view .view-tabs {
+  margin-bottom: 0 !important;
 }

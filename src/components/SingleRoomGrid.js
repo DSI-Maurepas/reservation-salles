@@ -22,6 +22,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
 
+  // REFERENCE POUR SCROLL AUTOMATIQUE FORMULAIRE
   const sidebarRef = useRef(null);
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
@@ -46,8 +47,24 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom]);
   
   const loadWeekReservations = async () => { setLoading(true); try { const allReservations = await googleSheetsService.getAllReservations(); const weekEnd = new Date(currentWeekStart); weekEnd.setDate(currentWeekStart.getDate() + 6); const filtered = allReservations.filter(res => { const resSalleName = res.salle.split(' - ')[0]; if (resSalleName !== selectedRoom && res.salle !== selectedRoom) return false; if (res.statut === 'cancelled') return false; const resDate = new Date(res.dateDebut); return resDate >= currentWeekStart && resDate <= weekEnd; }); setReservations(filtered); } catch (error) { console.error('Erreur chargement:', error); } setLoading(false); };
-  const isAdminOnlyRoom = (room) => SALLES_ADMIN_ONLY.includes(room);
-  const handleAdminPasswordSubmit = () => { if (adminPasswordModal.password === 'Maurepas2025') { setIsAdminUnlocked(true); setAdminPasswordModal({ show: false, password: '' }); } else { alert('❌ Mot de passe incorrect'); setAdminPasswordModal({ ...adminPasswordModal, password: '' }); } };
+  
+  // --- MODIFICATION : Détéction robuste des salles admin (Conseil / Mariages) ---
+  const isAdminOnlyRoom = (room) => {
+    const r = room.toLowerCase();
+    return r.includes('conseil') || r.includes('mariages') || SALLES_ADMIN_ONLY.some(adminSalle => adminSalle.toLowerCase().includes(r));
+  };
+
+  // --- MODIFICATION : Mot de passe harmonisé avec ReservationGrid ---
+  const handleAdminPasswordSubmit = () => { 
+    if (adminPasswordModal.password === 'R3sa@Morepas78') { 
+      setIsAdminUnlocked(true); 
+      setAdminPasswordModal({ show: false, password: '' }); 
+    } else { 
+      alert('❌ Mot de passe incorrect'); 
+      setAdminPasswordModal({ ...adminPasswordModal, password: '' }); 
+    } 
+  };
+
   const getDates = () => { const dates = []; for (let i = 0; i < 7; i++) { const date = new Date(currentWeekStart); date.setDate(currentWeekStart.getDate() + i); dates.push(date); } return dates; };
   const dates = getDates();
   const weekDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -65,7 +82,22 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const getReservation = (dayIndex, slotStart) => { const slotEnd = slotStart + 0.5; const date = dates[dayIndex]; const dateStr = googleSheetsService.formatDate(date); return reservations.find(res => { if (res.dateDebut !== dateStr) return false; const resStart = googleSheetsService.timeToFloat(res.heureDebut); const resEnd = googleSheetsService.timeToFloat(res.heureFin); return (slotStart < resEnd && slotEnd > resStart); }); };
   const isSlotSelected = (dayIndex, slot) => selections.some(sel => sel.dayIndex === dayIndex && sel.hour === slot);
   
-  const handleMouseDown = (dayIndex, hour, date) => { if (isDateInPast(date)) return; if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; } if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) { setAdminPasswordModal({ show: true, password: '' }); return; } if (isSlotReserved(dayIndex, hour)) return; setIsDragging(false); setDragStart({ dayIndex, hour }); setMouseDownPos({ dayIndex, hour, date }); };
+  const handleMouseDown = (dayIndex, hour, date) => { 
+    if (isDateInPast(date)) return; 
+    if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; } 
+    
+    // VERROUILLAGE ADMIN
+    if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) { 
+      setAdminPasswordModal({ show: true, password: '' }); 
+      return; 
+    } 
+    
+    if (isSlotReserved(dayIndex, hour)) return; 
+    setIsDragging(false); 
+    setDragStart({ dayIndex, hour }); 
+    setMouseDownPos({ dayIndex, hour, date }); 
+  };
+
   const handleMouseEnter = (dayIndex, hour, date) => { if (!dragStart) return; if (!isDragging && mouseDownPos) { if (dayIndex !== mouseDownPos.dayIndex || hour !== mouseDownPos.hour) setIsDragging(true); else return; } if (!isDragging) return; if (isSlotReserved(dayIndex, hour) || isDimanche(date) || isJourFerie(date) || isDateInPast(date)) return; const newSelections = [...selections]; const minDay = Math.min(dragStart.dayIndex, dayIndex); const maxDay = Math.max(dragStart.dayIndex, dayIndex); const minHour = Math.min(dragStart.hour, hour); const maxHour = Math.max(dragStart.hour, hour); for (let d = minDay; d <= maxDay; d++) { const dayDate = dates[d]; if (!isDimanche(dayDate) && !isJourFerie(dayDate) && !isDateInPast(dayDate)) { for (let h = minHour; h <= maxHour; h += 0.5) { const exists = newSelections.some(sel => sel.dayIndex === d && sel.hour === h); if (!exists && !isSlotReserved(d, h)) newSelections.push({ dayIndex: d, hour: h, date: dates[d] }); } } } setSelections(newSelections); };
   
   const handleMouseUp = () => { 
@@ -215,17 +247,19 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                     if (blocked) cellClass += ' blocked';
                     if (past) cellClass += ' past-date';
                     if (slot >= 12 && slot < 14) cellClass += ' lunch-break';
+                    
+                    // GESTION VISUELLE CADENAS
+                    const isLocked = isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked;
 
                     return (
                       <td 
                         key={`${dayIndex}-${slot}`} 
-                        className={cellClass} 
+                        className={`${cellClass} ${isLocked && !reserved ? 'admin-only-locked' : ''}`}
                         style={bgStyle} 
                         onMouseDown={() => handleMouseDown(dayIndex, slot, date)} 
                         onMouseEnter={(e) => { 
                           handleMouseEnter(dayIndex, slot, date); 
                           if (reserved && reservation) { 
-                            const rect = e.currentTarget.getBoundingClientRect(); 
                             setHoveredReservation(reservation); 
                             setPopupPosition({ x: e.clientX, y: e.clientY - 50 }); 
                           } 

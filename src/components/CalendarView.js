@@ -6,10 +6,10 @@ import ViewToggle from './ViewToggle';
 import RoomSelector from './RoomSelector';
 import './CalendarView.css';
 
-// Ajout de defaultTab pour gérer le retour depuis une salle
-function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultTab = 'dates' }) {
-  // Initialise le mode selon la demande d'App.js ('dates' -> 'date', 'rooms' -> 'room')
-  const [viewMode, setViewMode] = useState(defaultTab === 'rooms' ? 'room' : 'date');
+// Ajout de defaultView pour gérer la navigation retour
+function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 'date' }) {
+  // Initialisation avec la prop
+  const [viewMode, setViewMode] = useState(defaultView); // 'date' ou 'room'
   
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dateAvailability, setDateAvailability] = useState({});
@@ -31,11 +31,10 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultTab = '
     };
   };
 
-  // --- CORRECTION NAVIGATION : ECOUTE LE BOUTON RETOUR ---
+  // --- MISE A JOUR AUTOMATIQUE DE LA VUE SI LE PARENT LE DEMANDE ---
   useEffect(() => {
-    if (defaultTab === 'rooms') setViewMode('room');
-    else setViewMode('date');
-  }, [defaultTab]);
+    setViewMode(defaultView);
+  }, [defaultView]);
 
   useEffect(() => {
     loadMonthAvailability();
@@ -196,8 +195,8 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultTab = '
   ];
 
   return (
-    <div className="calendar-view">
-      {/* On garde votre composant ViewToggle d'origine */}
+    // AJOUT DE LA CLASSE CONDITIONNELLE 'room-view'
+    <div className={`calendar-view ${viewMode === 'room' ? 'room-view' : ''}`}>
       <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
 
       {viewMode === 'date' ? (
@@ -284,7 +283,6 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultTab = '
           </div>
         </>
       ) : (
-        /* On garde votre RoomSelector d'origine qui gère les tuiles */
         <RoomSelector onSelectRoom={onRoomSelect} />
       )}
     </div>
