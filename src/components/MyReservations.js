@@ -31,7 +31,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const [cancelModal, setCancelModal] = useState({ show: false, reservation: null });
   const [selectedMotif, setSelectedMotif] = useState('');
 
-  // Chargement des données au montage ou changement d'email
   useEffect(() => {
     if (userEmail) loadUserReservations();
   }, [userEmail]);
@@ -40,12 +39,10 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     setLoading(true);
     try {
       const allReservations = await googleSheetsService.getAllReservations();
-      // Filtrer par email (insensible à la casse)
       const userReservations = allReservations.filter(res => 
         res.email && res.email.trim().toLowerCase() === userEmail.trim().toLowerCase()
       );
       
-      // Tri par défaut : du plus récent au plus ancien
       userReservations.sort((a, b) => {
         const dateA = new Date(`${a.dateDebut}T${a.heureDebut}`);
         const dateB = new Date(`${b.dateDebut}T${b.heureDebut}`);
@@ -56,7 +53,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
       setFilteredReservations(userReservations);
     } catch (error) { 
       console.error(error); 
-      // Optionnel : ne pas alerter si c'est juste vide au début
     } finally { 
       setLoading(false); 
     }
@@ -66,7 +62,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     e.preventDefault(); 
     if (!searchEmail) return; 
     setUserEmail(searchEmail); 
-    // loadUserReservations sera déclenché par le useEffect sur userEmail
   };
 
   const filterReservations = (filterType) => {
@@ -133,8 +128,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     try {
       await googleSheetsService.deleteReservation(reservation.id);
       setConfirmModal({ show: true, type: 'cancel', reservation: reservation, motif: motif });
-      
-      // Rafraîchir la liste et envoyer email
       await loadUserReservations();
       try { await emailService.sendCancellationEmail({ ...reservation, motif: motif }); } catch (e) { console.error("Erreur envoi mail", e); }
     } catch (error) {
@@ -184,24 +177,29 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     <>
       <div className="my-reservations-container">
       <h1>📋 Mes Réservations</h1>
-      <div className="search-section">
-        <form onSubmit={handleSearch}><input type="email" placeholder="Entrez votre email" value={searchEmail} onChange={(e) => setSearchEmail(e.target.value)} required /><button type="submit">🔍 Rechercher</button></form>
-      </div>
+      
+      {/* SECTION RECHERCHE : MASQUÉE SI EMAIL VALIDÉ */}
+      {!userEmail && (
+        <div className="search-section">
+          <form onSubmit={handleSearch}><input type="email" placeholder="Entrez votre email" value={searchEmail} onChange={(e) => setSearchEmail(e.target.value)} required /><button type="submit">🔍 Rechercher</button></form>
+        </div>
+      )}
 
+      {/* BOUTONS FILTRES OPTIMISÉS */}
       <div className="filter-buttons">
-        <button onClick={() => filterReservations('all')} className={`filter-btn ${filter === 'all' ? 'active' : ''}`}>📅 Toutes ({reservations.length})</button>
-        <button onClick={() => filterReservations('past')} className={`filter-btn btn-past ${filter === 'past' ? 'active' : ''}`}>📜 Passées ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureFin || r.heureDebut}`) < new Date()).length})</button>
-        <button onClick={() => filterReservations('today')} className={`filter-btn ${filter === 'today' ? 'active' : ''}`}>📆 Aujourd'hui ({reservations.filter(r => { const d = new Date(r.dateDebut); return d.toDateString() === new Date().toDateString(); }).length})</button>
-        <button onClick={() => filterReservations('upcoming')} className={`filter-btn ${filter === 'upcoming' ? 'active' : ''}`}>🔜 À venir ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) > new Date()).length})</button>
+        <button onClick={() => filterReservations('all')} className={`filter-btn ${filter === 'all' ? 'active' : ''}`}>📅 <span className="btn-label-text">Toutes</span> ({reservations.length})</button>
+        <button onClick={() => filterReservations('past')} className={`filter-btn btn-past ${filter === 'past' ? 'active' : ''}`}>📜 <span className="btn-label-text">Passées</span> ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureFin || r.heureDebut}`) < new Date()).length})</button>
+        <button onClick={() => filterReservations('today')} className={`filter-btn ${filter === 'today' ? 'active' : ''}`}>📆 <span className="btn-label-text">Aujourd'hui</span> ({reservations.filter(r => { const d = new Date(r.dateDebut); return d.toDateString() === new Date().toDateString(); }).length})</button>
+        <button onClick={() => filterReservations('upcoming')} className={`filter-btn ${filter === 'upcoming' ? 'active' : ''}`}>🔜 <span className="btn-label-text">À venir</span> ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) > new Date()).length})</button>
       </div>
 
-      {/* SECTION EXPORT DESKTOP (Cachee sur mobile) */}
+      {/* SECTION EXPORT DESKTOP */}
       <div className="export-section desktop-export">
         <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}><option value="ical">📅 iCalendar (.ics)</option><option value="csv">📊 CSV</option><option value="xlsx">📗 Excel (.xls)</option></select>
         <button onClick={handleExport} className="export-btn">⬇️ Exporter</button>
       </div>
 
-      {/* SECTION EXPORT MOBILE (Unique Bouton ICS) */}
+      {/* SECTION EXPORT MOBILE */}
       <button onClick={exportToICalendar} className="mobile-export-btn">📅 iCalendar (.ics)</button>
 
       {filteredReservations.length === 0 ? <div className="no-reservations"><p>Aucune réservation trouvée pour cet email.</p></div> : (
