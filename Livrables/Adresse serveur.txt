@@ -1,0 +1,8 @@
+ Serving!                                       │
+   │                                                  │
+   │   - Local:    http://localhost:58935             │
+   │   - Network:  http://192.168.2.49:58935          │
+   │                                                  │
+   │   This port was picked because 3000 is in use.   │
+   │                                                  │
+   │   Copied local address to clipboard!   
