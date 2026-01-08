@@ -11,7 +11,7 @@ import emailService from './services/emailService';
 
 function App() {
   const [currentView, setCurrentView] = useState('calendar');
-  // Mémorise l'onglet actif du calendrier (dates ou rooms)
+  // ETAT AJOUTÉ : Mémorise si on est sur l'onglet 'dates' ou 'rooms'
   const [calendarTab, setCalendarTab] = useState('dates');
   
   const [selectedDate, setSelectedDate] = useState(null);
@@ -34,7 +34,6 @@ function App() {
     init();
   }, []);
 
-  // Gestion du Hash pour modification (lien email)
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
@@ -42,17 +41,13 @@ function App() {
         const params = new URLSearchParams(hash.split('?')[1]);
         const dateParam = params.get('date');
         const editId = params.get('edit');
-        
         if (dateParam && editId) {
           const date = new Date(dateParam);
           setSelectedDate(date);
           setEditReservationId(editId);
           setCurrentView('reservation');
-          setCalendarTab('dates'); // Par défaut dates via lien direct
-          
-          setTimeout(() => {
-            window.history.replaceState(null, '', window.location.pathname);
-          }, 500);
+          setCalendarTab('dates'); // Lien direct = vue date
+          setTimeout(() => { window.history.replaceState(null, '', window.location.pathname); }, 500);
         }
       }
     };
@@ -77,16 +72,15 @@ function App() {
     setSelectedDate(date);
     setEditReservationId(null);
     setCurrentView('reservation');
-    setCalendarTab('dates'); 
+    setCalendarTab('dates'); // On vient des dates
   };
 
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
     setCurrentView('roomview');
-    setCalendarTab('rooms'); 
+    setCalendarTab('rooms'); // On vient des salles
   };
 
-  // RETOUR GÉNÉRIQUE (Vers Agenda par défaut ou dernier onglet connu)
   const handleBackToCalendar = () => {
     setCurrentView('calendar');
     setSelectedDate(null);
@@ -94,9 +88,9 @@ function App() {
     setEditReservationId(null);
   };
 
-  // RETOUR SPÉCIFIQUE DEPUIS UNE SALLE (Force l'onglet Salles)
+  // --- FONCTION CLÉ : RETOUR FORCE VERS ONGLET SALLES ---
   const handleBackFromRoom = () => {
-    setCalendarTab('rooms'); // FORCE L'ONGLET SALLES
+    setCalendarTab('rooms'); // On impose l'onglet 'rooms'
     setCurrentView('calendar');
     setSelectedRoom(null);
     setEditReservationId(null);
@@ -115,9 +109,7 @@ function App() {
     setCalendarTab('dates');
   };
 
-  if (loading) {
-    return <div className="app-loading"><div className="spinner"></div><p>Chargement de l'application...</p></div>;
-  }
+  if (loading) return <div className="app-loading"><div className="spinner"></div><p>Chargement de l'application...</p></div>;
 
   return (
     <div className="App">
@@ -141,7 +133,7 @@ function App() {
             onDateSelect={handleDateSelect}
             onRoomSelect={handleRoomSelect}
             isDateInPast={isDateInPast}
-            defaultTab={calendarTab} // Transmet l'onglet actif
+            defaultTab={calendarTab} // ON TRANSMET L'ONGLET À OUVRIR
           />
         )}
 
@@ -157,7 +149,7 @@ function App() {
         {currentView === 'roomview' && selectedRoom && (
           <SingleRoomGrid 
             selectedRoom={selectedRoom}
-            onBack={handleBackFromRoom} // UTILISATION DU RETOUR SPÉCIFIQUE
+            onBack={handleBackFromRoom} // LE BOUTON RETOUR UTILISE LA FONCTION SPÉCIFIQUE
             onSuccess={handleReservationSuccess}
           />
         )}

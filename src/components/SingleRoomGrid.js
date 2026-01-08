@@ -22,7 +22,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
 
-  // REFERENCE POUR SCROLL AUTOMATIQUE FORMULAIRE
   const sidebarRef = useRef(null);
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
@@ -37,7 +36,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const salleInfo = sallesData.find(s => s.nom === salleData?.nom);
   const dispositions = salleInfo?.dispositions || null;
   
-  // FORCE SCROLL HAUT DE PAGE AU CHARGEMENT (Pleine page mobile)
+  // FIX: Force le scroll en haut de page dès le chargement du composant
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
@@ -105,27 +104,14 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
   const successModalContent = successModal.show ? ( <div className="success-modal-overlay" onClick={() => setSuccessModal({ ...successModal, show: false })} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '70px' }}> <div className="success-modal" onClick={e => e.stopPropagation()}> <div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div> <div className="success-modal-body"> <p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p> <div className="reservations-list"> {successModal.reservations.map((res, i) => ( <div key={i} className="reservation-item-success"> <span className="calendar-icon">📅</span> {res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin} </div> ))} </div> <div className="ical-download-section"> <button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Télécharger .ics</button> </div> </div> <div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({ ...successModal, show: false })}>Fermer</button></div> </div> </div> ) : null;
 
-  // --- GESTION DU TIMER (4 SECONDES) ---
   useEffect(() => {
     let fadeTimer;
     let removeTimer;
-
     if (hoveredReservation) {
-      setIsFading(false); // Reset
-
-      fadeTimer = setTimeout(() => {
-        setIsFading(true); // Fade out start
-        removeTimer = setTimeout(() => {
-          setHoveredReservation(null);
-          setIsFading(false);
-        }, 400); // Wait for transition
-      }, 4000); // 4 sec delay
+      setIsFading(false);
+      fadeTimer = setTimeout(() => { setIsFading(true); removeTimer = setTimeout(() => { setHoveredReservation(null); setIsFading(false); }, 400); }, 4000);
     }
-
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
-    };
+    return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
   }, [hoveredReservation]);
 
   return (
@@ -158,7 +144,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
             {!showForm && (
               <>
                 <SalleCard salle={selectedRoom} />
-                {/* INSTRUCTION BUREAU (Caché sur Mobile via CSS) */}
                 <div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div>
               </>
             )}
