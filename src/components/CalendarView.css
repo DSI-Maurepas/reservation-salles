@@ -1,11 +1,13 @@
 /* src/components/CalendarView.css */
 /* VERSION OPTIMISÉE FULL HD 1920x1080 */
 
+/* Conteneur principal */
 .calendar-view {
   background: white;
   border-radius: 16px;
   padding: 1.2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  /* MODIF : Ombre plus marquée */
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
   animation: fadeIn 0.5s ease;
   max-width: 1000px;
   margin: 0 auto;
@@ -16,13 +18,15 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ESPACEMENT VUE PAR SALLE (Gap entre boutons et tuiles) */
+/* ESPACEMENT VUE PAR SALLE */
 .calendar-view.room-view {
   display: flex;
   flex-direction: column;
-  gap: 20px; /* Par défaut desktop */
+  /* MODIF 1 : Gap quasi nul pour coller */
+  gap: 5px;
 }
 
+/* Annule la marge des onglets pour laisser le gap gérer l'espace */
 .calendar-view.room-view .view-tabs {
   margin-bottom: 0 !important;
 }
@@ -50,9 +54,9 @@
 }
 
 .tab-btn.active {
-  background: #2196f3;
+  background: #021B79; /* Bleu foncé pour matcher le header */
   color: white;
-  border-color: #2196f3;
+  border-color: #021B79;
 }
 
 /* HEADER AGENDA */
@@ -189,17 +193,15 @@
     padding: 0.8rem;
   }
 
-  /* MODIF: Écart très réduit entre boutons et contenu (tuiles ou agenda) */
   .view-tabs {
-    margin-bottom: 10px; /* Réduit l'espace blanc en Vue Date */
+    margin-bottom: 10px;
   }
 
-  /* MODIF: Écart entre boutons et première tuile identique aux autres */
+  /* Gap quasi nul sur mobile aussi */
   .calendar-view.room-view {
-    gap: 15px; /* S'aligne sur le gap des tuiles si géré par RoomSelector */
+    gap: 5px;
   }
 
-  /* MODIF: Agencement Header Agenda (Nav haut, Selecteurs bas) */
   .calendar-header {
     flex-wrap: wrap;
     justify-content: space-between;
@@ -207,17 +209,16 @@
     margin-bottom: 0.5rem;
   }
   
-  .nav-button:first-child { order: 1; } /* Flèche gauche */
-  .nav-button:last-child { order: 2; }  /* Flèche droite */
+  .nav-button:first-child { order: 1; }
+  .nav-button:last-child { order: 2; }
   
   .date-selectors {
     order: 3;
-    flex: 1 1 100%; /* Prend toute la largeur */
+    flex: 1 1 100%;
     justify-content: center;
     margin-top: 5px;
   }
 
-  /* MODIF: Boutons Par Date/Par Salle sur une ligne */
   .tab-btn {
     padding: 0.6rem 0.5rem;
     font-size: 0.9rem;
