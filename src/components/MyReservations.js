@@ -31,6 +31,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const [cancelModal, setCancelModal] = useState({ show: false, reservation: null });
   const [selectedMotif, setSelectedMotif] = useState('');
 
+  // Chargement des données au montage ou changement d'email
   useEffect(() => {
     if (userEmail) loadUserReservations();
   }, [userEmail]);
@@ -40,7 +41,9 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     try {
       const allReservations = await googleSheetsService.getAllReservations();
       // Filtrer par email (insensible à la casse)
-      const userReservations = allReservations.filter(res => res.email.toLowerCase() === userEmail.toLowerCase());
+      const userReservations = allReservations.filter(res => 
+        res.email && res.email.trim().toLowerCase() === userEmail.trim().toLowerCase()
+      );
       
       // Tri par défaut : du plus récent au plus ancien
       userReservations.sort((a, b) => {
@@ -53,7 +56,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
       setFilteredReservations(userReservations);
     } catch (error) { 
       console.error(error); 
-      alert('Erreur lors du chargement des réservations'); 
+      // Optionnel : ne pas alerter si c'est juste vide au début
     } finally { 
       setLoading(false); 
     }
@@ -63,6 +66,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     e.preventDefault(); 
     if (!searchEmail) return; 
     setUserEmail(searchEmail); 
+    // loadUserReservations sera déclenché par le useEffect sur userEmail
   };
 
   const filterReservations = (filterType) => {
@@ -86,7 +90,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
       let aVal = a[sortColumn];
       let bVal = b[sortColumn];
       
-      // Gestion spécifique des dates
       if (sortColumn === 'dateDebut') { 
           aVal = new Date(aVal); 
           bVal = new Date(bVal); 
@@ -114,18 +117,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const handleEdit = (reservation) => {
     if (onEditReservation && typeof onEditReservation === 'function') { 
         onEditReservation(reservation); 
-        return; 
     }
-    // Fallback si la fonction n'est pas passée
-    try {
-      const dateStr = reservation.dateDebut;
-      const newHash = `#?date=${dateStr}&edit=${reservation.id}`;
-      window.location.hash = newHash;
-      setTimeout(() => { 
-          if (!window.location.hash.includes('edit=')) 
-            window.location.href = `${window.location.origin}${window.location.pathname}${newHash}`; 
-      }, 200);
-    } catch (err) { console.error(err); }
   };
 
   const handleDeleteClick = (reservation) => { 
@@ -141,11 +133,12 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     try {
       await googleSheetsService.deleteReservation(reservation.id);
       setConfirmModal({ show: true, type: 'cancel', reservation: reservation, motif: motif });
-      try { await loadUserReservations(); } catch (e) {}
-      try { await emailService.sendCancellationEmail({ ...reservation, motif: motif }); } catch (e) {}
+      
+      // Rafraîchir la liste et envoyer email
+      await loadUserReservations();
+      try { await emailService.sendCancellationEmail({ ...reservation, motif: motif }); } catch (e) { console.error("Erreur envoi mail", e); }
     } catch (error) {
-      setConfirmModal({ show: true, type: 'cancel', reservation: reservation, motif: motif + ' (Erreur suppression)' });
-      try { await loadUserReservations(); } catch (e) {}
+      alert('Erreur lors de la suppression : ' + error.message);
     }
   };
 
@@ -211,7 +204,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
       {/* SECTION EXPORT MOBILE (Unique Bouton ICS) */}
       <button onClick={exportToICalendar} className="mobile-export-btn">📅 iCalendar (.ics)</button>
 
-      {filteredReservations.length === 0 ? <div className="no-reservations"><p>Aucune réservation trouvée</p></div> : (
+      {filteredReservations.length === 0 ? <div className="no-reservations"><p>Aucune réservation trouvée pour cet email.</p></div> : (
         <div className="table-container">
           <table className="reservations-table">
             <thead>
