@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import { JOURS_FERIES } from '../config/googleSheets';
-import ViewToggle from './ViewToggle';
 import RoomSelector from './RoomSelector';
 import './CalendarView.css';
 
@@ -153,9 +152,21 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
   const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
 
   return (
-    // AJOUT DE LA CLASSE CONDITIONNELLE
     <div className={`calendar-view ${viewMode === 'room' ? 'room-view' : ''}`}>
-      <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
+      <div className="view-tabs">
+        <button 
+          className={`tab-btn ${viewMode === 'date' ? 'active' : ''}`}
+          onClick={() => setViewMode('date')}
+        >
+          📅 Par Date
+        </button>
+        <button 
+          className={`tab-btn ${viewMode === 'room' ? 'active' : ''}`}
+          onClick={() => setViewMode('room')}
+        >
+          🏢 Par Salle
+        </button>
+      </div>
 
       {viewMode === 'date' ? (
         <>
@@ -195,7 +206,13 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
           </div>
         </>
       ) : (
-        <RoomSelector onSelectRoom={onRoomSelect} />
+        /* MODIF 1 : Marge et padding à 0 pour coller aux tuiles */
+        <>
+          <h2 style={{ textAlign: 'center', color: '#021B79', margin: '0', paddingBottom: '0', textTransform: 'uppercase', fontSize: '1.5rem', fontWeight: '700' }}>
+            SÉLECTIONNEZ UNE SALLE
+          </h2>
+          <RoomSelector onSelectRoom={onRoomSelect} />
+        </>
       )}
     </div>
   );
