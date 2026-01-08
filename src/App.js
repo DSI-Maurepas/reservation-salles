@@ -122,7 +122,6 @@ function App() {
               alt="Blason de Maurepas" 
               className="blason-maurepas"
             />
-            {/* Titre sur 2 lignes, aligné gauche, police BLANCHE */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', textAlign: 'left', color: 'white' }}>
               <h1 style={{ margin: 0, lineHeight: '1.2', fontSize: '1.5rem', color: 'white' }}>Réservation de Salles</h1>
               <div style={{ fontSize: '1rem', fontWeight: '500', color: 'white' }}>Mairie de MAUREPAS</div>
@@ -141,12 +140,12 @@ function App() {
             >
               📋 Mes Réservations
             </button>
-            {/* Bouton Admin réduit à l'icône */}
+            {/* MODIFICATION : Ajout du texte "Admin" */}
             <button 
               className={currentView === 'admin' ? 'active' : ''}
               onClick={() => setCurrentView('admin')}
             >
-              ⚙️
+              ⚙️ Admin
             </button>
           </nav>
         </div>
