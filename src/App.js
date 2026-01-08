@@ -11,19 +11,14 @@ import emailService from './services/emailService';
 
 function App() {
   const [currentView, setCurrentView] = useState('calendar');
-  
-  // Mémorise l'onglet actif du calendrier ('date' ou 'room')
   const [calendarTab, setCalendarTab] = useState('date');
-
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [editReservationId, setEditReservationId] = useState(null);
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialisation des services
     const init = async () => {
       try {
         await googleSheetsService.initialize();
@@ -37,53 +32,30 @@ function App() {
     init();
   }, []);
 
-  // Détecter les changements de hash pour la modification de réservation
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
-      console.log('📍 Hash changé:', hash);
-      
-      // Format: #?date=2026-02-16&edit=RES_123456
       if (hash.includes('?') && hash.includes('date=') && hash.includes('edit=')) {
         const params = new URLSearchParams(hash.split('?')[1]);
         const dateParam = params.get('date');
         const editId = params.get('edit');
-        
-        console.log('📝 Paramètres édition détectés:', { dateParam, editId });
-        
         if (dateParam && editId) {
           const date = new Date(dateParam);
-          console.log('✅ Ouverture en mode édition:', { date: date.toLocaleDateString(), editId });
-          
           setSelectedDate(date);
           setEditReservationId(editId);
           setCurrentView('reservation');
-          setCalendarTab('date'); // Force l'onglet date en édition
-          
-          // Nettoyer le hash après traitement
+          setCalendarTab('date');
           setTimeout(() => {
             window.history.replaceState(null, '', window.location.pathname);
           }, 500);
         }
       }
     };
-
-    // Écouter les changements de hash
     window.addEventListener('hashchange', handleHashChange);
-    
-    // Vérifier au chargement initial
     handleHashChange();
-
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  /**
-   * Vérifie si une date est dans le passé
-   * @param {Date} date - La date à vérifier
-   * @returns {boolean} - true si la date est passée
-   */
   const isDateInPast = (date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -93,32 +65,22 @@ function App() {
   };
 
   const handleDateSelect = (date) => {
-    // BLOQUER si date dans le passé
     if (isDateInPast(date)) {
       alert('⚠️ Impossible de réserver une date passée !\n\nVeuillez sélectionner une date à partir d\'aujourd\'hui.');
       return;
     }
-    
     setSelectedDate(date);
-    setEditReservationId(null); // Pas d'édition, nouvelle réservation
+    setEditReservationId(null);
     setCurrentView('reservation');
-    setCalendarTab('date'); // Mémorise qu'on vient de l'agenda
+    setCalendarTab('date');
   };
 
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
     setCurrentView('roomview');
-    setCalendarTab('room'); // Mémorise qu'on vient des tuiles
-  };
-
-  // Ce handler semble être un doublon du précédent dans votre code, je l'harmonise
-  const handleRoomSelection = (roomName) => {
-    setSelectedRoom(roomName);
-    setCurrentView('roomview');
     setCalendarTab('room');
   };
 
-  // Retour classique (depuis la grille par date)
   const handleBackToCalendar = () => {
     setCurrentView('calendar');
     setSelectedDate(null);
@@ -126,9 +88,8 @@ function App() {
     setEditReservationId(null);
   };
 
-  // --- NOUVEAU : Retour spécifique depuis une salle ---
   const handleBackFromRoom = () => {
-    setCalendarTab('room'); // On force l'affichage des tuiles
+    setCalendarTab('room');
     setCurrentView('calendar');
     setSelectedRoom(null);
     setEditReservationId(null);
@@ -139,9 +100,7 @@ function App() {
     setEditReservationId(null);
   };
 
-  // Callback pour MyReservations quand on clique sur Modifier
   const handleEditReservation = (reservation) => {
-    console.log('🔧 handleEditReservation appelé:', reservation);
     const date = new Date(reservation.dateDebut);
     setSelectedDate(date);
     setEditReservationId(reservation.id);
@@ -150,12 +109,7 @@ function App() {
   };
 
   if (loading) {
-    return (
-      <div className="app-loading">
-        <div className="spinner"></div>
-        <p>Chargement de l'application...</p>
-      </div>
-    );
+    return <div className="app-loading"><div className="spinner"></div><p>Chargement de l'application...</p></div>;
   }
 
   return (
@@ -168,10 +122,10 @@ function App() {
               alt="Blason de Maurepas" 
               className="blason-maurepas"
             />
-            {/* TITRE SUR 2 LIGNES */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', textAlign: 'left' }}>
-              <h1 style={{ margin: 0, lineHeight: '1.2' }}>Réservation de Salles</h1>
-              <div style={{ fontSize: '1rem', fontWeight: '500' }}>Mairie de MAUREPAS</div>
+            {/* Titre sur 2 lignes, aligné gauche, police BLANCHE */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', textAlign: 'left', color: 'white' }}>
+              <h1 style={{ margin: 0, lineHeight: '1.2', fontSize: '1.5rem', color: 'white' }}>Réservation de Salles</h1>
+              <div style={{ fontSize: '1rem', fontWeight: '500', color: 'white' }}>Mairie de MAUREPAS</div>
             </div>
           </div>
           <nav className="main-nav">
@@ -187,7 +141,7 @@ function App() {
             >
               📋 Mes Réservations
             </button>
-            {/* BOUTON ADMIN RÉDUIT (ICÔNE SEULE) */}
+            {/* Bouton Admin réduit à l'icône */}
             <button 
               className={currentView === 'admin' ? 'active' : ''}
               onClick={() => setCurrentView('admin')}
@@ -204,7 +158,7 @@ function App() {
             onDateSelect={handleDateSelect}
             onRoomSelect={handleRoomSelect}
             isDateInPast={isDateInPast}
-            defaultView={calendarTab} // ON PASSE L'ONGLET ACTIF ICI
+            defaultView={calendarTab}
           />
         )}
 
@@ -220,7 +174,7 @@ function App() {
         {currentView === 'roomview' && selectedRoom && (
           <SingleRoomGrid 
             selectedRoom={selectedRoom}
-            onBack={handleBackFromRoom} // ON UTILISE LE RETOUR SPÉCIFIQUE ICI
+            onBack={handleBackFromRoom}
             onSuccess={handleReservationSuccess}
           />
         )}
@@ -233,9 +187,7 @@ function App() {
           />
         )}
 
-        {currentView === 'admin' && (
-          <AdminPanel />
-        )}
+        {currentView === 'admin' && <AdminPanel />}
       </main>
 
       <footer className="app-footer">
