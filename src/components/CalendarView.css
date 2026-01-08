@@ -21,7 +21,7 @@
 .calendar-view.room-view {
   display: flex;
   flex-direction: column;
-  gap: 5px; /* Petit gap de base */
+  gap: 5px; 
 }
 
 /* Annule la marge des onglets pour laisser le gap et les marges du titre gérer l'espace */
@@ -35,17 +35,11 @@
   color: #021B79;
   font-size: 1.5rem;
   font-weight: 700;
-  
-  /* MARGE HAUT : 2.5rem (inchangé) */
   margin-top: 2.5rem;
-  
-  /* MODIF : REMONTÉE DE 25 PIXELS (Marge négative pour tirer le contenu du dessous) */
-  margin-bottom: -25px;
-  
+  margin-bottom: -40px; /* Remontée forte */
   margin-left: 0;
   margin-right: 0;
   padding: 0;
-  /* IMPORTANT : Position relative pour s'assurer qu'il reste au-dessus si chevauchement léger */
   position: relative;
   z-index: 2; 
 }
@@ -73,7 +67,7 @@
 }
 
 .tab-btn.active {
-  background: #021B79; /* Bleu foncé pour matcher le header */
+  background: #021B79; 
   color: white;
   border-color: #021B79;
 }
@@ -191,10 +185,21 @@
   display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
   margin-bottom: 1.2rem; max-width: 800px; margin-left: auto; margin-right: auto;
 }
+
+/* --- ENTÊTE DES JOURS (Lun, Mar...) CORRIGÉ --- */
+/* Défini ici pour s'appliquer PARTOUT (Mobile & Desktop) */
 .calendar-day-header {
-  text-align: center; font-weight: 700; color: #1976d2;
-  padding: 0.35rem; background: #f8f9fa; border-radius: 6px; font-size: 0.8rem;
+  text-align: center; 
+  font-weight: 700; 
+  /* FORCE BLANC SUR BLEU */
+  color: #ffffff !important; 
+  background-color: #1976d2 !important; 
+  padding: 0.35rem; 
+  border-radius: 6px; 
+  font-size: 0.8rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+
 .calendar-day {
   aspect-ratio: 1.8 / 1; border-radius: 8px; padding: 0.35rem;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -276,6 +281,7 @@
   }
 
   .calendar-grid { gap: 4px; max-width: 100%; }
+  
   .calendar-day { aspect-ratio: 1 / 1; padding: 0.3rem; min-height: 40px; }
 }
 

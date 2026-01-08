@@ -42,7 +42,6 @@
   padding: 1rem; 
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); 
   border-radius: 12px; 
-  /* OMBRE PUISSANTE */
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); 
 }
 .search-section form { display: flex; gap: 0.8rem; align-items: center; }
@@ -54,7 +53,6 @@
 /* Boutons filtres */
 .filter-buttons { 
   display: flex; flex-wrap: wrap; gap: 0.8rem; margin-bottom: 1.5rem; padding: 1rem; background: white; border-radius: 12px; 
-  /* OMBRE PUISSANTE */
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); 
 }
 .filter-btn { padding: 0.7rem 1.3rem; border: 2px solid #2196f3; background: white; color: #2196f3; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
@@ -64,7 +62,6 @@
 /* Section export (Desktop) */
 .export-section { 
   display: flex; gap: 0.8rem; align-items: center; margin-bottom: 1.5rem; padding: 1rem; background: white; border-radius: 12px; 
-  /* OMBRE PUISSANTE */
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); 
 }
 .export-section select { flex: 1; padding: 0.7rem 1rem; border: 2px solid #4caf50; border-radius: 8px; font-size: 1rem; font-weight: 600; color: #2e7d32; background: white; cursor: pointer; }
@@ -75,19 +72,14 @@
 .mobile-export-btn { display: none; width: 100%; padding: 0.8rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); }
 
 /* --- STYLE CARTE & TABLEAU --- */
-
-/* LA CARTE CONTENEUR : C'est elle qui porte l'ombre et l'arrondi */
 .reservations-card {
   background: white;
   border-radius: 16px;
-  /* OMBRE PUISSANTE sur la carte */
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
-  /* OVERFLOW HIDDEN ICI pour couper net les coins carrés des lignes */
   overflow: hidden; 
   margin-top: 1rem;
 }
 
-/* LA ZONE DE SCROLL */
 .table-scroll-container {
   overflow-x: auto;
   width: 100%;
@@ -100,7 +92,6 @@
   border-spacing: 0;
   background: white; 
   min-width: 1000px;
-  /* PLUS DE SHADOW ICI */
   box-shadow: none; 
 }
 
@@ -120,11 +111,9 @@
   text-overflow: ellipsis;
   position: relative;
   transition: all 0.3s ease;
-  /* Bordure du haut conservée pour l'esthétique interne, mais l'arrondi est géré par la card */
   border-top: none; 
 }
 
-/* Retrait des arrondis spécifiques TH car la Card s'en charge */
 .reservations-table th:first-child { border-left: none; }
 .reservations-table th:last-child { border-right: none; text-align: center !important; }
 
@@ -143,12 +132,12 @@
 .reservations-table tr:hover { filter: brightness(0.98); }
 
 /* --- LARGEURS COLONNES --- */
-.reservations-table th:nth-child(1), .reservations-table td:nth-child(1) { width: 15%; } /* Salle */
-.reservations-table th:nth-child(2), .reservations-table td:nth-child(2) { width: 8%; white-space: nowrap; } /* Date */
-.reservations-table th:nth-child(3), .reservations-table td:nth-child(3) { width: 12%; white-space: nowrap; } /* Heure */
-.reservations-table th:nth-child(4), .reservations-table td:nth-child(4) { width: 20%; white-space: normal !important; line-height: 1.2; } /* Service */
-.reservations-table th:nth-child(5), .reservations-table td:nth-child(5) { width: 25%; white-space: normal !important; line-height: 1.2; } /* Objet */
-.reservations-table th:nth-child(6), .reservations-table td:nth-child(6) { width: 20%; text-align: center !important; overflow: visible !important; } /* Actions */
+.reservations-table th:nth-child(1), .reservations-table td:nth-child(1) { width: 15%; }
+.reservations-table th:nth-child(2), .reservations-table td:nth-child(2) { width: 8%; white-space: nowrap; }
+.reservations-table th:nth-child(3), .reservations-table td:nth-child(3) { width: 12%; white-space: nowrap; }
+.reservations-table th:nth-child(4), .reservations-table td:nth-child(4) { width: 20%; white-space: normal !important; line-height: 1.2; }
+.reservations-table th:nth-child(5), .reservations-table td:nth-child(5) { width: 25%; white-space: normal !important; line-height: 1.2; }
+.reservations-table th:nth-child(6), .reservations-table td:nth-child(6) { width: 20%; text-align: center !important; overflow: visible !important; }
 
 .desktop-view { display: block; }
 .mobile-view { display: none; }
@@ -174,6 +163,10 @@
 .delete-button { background: linear-gradient(135deg, #ef5350 0%, #e53935 100%); color: white; }
 .delete-button:hover { background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
 
+/* Gestion Icone vs Texte */
+.btn-icon { display: none; font-size: 1rem; }
+.btn-text { display: inline; }
+
 /* MODALES */
 .cancel-modal-overlay, .confirmation-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 10000; }
 .cancel-modal, .confirmation-modal { background: white; border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); }
@@ -187,6 +180,7 @@
 .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #2196f3; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* --- RESPONSIVE MOBILE --- */
 @media (max-width: 768px) {
   .my-reservations-container { padding: 1rem; }
   .search-section form { flex-direction: column; }
@@ -196,11 +190,40 @@
   .btn-label-text { display: none; }
   .filter-btn { padding: 0.6rem 0.5rem; font-size: 0.9rem; flex: 1; display: flex; justify-content: center; align-items: center; gap: 4px; }
   .btn-past { display: none !important; }
+  
+  /* Colonnes inutiles masquées */
   .col-service, .col-objet { display: none !important; }
+  
   .desktop-view { display: none !important; }
   .mobile-view { display: block !important; }
   .salle-nom, .salle-capacite { text-align: center; display: block; }
   .btn-label { display: none; }
-  .edit-button, .delete-button { padding: 0.5rem; font-size: 1.1rem; justify-content: center; }
-  .reservations-table th, .reservations-table td { padding: 0.6rem 0.3rem; font-size: 0.85rem; text-align: center; }
+  
+  /* Affichage Emoji */
+  .btn-text { display: none !important; }
+  .btn-icon { display: inline !important; }
+  .edit-button, .delete-button { padding: 0.6rem; font-size: 1.2rem; justify-content: center; min-width: 40px; }
+
+  /* Désactivation du scroll horizontal */
+  .reservations-table { 
+    min-width: 100% !important; 
+    width: 100% !important; 
+    table-layout: fixed;
+  }
+  
+  .table-scroll-container {
+    overflow-x: visible; 
+  }
+
+  /* Redéfinition des colonnes pour le mobile (Total 100%) */
+  .reservations-table th:nth-child(1), .reservations-table td:nth-child(1) { width: 30% !important; }
+  .reservations-table th:nth-child(2), .reservations-table td:nth-child(2) { width: 22% !important; }
+  .reservations-table th:nth-child(3), .reservations-table td:nth-child(3) { width: 23% !important; }
+  .reservations-table th:nth-child(6), .reservations-table td:nth-child(6) { width: 25% !important; }
+
+  .reservations-table th, .reservations-table td { 
+    padding: 0.6rem 0.2rem; 
+    font-size: 0.85rem; 
+    text-align: center !important; 
+  }
 }

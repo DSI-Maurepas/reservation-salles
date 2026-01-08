@@ -198,8 +198,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
       <button onClick={exportToICalendar} className="mobile-export-btn">📅 iCalendar (.ics)</button>
 
       {filteredReservations.length === 0 ? <div className="no-reservations"><p>Aucune réservation trouvée pour cet email.</p></div> : (
-        
-        /* MODIF : WRAPPER CARD pour gérer l'ombre et l'arrondi proprement */
         <div className="reservations-card">
           <div className="table-scroll-container">
             <table className="reservations-table">
@@ -207,7 +205,8 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
                 <tr>
                   <th onClick={() => handleSort('salle')} style={{cursor: 'pointer'}}>Salle{renderSortIcon('salle')}</th>
                   <th onClick={() => handleSort('dateDebut')} style={{cursor: 'pointer'}}>Date{renderSortIcon('dateDebut')}</th>
-                  <th onClick={() => handleSort('heureDebut')} style={{cursor: 'pointer'}}>Heure{renderSortIcon('heureDebut')}</th>
+                  {/* MODIF : "Heure" masqué sur mobile via desktop-view */}
+                  <th onClick={() => handleSort('heureDebut')} style={{cursor: 'pointer'}}><span className="desktop-view">Heure</span>{renderSortIcon('heureDebut')}</th>
                   <th className="col-service" onClick={() => handleSort('service')} style={{cursor: 'pointer'}}>Service{renderSortIcon('service')}</th>
                   <th className="col-objet" onClick={() => handleSort('objet')} style={{cursor: 'pointer'}}>Objet{renderSortIcon('objet')}</th>
                   <th>Actions</th>
@@ -223,8 +222,14 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
                     <td className="col-objet">{reservation.objet}</td>
                     <td>
                       <div className="actions-wrapper">
-                        <button onClick={() => handleEdit(reservation)} className="edit-button">Modifier</button>
-                        <button onClick={() => handleDeleteClick(reservation)} className="delete-button">Annuler</button>
+                        <button onClick={() => handleEdit(reservation)} className="edit-button">
+                          <span className="btn-text">Modifier</span>
+                          <span className="btn-icon">✏️</span>
+                        </button>
+                        <button onClick={() => handleDeleteClick(reservation)} className="delete-button">
+                          <span className="btn-text">Annuler</span>
+                          <span className="btn-icon">🗑️</span>
+                        </button>
                       </div>
                     </td>
                   </tr>

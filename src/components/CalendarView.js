@@ -11,10 +11,8 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
   const [dateAvailability, setDateAvailability] = useState({});
   const [loading, setLoading] = useState(false);
   
-  // MODIF : État pour stocker le texte de la légende cliquée
   const [activeLegend, setActiveLegend] = useState(null);
 
-  // MODIF : Données de la légende structurées
   const LEGEND_DATA = [
     { status: 'available', label: 'Disponible', description: '🟢 Disponible (0 réservation)' },
     { status: 'partial', label: 'Partiellement occupé', description: '🟡 Partiellement occupé (1-3 réservations)' },
@@ -118,12 +116,19 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
     onDateSelect(date);
   };
 
-  // MODIF : Gestion du clic sur la légende
   const handleLegendClick = (description) => {
     if (activeLegend === description) {
-      setActiveLegend(null); // Ferme si on reclique dessus
+      setActiveLegend(null);
     } else {
       setActiveLegend(description);
+    }
+  };
+
+  // MODIF : Wrapper pour forcer le scroll en haut lors de la sélection d'une salle
+  const handleRoomSelectWrapper = (room) => {
+    window.scrollTo(0, 0); // Remonte tout en haut de la page
+    if (onRoomSelect) {
+      onRoomSelect(room);
     }
   };
 
@@ -206,7 +211,6 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
 
           <div className="capacity-instructions"><strong>💡 Cliquez sur les statuts ci-dessous pour voir les détails</strong></div>
 
-          {/* MODIF : Légende dynamique générée via .map avec onClick */}
           <div className="calendar-legend">
             {LEGEND_DATA.map((item, index) => (
               <div 
@@ -221,7 +225,6 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
             ))}
           </div>
 
-          {/* MODIF : Affichage de la description quand on clique */}
           {activeLegend && (
             <div className="legend-info-box">
               {activeLegend}
@@ -245,7 +248,8 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
           <h2 className="room-select-title">
             Sélectionnez une salle
           </h2>
-          <RoomSelector onSelectRoom={onRoomSelect} />
+          {/* MODIF : Utilisation du wrapper qui gère le scroll */}
+          <RoomSelector onSelectRoom={handleRoomSelectWrapper} />
         </>
       )}
     </div>
