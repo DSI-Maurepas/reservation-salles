@@ -112,8 +112,7 @@ function Statistics({ reservations }) {
 
   const handleSliceHover = (data) => {
     setHoveredSlice(data);
-    // MODIFICATION DEMANDÉE : 130 pixels de l'axe (au-dessus)
-    setPopupPos({ x: data.x, y: data.y - 130 }); 
+    setPopupPos({ x: data.x, y: data.y - 15 }); // Position desktop
     setIsFading(false);
   };
 
