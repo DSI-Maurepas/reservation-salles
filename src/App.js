@@ -11,7 +11,7 @@ import emailService from './services/emailService';
 
 function App() {
   const [currentView, setCurrentView] = useState('calendar');
-  // NOUVEAU : Mémorise l'onglet actif du calendrier (dates ou rooms)
+  // Mémorise l'onglet actif du calendrier (dates ou rooms)
   const [calendarTab, setCalendarTab] = useState('dates');
   
   const [selectedDate, setSelectedDate] = useState(null);
@@ -48,8 +48,7 @@ function App() {
           setSelectedDate(date);
           setEditReservationId(editId);
           setCurrentView('reservation');
-          // Quand on vient d'un lien, on veut revenir aux dates par défaut
-          setCalendarTab('dates');
+          setCalendarTab('dates'); // Par défaut dates via lien direct
           
           setTimeout(() => {
             window.history.replaceState(null, '', window.location.pathname);
@@ -78,21 +77,29 @@ function App() {
     setSelectedDate(date);
     setEditReservationId(null);
     setCurrentView('reservation');
-    setCalendarTab('dates'); // Mémorise qu'on vient des dates
+    setCalendarTab('dates'); 
   };
 
   const handleRoomSelect = (room) => {
     setSelectedRoom(room);
     setCurrentView('roomview');
-    setCalendarTab('rooms'); // Mémorise qu'on vient des salles pour le retour
+    setCalendarTab('rooms'); 
   };
 
+  // RETOUR GÉNÉRIQUE (Vers Agenda par défaut ou dernier onglet connu)
   const handleBackToCalendar = () => {
     setCurrentView('calendar');
     setSelectedDate(null);
     setSelectedRoom(null);
     setEditReservationId(null);
-    // On ne reset PAS calendarTab ici, pour revenir sur le bon onglet
+  };
+
+  // RETOUR SPÉCIFIQUE DEPUIS UNE SALLE (Force l'onglet Salles)
+  const handleBackFromRoom = () => {
+    setCalendarTab('rooms'); // FORCE L'ONGLET SALLES
+    setCurrentView('calendar');
+    setSelectedRoom(null);
+    setEditReservationId(null);
   };
 
   const handleReservationSuccess = () => {
@@ -134,7 +141,7 @@ function App() {
             onDateSelect={handleDateSelect}
             onRoomSelect={handleRoomSelect}
             isDateInPast={isDateInPast}
-            defaultTab={calendarTab} // Passe l'info à CalendarView
+            defaultTab={calendarTab} // Transmet l'onglet actif
           />
         )}
 
@@ -150,7 +157,7 @@ function App() {
         {currentView === 'roomview' && selectedRoom && (
           <SingleRoomGrid 
             selectedRoom={selectedRoom}
-            onBack={handleBackToCalendar}
+            onBack={handleBackFromRoom} // UTILISATION DU RETOUR SPÉCIFIQUE
             onSuccess={handleReservationSuccess}
           />
         )}
