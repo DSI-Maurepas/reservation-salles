@@ -17,12 +17,11 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- CORRECTION ESPACEMENT VUE PAR SALLE --- */
-/* Applique un gap uniforme entre les éléments (boutons et grille) */
+/* ESPACEMENT VUE PAR SALLE */
 .calendar-view.room-view {
   display: flex;
   flex-direction: column;
-  gap: 20px; /* Écart identique à celui de la grille */
+  gap: 20px; /* Écart standard Desktop */
 }
 
 /* Annule la marge des onglets pour laisser le gap gérer l'espace */
@@ -35,7 +34,7 @@
   display: flex;
   justify-content: center;
   gap: 1rem;
-  margin-bottom: 2rem; /* Marge par défaut pour vue date */
+  margin-bottom: 2rem;
 }
 
 .tab-btn {
@@ -49,6 +48,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  /* MODIF: Empêche le texte de passer à la ligne */
+  white-space: nowrap; 
 }
 
 .tab-btn.active {
@@ -187,14 +188,41 @@
 }
 
 @media (max-width: 768px) {
-  /* TUILLES PLEINE LARGEUR RESTAURÉES */
   .calendar-view {
     padding: 0.8rem;
-    /* On retire toute restriction de largeur ici pour laisser les tuiles remplir */
+    /* Suppression des limites de largeur pour les tuiles */
   }
 
-  .calendar-header { flex-direction: row; flex-wrap: wrap; gap: 0.8rem; }
-  .date-selectors { flex: 1 1 100%; justify-content: center; order: -1; }
+  /* MODIF: Écart très réduit entre les boutons et les tuiles */
+  .calendar-view.room-view {
+    gap: 5px; 
+  }
+
+  /* MODIF: Reconfiguration Header Par Date (Navigation au-dessus, Sélecteurs en-dessous) */
+  .calendar-header { 
+    flex-wrap: wrap; 
+    justify-content: space-between; 
+    gap: 0.5rem; 
+  }
+  
+  /* Bouton Précédent en haut à gauche */
+  .nav-button:first-child { 
+    order: 1; 
+  }
+  
+  /* Bouton Suivant en haut à droite */
+  .nav-button:last-child { 
+    order: 2; 
+  }
+  
+  /* Sélecteurs (Mois/Année) en dessous, pleine largeur */
+  .date-selectors { 
+    order: 3; 
+    flex: 1 1 100%; 
+    justify-content: center; 
+    margin-top: 5px; 
+  }
+
   .calendar-grid { gap: 4px; max-width: 100%; }
   .calendar-day { aspect-ratio: 1 / 1; padding: 0.3rem; min-height: 40px; }
 }
