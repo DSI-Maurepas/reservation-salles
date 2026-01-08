@@ -1,5 +1,5 @@
 // src/components/SingleRoomGrid.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
@@ -22,7 +22,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
 
-  // REFERENCE POUR LE BLOC LATERAL (Photo/Formulaire)
+  // REFERENCE POUR LE SCROLL AUTOMATIQUE DU FORMULAIRE
   const sidebarRef = useRef(null);
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
@@ -36,7 +36,21 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const salleData = getSalleData(selectedRoom);
   const salleInfo = sallesData.find(s => s.nom === salleData?.nom);
   const dispositions = salleInfo?.dispositions || null;
+  
+  // --- CORRECTION CRITIQUE : FORCE LE SCROLL EN HAUT DÈS L'ARRIVÉE SUR LA PAGE ---
+  useLayoutEffect(() => {
+    // Scroll instantané en haut pour afficher la grille "pleine page"
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    
+    // Sécurité supplémentaire pour les mobiles qui chargent lentement
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+    }, 50);
+  }, [selectedRoom]); // Se déclenche quand on change de salle (donc à l'ouverture)
+
   useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom]);
+  
   const loadWeekReservations = async () => { setLoading(true); try { const allReservations = await googleSheetsService.getAllReservations(); const weekEnd = new Date(currentWeekStart); weekEnd.setDate(currentWeekStart.getDate() + 6); const filtered = allReservations.filter(res => { const resSalleName = res.salle.split(' - ')[0]; if (resSalleName !== selectedRoom && res.salle !== selectedRoom) return false; if (res.statut === 'cancelled') return false; const resDate = new Date(res.dateDebut); return resDate >= currentWeekStart && resDate <= weekEnd; }); setReservations(filtered); } catch (error) { console.error('Erreur chargement:', error); } setLoading(false); };
   const isAdminOnlyRoom = (room) => SALLES_ADMIN_ONLY.includes(room);
   const handleAdminPasswordSubmit = () => { if (adminPasswordModal.password === 'Maurepas2025') { setIsAdminUnlocked(true); setAdminPasswordModal({ show: false, password: '' }); } else { alert('❌ Mot de passe incorrect'); setAdminPasswordModal({ ...adminPasswordModal, password: '' }); } };
@@ -79,18 +93,12 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       shouldScroll = true;
     }
     
-    // CORRECTION : SCROLL SUR LA BARRE LATÉRALE (Bloc Salle + Propriétés)
-    // 'block: start' assure que le HAUT du bloc s'aligne avec le HAUT de l'écran
+    // SCROLL VERS LE FORMULAIRE SI SÉLECTION
     if (shouldScroll && sidebarRef.current) {
-        // Petit timeout pour laisser le temps au DOM de se mettre à jour (ex: affichage du formulaire)
-        setTimeout(() => {
-            sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+        setTimeout(() => { sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
     }
 
-    setIsDragging(false); 
-    setDragStart(null); 
-    setMouseDownPos(null); 
+    setIsDragging(false); setDragStart(null); setMouseDownPos(null); 
   };
 
   const handleCancelSelection = () => { setSelections([]); setShowForm(false); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
@@ -103,27 +111,14 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
   const successModalContent = successModal.show ? ( <div className="success-modal-overlay" onClick={() => setSuccessModal({ ...successModal, show: false })} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '70px' }}> <div className="success-modal" onClick={e => e.stopPropagation()}> <div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div> <div className="success-modal-body"> <p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p> <div className="reservations-list"> {successModal.reservations.map((res, i) => ( <div key={i} className="reservation-item-success"> <span className="calendar-icon">📅</span> {res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin} </div> ))} </div> <div className="ical-download-section"> <button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Télécharger .ics</button> </div> </div> <div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({ ...successModal, show: false })}>Fermer</button></div> </div> </div> ) : null;
 
-  // --- GESTION DU TIMER (4 SECONDES) ---
   useEffect(() => {
     let fadeTimer;
     let removeTimer;
-
     if (hoveredReservation) {
-      setIsFading(false); // Reset
-
-      fadeTimer = setTimeout(() => {
-        setIsFading(true); // Fade out start
-        removeTimer = setTimeout(() => {
-          setHoveredReservation(null);
-          setIsFading(false);
-        }, 400); // Wait for transition
-      }, 4000); // 4 sec delay
+      setIsFading(false);
+      fadeTimer = setTimeout(() => { setIsFading(true); removeTimer = setTimeout(() => { setHoveredReservation(null); setIsFading(false); }, 400); }, 4000);
     }
-
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
-    };
+    return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
   }, [hoveredReservation]);
 
   return (
@@ -146,18 +141,15 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
           <div className="nav-group-right-spacer"></div>
         </div>
 
-        {/* INSTRUCTION MOBILE AJOUTÉE (Caché sur Desktop via CSS) */}
         <div className="mobile-instruction">
           <p>Cliquez sur un créneau pour le sélectionner</p>
         </div>
 
         <div className="single-room-layout">
-          {/* CIBLE DU SCROLL VIA LA REF */}
           <div className="room-sidebar" ref={sidebarRef}>
             {!showForm && (
               <>
                 <SalleCard salle={selectedRoom} />
-                {/* INSTRUCTION BUREAU (Caché sur Mobile via CSS) */}
                 <div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div>
               </>
             )}
@@ -177,9 +169,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                   <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez l'objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
                   {dispositions && (
                     <>
-                      {/* VALIDATION: Ajout de 'required' */}
                       <select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})} required><option value="">Disposition souhaitée *</option>{dispositions.map(d => <option key={d} value={d}>{d}</option>)}</select>
-                      {/* VALIDATION: Ajout de 'required', 'min' et 'max' dynamique */}
                       {(selectedRoom.includes('Conseil') || selectedRoom.includes('Mariages')) && <input type="number" className="form-input" placeholder={`Nombre de personnes prévues (max ${selectedRoom.includes('Mariages') ? 30 : 100}) *`} value={formData.nbPersonnes} onChange={e => setFormData({...formData, nbPersonnes: e.target.value})} required min="1" max={selectedRoom.includes('Mariages') ? 30 : 100} />}
                     </>
                   )}
@@ -241,13 +231,10 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                         onMouseEnter={(e) => { 
                           handleMouseEnter(dayIndex, slot, date); 
                           if (reserved && reservation) { 
-                            const rect = e.currentTarget.getBoundingClientRect(); 
                             setHoveredReservation(reservation); 
-                            // MODIFICATION : POSITIONNEMENT RELATIF À LA SOURIS (Base à 50px au-dessus)
                             setPopupPosition({ x: e.clientX, y: e.clientY - 50 }); 
                           } 
                         }} 
-                        // On retire le onMouseLeave ici pour laisser le timer gérer
                       >
                       </td>
                     ); 
@@ -259,7 +246,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
         </div>
         
         {hoveredReservation && (
-          // CLASSE DYNAMIQUE POUR L'ANIMATION DE DISPARITION
           <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}>
             <div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div>
             <div className="popup-card-body">{hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}{hoveredReservation.service && <div className="popup-info-line"><span className="popup-info-icon">🏢</span><span className="popup-info-text">{hoveredReservation.service}</span></div>}<div className="popup-info-line"><span className="popup-info-icon">📅</span><span className="popup-info-text">{new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</span></div>{(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (<>{hoveredReservation.agencement && (<div className="popup-info-line"><span className="popup-info-icon">🪑</span><span className="popup-info-text">Disposition : {hoveredReservation.agencement}</span></div>)}{hoveredReservation.nbPersonnes && (<div className="popup-info-line"><span className="popup-info-icon">👥</span><span className="popup-info-text">{hoveredReservation.nbPersonnes} pers.</span></div>)}</>)}</div>
