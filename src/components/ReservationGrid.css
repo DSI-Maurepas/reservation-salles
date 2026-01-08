@@ -1,5 +1,5 @@
 /* src/components/ReservationGrid.css */
-/* VERSION FINALE : CENTRAGE STRICT FICHE RÉSERVATION MOBILE VIA CSS */
+/* VERSION CORRIGÉE : STRUCTURE GRILLE RESTAURÉE & FOND BLANC */
 
 .reservation-grid-container {
   background: transparent !important;
@@ -13,7 +13,7 @@
 
 @keyframes slideIn { from { opacity: 0; transform: translateX(-50px); } to { opacity: 1; transform: translateX(0); } }
 
-/* HEADER */
+/* HEADER NAVIGATION */
 .date-navigation-bar {
   display: flex; 
   align-items: center;
@@ -38,7 +38,7 @@
 .nav-day-button:hover, .nav-week-button:hover, .nav-today-button:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .date-display h2 { margin: 0; color: #1565c0; font-size: 1.2rem; font-weight: 800; text-transform: capitalize; min-width: 250px; text-align: center; letter-spacing: -0.5px; }
 
-/* LAYOUT */
+/* LAYOUT GLOBAL */
 .reservation-content { 
   display: grid; 
   grid-template-columns: minmax(900px, 1fr) 350px; 
@@ -46,12 +46,38 @@
   align-items: start; 
 }
 
-.grid-column { width: 100%; height: auto; min-height: 650px; overflow: visible; border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); background: white; display: flex; flex-direction: column; border: 1px solid #e2e8f0; padding: 10px; }
+.grid-column { 
+  width: 100%; 
+  height: auto; 
+  min-height: 650px; 
+  overflow: visible; 
+  border-radius: 16px; 
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); 
+  background: white; /* Important pour cacher le bleu */
+  display: flex; 
+  flex-direction: column; 
+  border: 1px solid #e2e8f0; 
+  padding: 10px; 
+}
+
 .form-column { width: 100%; height: auto; display: flex; flex-direction: column; gap: 20px; }
 .form-column > * { margin-top: 0 !important; margin-bottom: 0 !important; }
 
-/* GRILLE */
-.reservation-grid { display: grid; grid-template-columns: 45px repeat(9, 1fr); grid-template-rows: 57px repeat(28, 25px); gap: 0; padding: 0; background: white; height: auto; width: 100%; overflow: visible; user-select: none; -webkit-user-select: none; }
+/* --- GRILLE PRINCIPALE (Le correctif est ici) --- */
+.reservation-grid { 
+  display: grid !important; /* Force l'affichage grille */
+  grid-template-columns: 45px repeat(9, 1fr); 
+  grid-template-rows: 57px repeat(28, 25px); 
+  gap: 0; 
+  padding: 0; 
+  background: white !important; /* Force le fond blanc */
+  height: auto; 
+  width: 100%; 
+  overflow: visible; 
+  user-select: none; 
+  -webkit-user-select: none; 
+}
+
 .grid-corner { background: #f1f5f9; color: #64748b; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; position: sticky; top: 0; left: 0; z-index: 30; border-bottom: 1px solid #64748b; border-right: 1px solid #64748b; }
 .salle-header { background: #1976d2; color: white !important; padding: 0.2rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; border-right: 1px solid rgba(255,255,255,0.3); border-bottom: 1px solid #64748b; position: sticky; top: 0; z-index: 20; }
 
@@ -129,7 +155,7 @@
 .popup-info-icon { font-size: 1.1rem; min-width: 24px; text-align: center; }
 .popup-info-text { flex: 1; font-weight: 500; }
 .modal-overlay, .success-modal-overlay, .blocked-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 99999; display: flex; align-items: center; justify-content: center; }
-.modal-content, .success-modal, .blocked-modal { background: white; padding: 1.5rem; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.25); text-align: center; }
+.modal-content, .success-modal, .blocked-modal { background: white; padding: 1.5rem; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.25); text-align: center; }
 .success-modal h2 { color: #22c55e; margin-bottom: 1rem; }
 .success-subtitle { margin-bottom: 1rem; font-weight: normal; }
 .reservations-list { text-align: left; margin: 1rem 0; background: #f9f9f9; padding: 1rem; border-radius: 8px; max-height: 200px; overflow-y: auto; }
@@ -148,7 +174,7 @@
 @media (max-width: 1280px) {
   .reservation-grid-container { padding: 1rem; }
   
-  /* FIX FLEX DIRECTION */
+  /* FIX FLEX DIRECTION - POUR METTRE LES BLOCS LES UNS SOUS LES AUTRES */
   .reservation-content { 
     display: flex !important; 
     flex-direction: column !important;
@@ -211,6 +237,7 @@
     width: 100%; 
     max-width: 100vw; 
     order: 2; 
+    min-height: 100vh; /* GARANTIT L'EFFET PLEINE PAGE AU SCROLL */
   }
   
   .reservation-form { width: 100%; box-sizing: border-box; height: auto; }
@@ -222,13 +249,13 @@
 
   /* FIX CRITIQUE : CENTRAGE POPUP SUR MOBILE (FORCE) */
   .reservation-popup-card {
-    /* Force le positionnement au centre, écrase les styles inline JS */
+    /* Écrase le style inline (top/left) calculé par le JS */
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
     position: fixed !important;
     width: 80% !important; 
     max-width: 320px;
-    z-index: 20002 !important; /* Très haut pour passer devant tout */
+    z-index: 10002 !important; /* Au-dessus de tout */
   }
 }

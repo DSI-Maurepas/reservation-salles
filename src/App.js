@@ -140,7 +140,6 @@ function App() {
             >
               📋 Mes Réservations
             </button>
-            {/* MODIFICATION : Ajout du texte "Admin" */}
             <button 
               className={currentView === 'admin' ? 'active' : ''}
               onClick={() => setCurrentView('admin')}

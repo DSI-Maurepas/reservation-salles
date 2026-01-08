@@ -10,6 +10,18 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [dateAvailability, setDateAvailability] = useState({});
   const [loading, setLoading] = useState(false);
+  
+  // MODIF : État pour stocker le texte de la légende cliquée
+  const [activeLegend, setActiveLegend] = useState(null);
+
+  // MODIF : Données de la légende structurées
+  const LEGEND_DATA = [
+    { status: 'available', label: 'Disponible', description: '🟢 Disponible (0 réservation)' },
+    { status: 'partial', label: 'Partiellement occupé', description: '🟡 Partiellement occupé (1-3 réservations)' },
+    { status: 'busy', label: 'Très occupé', description: '🟠 Très occupé (4-6 réservations)' },
+    { status: 'full', label: 'Complet', description: '🔴 Complet (7+ réservations)' },
+    { status: 'closed', label: 'Fermé', description: '⚫ Fermé (hors plages horaires)' }
+  ];
 
   const createLocalDate = (year, month, day) => {
     const date = new Date(year, month, day, 12, 0, 0, 0);
@@ -106,6 +118,15 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
     onDateSelect(date);
   };
 
+  // MODIF : Gestion du clic sur la légende
+  const handleLegendClick = (description) => {
+    if (activeLegend === description) {
+      setActiveLegend(null); // Ferme si on reclique dessus
+    } else {
+      setActiveLegend(description);
+    }
+  };
+
   const renderCalendar = () => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -183,15 +204,29 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
             <button onClick={handleNextMonth} className="nav-button" title="Mois suivant">▶</button>
           </div>
 
-          <div className="capacity-instructions"><strong>💡 Survolez les catégories ci-dessous pour afficher les niveaux de disponibilité des salles dans la journée</strong></div>
+          <div className="capacity-instructions"><strong>💡 Cliquez sur les statuts ci-dessous pour voir les détails</strong></div>
 
+          {/* MODIF : Légende dynamique générée via .map avec onClick */}
           <div className="calendar-legend">
-            <div className="legend-item" title="🟢 Disponible (0 réservation)"><span className="legend-color available"></span><span>Disponible</span></div>
-            <div className="legend-item" title="🟡 Partiellement occupé (1-3 réservations)"><span className="legend-color partial"></span><span>Partiellement occupé</span></div>
-            <div className="legend-item" title="🟠 Très occupé (4-6 réservations)"><span className="legend-color busy"></span><span>Très occupé</span></div>
-            <div className="legend-item" title="🔴 Complet (7+ réservations)"><span className="legend-color full"></span><span>Complet</span></div>
-            <div className="legend-item" title="⚫ Fermé (hors plages horaires)"><span className="legend-color closed"></span><span>Fermé</span></div>
+            {LEGEND_DATA.map((item, index) => (
+              <div 
+                key={index} 
+                className={`legend-item ${activeLegend === item.description ? 'active-legend' : ''}`}
+                onClick={() => handleLegendClick(item.description)}
+                title={item.description}
+              >
+                <span className={`legend-color ${item.status}`}></span>
+                <span>{item.label}</span>
+              </div>
+            ))}
           </div>
+
+          {/* MODIF : Affichage de la description quand on clique */}
+          {activeLegend && (
+            <div className="legend-info-box">
+              {activeLegend}
+            </div>
+          )}
 
           {loading ? <div className="calendar-loading"><div className="spinner"></div><p>Chargement du calendrier...</p></div> : <div className="calendar-grid">{renderCalendar()}</div>}
 
@@ -206,10 +241,9 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
           </div>
         </>
       ) : (
-        /* MODIF 1 : Marge et padding à 0 pour coller aux tuiles */
         <>
-          <h2 style={{ textAlign: 'center', color: '#021B79', margin: '0', paddingBottom: '0', textTransform: 'uppercase', fontSize: '1.5rem', fontWeight: '700' }}>
-            SÉLECTIONNEZ UNE SALLE
+          <h2 className="room-select-title">
+            Sélectionnez une salle
           </h2>
           <RoomSelector onSelectRoom={onRoomSelect} />
         </>
