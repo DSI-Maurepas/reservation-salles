@@ -37,7 +37,7 @@
 .admin-only-locked::after, .admin-only-locked::before { content: none !important; }
 .lock-icon-single { font-size: 0.85rem; color: #64748b; display: block; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 
-/* FICHE PROPRIETE AVEC SECURITE ECRAN */
+/* FICHE PROPRIETE */
 .reservation-popup-card { background: white; border-radius: 12px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25); width: 280px; overflow: hidden; border: 1px solid #e2e8f0; pointer-events: none; }
 .popup-card-header { background: #3b82f6; color: white; padding: 0.8rem; font-weight: 700; text-align: center; }
 .popup-card-body { padding: 1rem; color: #475569; font-size: 0.85rem; line-height: 1.5; }

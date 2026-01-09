@@ -29,7 +29,6 @@ function ReservationGrid({ selectedDate, onBack }) {
     agencement: '', nbPersonnes: ''
   });
 
-  // Gestion de la fiche (4s affichage, 0.4s disparition) avec sécurité de visibilité
   useEffect(() => {
     let fadeTimer, removeTimer;
     if (hoveredReservation) {
@@ -78,13 +77,10 @@ function ReservationGrid({ selectedDate, onBack }) {
     const res = reservations.find(r => r.salle.includes(sShort) && hour >= googleSheetsService.timeToFloat(r.heureDebut) && hour < googleSheetsService.timeToFloat(r.heureFin));
     
     if (res) {
-      const popupHeight = 220; // Hauteur estimée de la fiche
+      const popupHeight = 220;
       const posY = e.clientY - 50;
-      
-      // Règle de sécurité : Si la fiche dépasse le haut de l'écran, on l'affiche en dessous du curseur
       const alignment = (posY - popupHeight < 10) ? 'top' : 'bottom';
       const finalY = (alignment === 'top') ? e.clientY + 50 : posY;
-
       setPopupPosition({ x: e.clientX, y: finalY, alignment: alignment });
       setHoveredReservation(res);
       return;
@@ -111,24 +107,6 @@ function ReservationGrid({ selectedDate, onBack }) {
     setIsDragging(false);
     setCurrentSelection(null);
   };
-
-  const preMergeSelections = (selections) => {
-    const bySalle = {};
-    selections.forEach(sel => { if (!bySalle[sel.salle]) bySalle[sel.salle] = []; bySalle[sel.salle].push(sel); });
-    const merged = [];
-    for (const salle in bySalle) {
-      const slots = bySalle[salle].sort((a, b) => a.startHour - b.startHour);
-      let i = 0;
-      while (i < slots.length) {
-        const current = { ...slots[i] };
-        while (i + 1 < slots.length && Math.abs(current.endHour - slots[i + 1].startHour) < 0.01) { current.endHour = slots[i + 1].endHour; i++; }
-        merged.push(current); i++;
-      }
-    }
-    return merged;
-  };
-
-  const mergedSelections = preMergeSelections(selections);
 
   const renderGrid = () => {
     const grid = [];
@@ -176,6 +154,22 @@ function ReservationGrid({ selectedDate, onBack }) {
     return grid;
   };
 
+  const preMergeSelections = (sels) => {
+    const bySalle = {};
+    sels.forEach(sel => { if (!bySalle[sel.salle]) bySalle[sel.salle] = []; bySalle[sel.salle].push(sel); });
+    const merged = [];
+    for (const s in bySalle) {
+      const slots = bySalle[s].sort((a, b) => a.startHour - b.startHour);
+      let i = 0;
+      while (i < slots.length) {
+        const cur = { ...slots[i] };
+        while (i + 1 < slots.length && Math.abs(cur.endHour - slots[i + 1].startHour) < 0.01) { cur.endHour = slots[i + 1].endHour; i++; }
+        merged.push(cur); i++;
+      }
+    }
+    return merged;
+  };
+
   return (
     <div className="reservation-grid-container" onMouseUp={handleMouseUp}>
       <div className="date-navigation-bar">
@@ -202,7 +196,7 @@ function ReservationGrid({ selectedDate, onBack }) {
               <p className="selection-count">{selections.length} {selections.length > 1 ? 'nouveaux créneaux' : 'nouveau créneau'}</p>
               
               <div className="selections-summary">
-                {mergedSelections.map((sel, idx) => (
+                {preMergeSelections(selections).map((sel, idx) => (
                   <div key={idx} className="selection-item">
                     {sel.salle.split(' - ')[0]} : {googleSheetsService.formatTime(sel.startHour)} - {googleSheetsService.formatTime(sel.endHour)}
                     <button className="remove-selection-btn" onClick={() => setSelections(prev => prev.filter(s => !(s.salle === sel.salle && s.startHour >= sel.startHour && s.endHour <= sel.endHour)))}>✕</button>
@@ -266,13 +260,17 @@ function ReservationGrid({ selectedDate, onBack }) {
           <div className="popup-card-body">
             <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
             <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
-            <div className="popup-info-line"><span className="popup-info-icon">📅</span> {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')}</div>
-            <div className="popup-info-line"><span className="popup-info-icon">⏰</span> {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</div>
-            {hoveredReservation.agencement && <div className="popup-info-line"><span className="popup-info-icon">🪑</span> {hoveredReservation.agencement}</div>}
-            
-            {/* Capacité restaurée pour salles admin */}
-            {(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (
-                <div className="popup-info-line"><span className="popup-info-icon">👥</span> {hoveredReservation.nbPersonnes || 'N/C'} Pers.</div>
+            <div className="popup-info-line">
+              <span className="popup-info-icon">📅</span> 
+              {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} | {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}
+            </div>
+
+            {/* LOGIQUE CORRIGÉE : UNIQUEMENT POUR SALLE CONSEIL ET SALLE MARIAGES */}
+            {(hoveredReservation.salle.toLowerCase().includes('conseil') || hoveredReservation.salle.toLowerCase().includes('mariages')) && (
+                <div className="popup-info-line">
+                  <span className="popup-info-icon">🪑</span> 
+                  {hoveredReservation.agencement || 'N/C'} | {hoveredReservation.nbPersonnes || 'N/C'} Pers.
+                </div>
             )}
           </div>
         </div>
