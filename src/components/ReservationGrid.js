@@ -108,11 +108,11 @@ function ReservationGrid({ selectedDate, onBack }) {
     grid.push(<div key="corner" className="grid-corner"></div>);
     SALLES.forEach((salle, idx) => {
       const parts = salle.split(' - ');
-      const cap = parts[1] ? parts[1].replace(/Personnes/gi, 'Pers.') : '';
+      const capacity = parts[1] ? parts[1].replace(/Personnes/gi, 'Pers.') : '';
       grid.push(
         <div key={`h-${idx}`} className="salle-header" style={{ gridColumn: idx + 2 }} onClick={() => setHoveredSalle(salle)}>
           <span className="salle-name-white">{parts[0].replace(/Salle Conseil/gi, 'Conseil').replace(/Salle Mariages/gi, 'Mariages')}</span>
-          <span className="salle-capacity-white">{cap}</span>
+          <span className="salle-capacity-white">{capacity}</span>
         </div>
       );
     });
@@ -163,18 +163,26 @@ function ReservationGrid({ selectedDate, onBack }) {
   return (
     <div className="reservation-grid-container" onMouseUp={handleMouseUp}>
       <div className="date-navigation-bar">
-        <div className="nav-group-left"><button className="back-button-original" onClick={onBack}>◀ Calendrier</button></div>
-        <div className="nav-group-center">
-          <button className="nav-nav-btn" onClick={() => changeDate(-7)}>⏪</button>
-          <button className="nav-nav-btn" onClick={() => changeDate(-1)}>◀</button>
-          <div className="central-date-block">
-            <button className="nav-today-button" onClick={handleToday}>Aujourd'hui</button>
-            <div className="date-display"><h2>{currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h2></div>
-          </div>
-          <button className="nav-nav-btn" onClick={() => changeDate(1)}>▶</button>
-          <button className="nav-nav-btn" onClick={() => changeDate(7)}>⏩</button>
+        <div className="nav-group-left">
+          <button className="back-button-original" onClick={onBack}>◀ Calendrier</button>
         </div>
-        <div className="nav-group-right"></div>
+        
+        {/* Structure HTML modifiée pour permettre le repositionnement Flexbox */}
+        <div className="nav-group-center">
+          <button className="nav-nav-btn nav-prev-week" onClick={() => changeDate(-7)}>⏪</button>
+          <button className="nav-nav-btn nav-prev-day" onClick={() => changeDate(-1)}>◀</button>
+          
+          <button className="nav-today-button" onClick={handleToday}>Aujourd'hui</button>
+          
+          <button className="nav-nav-btn nav-next-day" onClick={() => changeDate(1)}>▶</button>
+          <button className="nav-nav-btn nav-next-week" onClick={() => changeDate(7)}>⏩</button>
+        </div>
+
+        <div className="central-date-block">
+          <div className="date-display">
+            <h2>{currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h2>
+          </div>
+        </div>
       </div>
 
       <div className="reservation-content">
@@ -239,9 +247,15 @@ function ReservationGrid({ selectedDate, onBack }) {
           <div className="popup-card-body">
             <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
             <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
-            <div className="popup-info-line"><span className="popup-info-icon">📅</span> {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} | {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</div>
+            <div className="popup-info-line">
+              <span className="popup-info-icon">📅</span> 
+              {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} | {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}
+            </div>
             {(hoveredReservation.salle.toLowerCase().includes('conseil') || hoveredReservation.salle.toLowerCase().includes('mariages')) && (
-                <div className="popup-info-line"><span className="popup-info-icon">🪑</span> {hoveredReservation.agencement || 'N/C'} | {hoveredReservation.nbPersonnes || 'N/C'} Pers.</div>
+                <div className="popup-info-line">
+                  <span className="popup-info-icon">🪑</span> 
+                  {hoveredReservation.agencement || 'N/C'} | {hoveredReservation.nbPersonnes || 'N/C'} Pers.
+                </div>
             )}
           </div>
         </div>
