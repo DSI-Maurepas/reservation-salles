@@ -14,11 +14,10 @@ function ReservationGrid({ selectedDate, onBack }) {
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredSalle, setHoveredSalle] = useState(null);
   const [hoveredReservation, setHoveredReservation] = useState(null);
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0, alignment: 'bottom' });
   const [isFading, setIsFading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Sécurité Admin
   const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
 
@@ -30,7 +29,7 @@ function ReservationGrid({ selectedDate, onBack }) {
     agencement: '', nbPersonnes: ''
   });
 
-  // Gestion de la fiche (4s affichage, 0.4s disparition)
+  // Gestion de la fiche (4s affichage, 0.4s disparition) avec sécurité de visibilité
   useEffect(() => {
     let fadeTimer, removeTimer;
     if (hoveredReservation) {
@@ -41,7 +40,7 @@ function ReservationGrid({ selectedDate, onBack }) {
           setHoveredReservation(null);
           setIsFading(false);
         }, 400);
-      }, 4000); 
+      }, 4000);
     }
     return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
   }, [hoveredReservation]);
@@ -78,9 +77,15 @@ function ReservationGrid({ selectedDate, onBack }) {
     const sShort = salle.split(' - ')[0];
     const res = reservations.find(r => r.salle.includes(sShort) && hour >= googleSheetsService.timeToFloat(r.heureDebut) && hour < googleSheetsService.timeToFloat(r.heureFin));
     
-    // Fiche de propriété prioritaire même sur salle verrouillée
     if (res) {
-      setPopupPosition({ x: e.clientX, y: e.clientY - 50 });
+      const popupHeight = 220; // Hauteur estimée de la fiche
+      const posY = e.clientY - 50;
+      
+      // Règle de sécurité : Si la fiche dépasse le haut de l'écran, on l'affiche en dessous du curseur
+      const alignment = (posY - popupHeight < 10) ? 'top' : 'bottom';
+      const finalY = (alignment === 'top') ? e.clientY + 50 : posY;
+
+      setPopupPosition({ x: e.clientX, y: finalY, alignment: alignment });
       setHoveredReservation(res);
       return;
     }
@@ -100,12 +105,14 @@ function ReservationGrid({ selectedDate, onBack }) {
   };
 
   const handleMouseUp = () => {
-    if (isDragging && currentSelection) setSelections(prev => [...prev, currentSelection]);
+    if (isDragging && currentSelection) {
+      setSelections(prev => [...prev, currentSelection]);
+    }
     setIsDragging(false);
     setCurrentSelection(null);
   };
 
-  const mergedSelections = ((selections) => {
+  const preMergeSelections = (selections) => {
     const bySalle = {};
     selections.forEach(sel => { if (!bySalle[sel.salle]) bySalle[sel.salle] = []; bySalle[sel.salle].push(sel); });
     const merged = [];
@@ -119,7 +126,9 @@ function ReservationGrid({ selectedDate, onBack }) {
       }
     }
     return merged;
-  })(selections);
+  };
+
+  const mergedSelections = preMergeSelections(selections);
 
   const renderGrid = () => {
     const grid = [];
@@ -127,10 +136,11 @@ function ReservationGrid({ selectedDate, onBack }) {
 
     SALLES.forEach((salle, idx) => {
       const parts = salle.split(' - ');
+      const capacity = parts[1] ? parts[1].replace(/Personnes/gi, 'Pers.') : '';
       grid.push(
         <div key={`h-${idx}`} className="salle-header" style={{ gridColumn: idx + 2 }} onClick={() => setHoveredSalle(salle)}>
-          <span className="salle-name">{parts[0].replace(/Salle Conseil/gi, 'Conseil').replace(/Salle Mariages/gi, 'Mariages')}</span>
-          <span className="salle-capacity">{parts[1] || ''}</span>
+          <span className="salle-name-white">{parts[0].replace(/Salle Conseil/gi, 'Conseil').replace(/Salle Mariages/gi, 'Mariages')}</span>
+          <span className="salle-capacity-white">{capacity}</span>
         </div>
       );
     });
@@ -138,7 +148,6 @@ function ReservationGrid({ selectedDate, onBack }) {
     for (let h = HORAIRES.HEURE_DEBUT; h < HORAIRES.HEURE_FIN; h += 0.5) {
       const row = (h - HORAIRES.HEURE_DEBUT) / 0.5 + 2;
       const isFullHour = h % 1 === 0;
-      const isLastRow = (h === HORAIRES.HEURE_FIN - 0.5);
       if (isFullHour) grid.push(<div key={`t-${h}`} className="time-label" style={{ gridRow: `${row} / span 2` }}>{h}h</div>);
 
       SALLES.forEach((salle, idx) => {
@@ -148,18 +157,18 @@ function ReservationGrid({ selectedDate, onBack }) {
         const selected = selections.some(sel => sel.salle === salle && h >= sel.startHour && h < sel.endHour) || (currentSelection && currentSelection.salle === salle && h >= currentSelection.startHour && h < currentSelection.endHour);
         
         let classes = `time-slot ${isFullHour ? 'full-hour-start' : 'half-hour-start'}`;
-        if (isLastRow) classes += ' last-row-slot';
-        if (res) classes += ' reserved occupied'; // Toujours visible
-        if (isLocked && !res) classes += ' admin-only-locked';
+        if (h === HORAIRES.HEURE_FIN - 0.5) classes += ' last-row-slot';
+        if (res) classes += ' reserved occupied';
+        else if (isLocked) classes += ' admin-only-locked';
         else if (selected) classes += ' selected';
-        else if (h >= 12 && h < 14 && !res) classes += ' lunch-break';
+        else if (h >= 12 && h < 14) classes += ' lunch-break';
 
         grid.push(
           <div key={`c-${salle}-${h}`} className={classes} style={{ gridColumn: idx + 2, gridRow: row, backgroundColor: res ? (COULEURS_OBJETS[res.objet] || '#ccc') : '' }}
             onMouseDown={(e) => handleMouseDown(salle, h, e)}
             onMouseEnter={() => handleMouseEnter(salle, h)}
           >
-            {isLocked && !res && <span className="lock-icon">🔒</span>}
+            {isLocked && !res && <span className="lock-icon-single">🔒</span>}
           </div>
         );
       });
@@ -185,14 +194,13 @@ function ReservationGrid({ selectedDate, onBack }) {
       </div>
 
       <div className="reservation-content">
-        <div className="grid-column">
-          <div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>{renderGrid()}</div>
-        </div>
+        <div className="grid-column"><div className="reservation-grid" onMouseLeave={() => setIsDragging(false)}>{renderGrid()}</div></div>
         <div className="form-column" ref={detailsRef}>
           {selections.length > 0 ? (
             <div className="reservation-form">
-              <h3>Nouvelle Réservation</h3>
+              <h3 className="form-title">Nouvelle Réservation</h3>
               <p className="selection-count">{selections.length} {selections.length > 1 ? 'nouveaux créneaux' : 'nouveau créneau'}</p>
+              
               <div className="selections-summary">
                 {mergedSelections.map((sel, idx) => (
                   <div key={idx} className="selection-item">
@@ -201,6 +209,7 @@ function ReservationGrid({ selectedDate, onBack }) {
                   </div>
                 ))}
               </div>
+
               <form onSubmit={e => e.preventDefault()} className="room-form">
                 <div className="form-row">
                   <input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required />
@@ -214,6 +223,7 @@ function ReservationGrid({ selectedDate, onBack }) {
                 <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required>
                   <option value="">Objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
+
                 <div className="recurrence-section-styled">
                   <div className="recurrence-box">
                     <input type="checkbox" id="rec-grid" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} />
@@ -230,9 +240,11 @@ function ReservationGrid({ selectedDate, onBack }) {
                     </div>
                   )}
                 </div>
+
                 <textarea className="form-textarea" placeholder="Description" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+
                 <div className="form-actions">
-                  <button type="button" className="btn-cancel" onClick={() => setSelections([])}>Annuler</button>
+                  <button type="button" className="btn-cancel" onClick={() => setSelections([])}>Annuler la sélection</button>
                   <button type="submit" className="btn-submit">Continuer la réservation</button>
                 </div>
               </form>
@@ -242,14 +254,26 @@ function ReservationGrid({ selectedDate, onBack }) {
       </div>
 
       {hoveredReservation && (
-        <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{ position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: 'translateX(-50%)', zIndex: 10003 }}>
+        <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`}
+             style={{ 
+               position: 'fixed', 
+               left: popupPosition.x, 
+               top: popupPosition.y, 
+               transform: popupPosition.alignment === 'bottom' ? 'translate(-50%, -100%)' : 'translate(-50%, 0)', 
+               zIndex: 10005 
+             }}>
           <div className="popup-card-header"><span className="popup-icon">👤</span> {hoveredReservation.prenom} {hoveredReservation.nom}</div>
           <div className="popup-card-body">
-            <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
             <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
-            <div className="popup-info-line"><span className="popup-info-icon">📅</span> {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} : {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</div>
-            {hoveredReservation.agencement && <div className="popup-info-line"><span className="popup-info-icon">🪑</span> Disposition : {hoveredReservation.agencement}</div>}
-            {hoveredReservation.nbPersonnes && <div className="popup-info-line"><span className="popup-info-icon">👥</span> {hoveredReservation.nbPersonnes} pers.</div>}
+            <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
+            <div className="popup-info-line"><span className="popup-info-icon">📅</span> {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')}</div>
+            <div className="popup-info-line"><span className="popup-info-icon">⏰</span> {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</div>
+            {hoveredReservation.agencement && <div className="popup-info-line"><span className="popup-info-icon">🪑</span> {hoveredReservation.agencement}</div>}
+            
+            {/* Capacité restaurée pour salles admin */}
+            {(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (
+                <div className="popup-info-line"><span className="popup-info-icon">👥</span> {hoveredReservation.nbPersonnes || 'N/C'} Pers.</div>
+            )}
           </div>
         </div>
       )}
@@ -261,8 +285,8 @@ function ReservationGrid({ selectedDate, onBack }) {
             <p>Saisissez le mot de passe pour déverrouiller cette salle :</p>
             <input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" autoFocus />
             <div className="form-actions">
-              <button className="btn-cancel" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button>
-              <button className="btn-submit" onClick={handleAdminPasswordSubmit}>Débloquer</button>
+                <button className="btn-cancel" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button>
+                <button className="btn-submit" onClick={handleAdminPasswordSubmit}>Débloquer</button>
             </div>
           </div>
         </div>
