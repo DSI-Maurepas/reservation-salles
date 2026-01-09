@@ -75,7 +75,6 @@ function ReservationGrid({ selectedDate, onBack }) {
   const handleMouseDown = (salle, hour, e) => {
     const sShort = salle.split(' - ')[0];
     const res = reservations.find(r => r.salle.includes(sShort) && hour >= googleSheetsService.timeToFloat(r.heureDebut) && hour < googleSheetsService.timeToFloat(r.heureFin));
-    
     if (res) {
       const popupHeight = 220;
       const posY = e.clientY - 50;
@@ -85,12 +84,10 @@ function ReservationGrid({ selectedDate, onBack }) {
       setHoveredReservation(res);
       return;
     }
-
     if (SALLES_ADMIN_ONLY.some(a => salle.includes(a)) && !isAdminUnlocked) {
       setAdminPasswordModal({ show: true, password: '' });
       return;
     }
-
     setIsDragging(true);
     setCurrentSelection({ salle, startHour: hour, endHour: hour + 0.5 });
   };
@@ -101,9 +98,7 @@ function ReservationGrid({ selectedDate, onBack }) {
   };
 
   const handleMouseUp = () => {
-    if (isDragging && currentSelection) {
-      setSelections(prev => [...prev, currentSelection]);
-    }
+    if (isDragging && currentSelection) setSelections(prev => [...prev, currentSelection]);
     setIsDragging(false);
     setCurrentSelection(null);
   };
@@ -111,36 +106,31 @@ function ReservationGrid({ selectedDate, onBack }) {
   const renderGrid = () => {
     const grid = [];
     grid.push(<div key="corner" className="grid-corner"></div>);
-
     SALLES.forEach((salle, idx) => {
       const parts = salle.split(' - ');
-      const capacity = parts[1] ? parts[1].replace(/Personnes/gi, 'Pers.') : '';
+      const cap = parts[1] ? parts[1].replace(/Personnes/gi, 'Pers.') : '';
       grid.push(
         <div key={`h-${idx}`} className="salle-header" style={{ gridColumn: idx + 2 }} onClick={() => setHoveredSalle(salle)}>
           <span className="salle-name-white">{parts[0].replace(/Salle Conseil/gi, 'Conseil').replace(/Salle Mariages/gi, 'Mariages')}</span>
-          <span className="salle-capacity-white">{capacity}</span>
+          <span className="salle-capacity-white">{cap}</span>
         </div>
       );
     });
-
     for (let h = HORAIRES.HEURE_DEBUT; h < HORAIRES.HEURE_FIN; h += 0.5) {
       const row = (h - HORAIRES.HEURE_DEBUT) / 0.5 + 2;
       const isFullHour = h % 1 === 0;
       if (isFullHour) grid.push(<div key={`t-${h}`} className="time-label" style={{ gridRow: `${row} / span 2` }}>{h}h</div>);
-
       SALLES.forEach((salle, idx) => {
         const sShort = salle.split(' - ')[0];
         const res = reservations.find(r => r.salle.includes(sShort) && h >= googleSheetsService.timeToFloat(r.heureDebut) && h < googleSheetsService.timeToFloat(r.heureFin));
         const isLocked = SALLES_ADMIN_ONLY.some(a => salle.includes(a)) && !isAdminUnlocked;
         const selected = selections.some(sel => sel.salle === salle && h >= sel.startHour && h < sel.endHour) || (currentSelection && currentSelection.salle === salle && h >= currentSelection.startHour && h < currentSelection.endHour);
-        
         let classes = `time-slot ${isFullHour ? 'full-hour-start' : 'half-hour-start'}`;
         if (h === HORAIRES.HEURE_FIN - 0.5) classes += ' last-row-slot';
         if (res) classes += ' reserved occupied';
         else if (isLocked) classes += ' admin-only-locked';
         else if (selected) classes += ' selected';
         else if (h >= 12 && h < 14) classes += ' lunch-break';
-
         grid.push(
           <div key={`c-${salle}-${h}`} className={classes} style={{ gridColumn: idx + 2, gridRow: row, backgroundColor: res ? (COULEURS_OBJETS[res.objet] || '#ccc') : '' }}
             onMouseDown={(e) => handleMouseDown(salle, h, e)}
@@ -194,7 +184,6 @@ function ReservationGrid({ selectedDate, onBack }) {
             <div className="reservation-form">
               <h3 className="form-title">Nouvelle Réservation</h3>
               <p className="selection-count">{selections.length} {selections.length > 1 ? 'nouveaux créneaux' : 'nouveau créneau'}</p>
-              
               <div className="selections-summary">
                 {preMergeSelections(selections).map((sel, idx) => (
                   <div key={idx} className="selection-item">
@@ -203,7 +192,6 @@ function ReservationGrid({ selectedDate, onBack }) {
                   </div>
                 ))}
               </div>
-
               <form onSubmit={e => e.preventDefault()} className="room-form">
                 <div className="form-row">
                   <input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required />
@@ -217,7 +205,6 @@ function ReservationGrid({ selectedDate, onBack }) {
                 <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required>
                   <option value="">Objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
-
                 <div className="recurrence-section-styled">
                   <div className="recurrence-box">
                     <input type="checkbox" id="rec-grid" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} />
@@ -234,9 +221,7 @@ function ReservationGrid({ selectedDate, onBack }) {
                     </div>
                   )}
                 </div>
-
                 <textarea className="form-textarea" placeholder="Description" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
-
                 <div className="form-actions">
                   <button type="button" className="btn-cancel" onClick={() => setSelections([])}>Annuler la sélection</button>
                   <button type="submit" className="btn-submit">Continuer la réservation</button>
@@ -249,28 +234,14 @@ function ReservationGrid({ selectedDate, onBack }) {
 
       {hoveredReservation && (
         <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`}
-             style={{ 
-               position: 'fixed', 
-               left: popupPosition.x, 
-               top: popupPosition.y, 
-               transform: popupPosition.alignment === 'bottom' ? 'translate(-50%, -100%)' : 'translate(-50%, 0)', 
-               zIndex: 10005 
-             }}>
+             style={{ position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: popupPosition.alignment === 'bottom' ? 'translate(-50%, -100%)' : 'translate(-50%, 0)', zIndex: 10005 }}>
           <div className="popup-card-header"><span className="popup-icon">👤</span> {hoveredReservation.prenom} {hoveredReservation.nom}</div>
           <div className="popup-card-body">
             <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
             <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
-            <div className="popup-info-line">
-              <span className="popup-info-icon">📅</span> 
-              {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} | {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}
-            </div>
-
-            {/* LOGIQUE CORRIGÉE : UNIQUEMENT POUR SALLE CONSEIL ET SALLE MARIAGES */}
+            <div className="popup-info-line"><span className="popup-info-icon">📅</span> {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} | {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</div>
             {(hoveredReservation.salle.toLowerCase().includes('conseil') || hoveredReservation.salle.toLowerCase().includes('mariages')) && (
-                <div className="popup-info-line">
-                  <span className="popup-info-icon">🪑</span> 
-                  {hoveredReservation.agencement || 'N/C'} | {hoveredReservation.nbPersonnes || 'N/C'} Pers.
-                </div>
+                <div className="popup-info-line"><span className="popup-info-icon">🪑</span> {hoveredReservation.agencement || 'N/C'} | {hoveredReservation.nbPersonnes || 'N/C'} Pers.</div>
             )}
           </div>
         </div>
