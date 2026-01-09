@@ -1,5 +1,5 @@
 // src/components/SingleRoomGrid.js
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
@@ -22,7 +22,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
 
-  // REFERENCE POUR LE SCROLL AUTO
   const sidebarRef = useRef(null);
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
@@ -36,28 +35,32 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const salleData = getSalleData(selectedRoom);
   const salleInfo = sallesData.find(s => s.nom === salleData?.nom);
   const dispositions = salleInfo?.dispositions || null;
-
-  // --- CORRECTION : VÉRIFICATION ADMIN PLUS LARGE ---
-  // On vérifie si le nom de la salle sélectionnée contient l'un des noms de la liste admin
-  const isAdminOnlyRoom = (room) => {
-    if (!room) return false;
-    return SALLES_ADMIN_ONLY.some(adminRoom => room.includes(adminRoom) || adminRoom.includes(room));
-  };
-
-  useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom]);
-
-  // --- SCROLL AUTO AU CHARGEMENT ---
-  useEffect(() => {
-    if (sidebarRef.current) {
-        setTimeout(() => {
-            sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
-    }
+  
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    setTimeout(() => { window.scrollTo(0, 0); }, 50);
   }, [selectedRoom]);
 
+  useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom]);
+  
   const loadWeekReservations = async () => { setLoading(true); try { const allReservations = await googleSheetsService.getAllReservations(); const weekEnd = new Date(currentWeekStart); weekEnd.setDate(currentWeekStart.getDate() + 6); const filtered = allReservations.filter(res => { const resSalleName = res.salle.split(' - ')[0]; if (resSalleName !== selectedRoom && res.salle !== selectedRoom) return false; if (res.statut === 'cancelled') return false; const resDate = new Date(res.dateDebut); return resDate >= currentWeekStart && resDate <= weekEnd; }); setReservations(filtered); } catch (error) { console.error('Erreur chargement:', error); } setLoading(false); };
   
-  const handleAdminPasswordSubmit = () => { if (adminPasswordModal.password === 'R3sa@M0rep@s78') { setIsAdminUnlocked(true); setAdminPasswordModal({ show: false, password: '' }); } else { alert('❌ Mot de passe incorrect'); setAdminPasswordModal({ ...adminPasswordModal, password: '' }); } };
+  const isAdminOnlyRoom = (room) => {
+    const r = room.toLowerCase();
+    return r.includes('conseil') || r.includes('mariages') || SALLES_ADMIN_ONLY.some(adminSalle => adminSalle.toLowerCase().includes(r));
+  };
+
+  const handleAdminPasswordSubmit = () => { 
+    if (adminPasswordModal.password === 'R3sa@Morepas78') { 
+      setIsAdminUnlocked(true); 
+      setAdminPasswordModal({ show: false, password: '' }); 
+    } else { 
+      alert('❌ Mot de passe incorrect'); 
+      setAdminPasswordModal({ ...adminPasswordModal, password: '' }); 
+    } 
+  };
+
   const getDates = () => { const dates = []; for (let i = 0; i < 7; i++) { const date = new Date(currentWeekStart); date.setDate(currentWeekStart.getDate() + i); dates.push(date); } return dates; };
   const dates = getDates();
   const weekDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -75,7 +78,19 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const getReservation = (dayIndex, slotStart) => { const slotEnd = slotStart + 0.5; const date = dates[dayIndex]; const dateStr = googleSheetsService.formatDate(date); return reservations.find(res => { if (res.dateDebut !== dateStr) return false; const resStart = googleSheetsService.timeToFloat(res.heureDebut); const resEnd = googleSheetsService.timeToFloat(res.heureFin); return (slotStart < resEnd && slotEnd > resStart); }); };
   const isSlotSelected = (dayIndex, slot) => selections.some(sel => sel.dayIndex === dayIndex && sel.hour === slot);
   
-  const handleMouseDown = (dayIndex, hour, date) => { if (isDateInPast(date)) return; if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; } if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) { setAdminPasswordModal({ show: true, password: '' }); return; } if (isSlotReserved(dayIndex, hour)) return; setIsDragging(false); setDragStart({ dayIndex, hour }); setMouseDownPos({ dayIndex, hour, date }); };
+  const handleMouseDown = (dayIndex, hour, date) => { 
+    if (isDateInPast(date)) return; 
+    if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; } 
+    if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) { 
+      setAdminPasswordModal({ show: true, password: '' }); 
+      return; 
+    } 
+    if (isSlotReserved(dayIndex, hour)) return; 
+    setIsDragging(false); 
+    setDragStart({ dayIndex, hour }); 
+    setMouseDownPos({ dayIndex, hour, date }); 
+  };
+
   const handleMouseEnter = (dayIndex, hour, date) => { if (!dragStart) return; if (!isDragging && mouseDownPos) { if (dayIndex !== mouseDownPos.dayIndex || hour !== mouseDownPos.hour) setIsDragging(true); else return; } if (!isDragging) return; if (isSlotReserved(dayIndex, hour) || isDimanche(date) || isJourFerie(date) || isDateInPast(date)) return; const newSelections = [...selections]; const minDay = Math.min(dragStart.dayIndex, dayIndex); const maxDay = Math.max(dragStart.dayIndex, dayIndex); const minHour = Math.min(dragStart.hour, hour); const maxHour = Math.max(dragStart.hour, hour); for (let d = minDay; d <= maxDay; d++) { const dayDate = dates[d]; if (!isDimanche(dayDate) && !isJourFerie(dayDate) && !isDateInPast(dayDate)) { for (let h = minHour; h <= maxHour; h += 0.5) { const exists = newSelections.some(sel => sel.dayIndex === d && sel.hour === h); if (!exists && !isSlotReserved(d, h)) newSelections.push({ dayIndex: d, hour: h, date: dates[d] }); } } } setSelections(newSelections); };
   
   const handleMouseUp = () => { 
@@ -96,16 +111,10 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       setShowForm(true);
       shouldScroll = true;
     }
-    
     if (shouldScroll && sidebarRef.current) {
-        setTimeout(() => {
-            sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+        setTimeout(() => { sidebarRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
     }
-
-    setIsDragging(false); 
-    setDragStart(null); 
-    setMouseDownPos(null); 
+    setIsDragging(false); setDragStart(null); setMouseDownPos(null); 
   };
 
   const handleCancelSelection = () => { setSelections([]); setShowForm(false); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
@@ -114,31 +123,18 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const generateRecurrenceDates = (startDate, endDate, type) => { const dates = []; const current = new Date(startDate); const end = new Date(endDate); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); while (current <= end) { dates.push(new Date(current)); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); } return dates; };
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (existing.salle !== candidate.salle && existing.salle.split(' - ')[0] !== candidate.salle) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
   const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '✅ Réservation confirmée !' }); setSelections([]); setShowForm(false); loadWeekReservations(); } catch (error) { alert('Erreur: ' + error.message); } finally { setIsSubmitting(false); } };
-  const handleFormSubmit = async (e) => { e.preventDefault(); if (dispositions && !formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(sel.date); const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); const dates = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } };
+  const handleFormSubmit = async (e) => { e.preventDefault(); if (dispositions && !formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(sel.date); const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement, nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); const dates = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } };
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
   const successModalContent = successModal.show ? ( <div className="success-modal-overlay" onClick={() => setSuccessModal({ ...successModal, show: false })} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '70px' }}> <div className="success-modal" onClick={e => e.stopPropagation()}> <div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div> <div className="success-modal-body"> <p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p> <div className="reservations-list"> {successModal.reservations.map((res, i) => ( <div key={i} className="reservation-item-success"> <span className="calendar-icon">📅</span> {res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin} </div> ))} </div> <div className="ical-download-section"> <button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Télécharger .ics</button> </div> </div> <div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({ ...successModal, show: false })}>Fermer</button></div> </div> </div> ) : null;
 
-  // --- GESTION DU TIMER (4 SECONDES) ---
   useEffect(() => {
     let fadeTimer;
     let removeTimer;
-
     if (hoveredReservation) {
-      setIsFading(false); // Reset
-
-      fadeTimer = setTimeout(() => {
-        setIsFading(true); // Fade out start
-        removeTimer = setTimeout(() => {
-          setHoveredReservation(null);
-          setIsFading(false);
-        }, 400); // Wait for transition
-      }, 4000); // 4 sec delay
+      setIsFading(false);
+      fadeTimer = setTimeout(() => { setIsFading(true); removeTimer = setTimeout(() => { setHoveredReservation(null); setIsFading(false); }, 400); }, 4000);
     }
-
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(removeTimer);
-    };
+    return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
   }, [hoveredReservation]);
 
   return (
@@ -161,14 +157,16 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
           <div className="nav-group-right-spacer"></div>
         </div>
 
+        <div className="mobile-instruction">
+          <p>Cliquez sur un créneau pour le sélectionner</p>
+        </div>
+
         <div className="single-room-layout">
-          {/* CIBLE DU SCROLL VIA LA REF */}
           <div className="room-sidebar" ref={sidebarRef}>
             {!showForm && (
               <>
                 <SalleCard salle={selectedRoom} />
-                {/* INSTRUCTION BUREAU (Caché sur Mobile via CSS) */}
-                <div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div>
+                {/* BLOC INSTRUCTION SUPPRIMÉ ICI */}
               </>
             )}
             {showForm && selections.length > 0 && (
@@ -187,9 +185,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                   <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez l'objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
                   {dispositions && (
                     <>
-                      {/* VALIDATION: Ajout de 'required' */}
                       <select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})} required><option value="">Disposition souhaitée *</option>{dispositions.map(d => <option key={d} value={d}>{d}</option>)}</select>
-                      {/* VALIDATION: Ajout de 'required', 'min' et 'max' dynamique */}
                       {(selectedRoom.includes('Conseil') || selectedRoom.includes('Mariages')) && <input type="number" className="form-input" placeholder={`Nombre de personnes prévues (max ${selectedRoom.includes('Mariages') ? 30 : 100}) *`} value={formData.nbPersonnes} onChange={e => setFormData({...formData, nbPersonnes: e.target.value})} required min="1" max={selectedRoom.includes('Mariages') ? 30 : 100} />}
                     </>
                   )}
@@ -230,9 +226,6 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                     const reservation = getReservation(dayIndex, slot); 
                     const isFullHour = slot % 1 === 0;
                     
-                    // --- VÉRIFICATION ADMIN SÉCURISÉE ---
-                    const isAdmin = isAdminOnlyRoom(selectedRoom);
-                    
                     let bgStyle = {}; 
                     if (reserved && reservation) bgStyle.backgroundColor = COULEURS_OBJETS[reservation.objet] || '#ccc'; 
                     
@@ -243,24 +236,19 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                     if (selected) cellClass += ' selected';
                     if (blocked) cellClass += ' blocked';
                     if (past) cellClass += ' past-date';
-                    
-                    // --- APPLIQUER LA CLASSE DE VERROUILLAGE MÊME LE MIDI ---
-                    if (isAdmin && !isAdminUnlocked && !reserved) {
-                        cellClass += ' admin-only-locked';
-                    }
-                    
                     if (slot >= 12 && slot < 14) cellClass += ' lunch-break';
+                    
+                    const isLocked = isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked;
 
                     return (
                       <td 
                         key={`${dayIndex}-${slot}`} 
-                        className={cellClass} 
+                        className={`${cellClass} ${isLocked && !reserved ? 'admin-only-locked' : ''}`}
                         style={bgStyle} 
                         onMouseDown={() => handleMouseDown(dayIndex, slot, date)} 
                         onMouseEnter={(e) => { 
                           handleMouseEnter(dayIndex, slot, date); 
                           if (reserved && reservation) { 
-                            const rect = e.currentTarget.getBoundingClientRect(); 
                             setHoveredReservation(reservation); 
                             setPopupPosition({ x: e.clientX, y: e.clientY - 50 }); 
                           } 

@@ -176,14 +176,21 @@ function AdminPanel() {
     return (
       <div className="admin-auth">
         <div className="auth-card">
+          {/* Bloc unique bleu pour tout le contenu */}
           <div className="admin-login-blue-block">
+            
+            {/* Version Desktop : Cadenas + Phrases */}
             <span className="login-icon-desktop">🔒</span>
             <span className="login-text-desktop">
               Cette section est réservée aux administrateurs. Mot de passe Administrateur
             </span>
+
+            {/* Version Mobile : Titre seul */}
             <span className="login-title-mobile">
               Accès Administrateur
             </span>
+
+            {/* Formulaire (Champ + Bouton) */}
             <form onSubmit={handleAuthenticate} className="admin-login-form-inline">
               <input
                 type="password"
@@ -206,8 +213,8 @@ function AdminPanel() {
   return (
     <>
     <div className="admin-panel">
-      
       <div className="admin-header">
+        <h2>⚙️ Panel d'Administration</h2>
         <div className="admin-header-actions">
           <button onClick={handleDownloadExcel} className="download-excel-btn">📥 Télécharger Excel</button>
           <button onClick={handleLogout} className="logout-btn">Déconnexion</button>
@@ -231,21 +238,7 @@ function AdminPanel() {
           <div className="admin-table-container">
             <table className="admin-table">
               <thead><tr><th onClick={() => handleSort('salle')}>Salle{renderSortIcon('salle')}</th><th onClick={() => handleSort('dateDebut')}>Date{renderSortIcon('dateDebut')}</th><th onClick={() => handleSort('heureDebut')}>Horaire{renderSortIcon('heureDebut')}</th><th onClick={() => handleSort('nom')}>Agent{renderSortIcon('nom')}</th><th onClick={() => handleSort('service')}>Service{renderSortIcon('service')}</th><th onClick={() => handleSort('objet')}>Objet{renderSortIcon('objet')}</th><th onClick={() => handleSort('email')}>Email{renderSortIcon('email')}</th><th>Actions</th></tr></thead>
-              <tbody>{filteredReservations.map(res => (<tr key={res.id} style={{backgroundColor: `${getObjetColor(res.objet)}20`}}><td><div className="salle-cell"><div className="salle-name">{res.salle.split(' - ')[0]}</div><div className="salle-capacity">{res.salle.split(' - ')[1] || ''}</div></div></td>
-              
-              <td>{new Date(res.dateDebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</td>
-              
-              <td>{res.heureDebut} - {res.heureFin}</td><td>{res.prenom} {res.nom}</td><td>{res.service}</td><td>{res.objet}</td><td>{res.email}</td>
-              
-              {/* CORRECTION STRUCTURELLE : TD normal avec DIV wrapper à l'intérieur */}
-              <td>
-                <div className="actions-wrapper">
-                  <button onClick={() => handleEdit(res)} className="edit-button">Modifier</button>
-                  <button onClick={() => handleDeleteClick(res)} className="delete-button">Supprimer</button>
-                </div>
-              </td>
-              
-              </tr>))}</tbody>
+              <tbody>{filteredReservations.map(res => (<tr key={res.id} style={{backgroundColor: `${getObjetColor(res.objet)}20`}}><td><div className="salle-cell"><div className="salle-name">{res.salle.split(' - ')[0]}</div><div className="salle-capacity">{res.salle.split(' - ')[1] || ''}</div></div></td><td>{new Date(res.dateDebut).toLocaleDateString('fr-FR')}</td><td>{res.heureDebut} - {res.heureFin}</td><td>{res.prenom} {res.nom}</td><td>{res.service}</td><td>{res.objet}</td><td>{res.email}</td><td className="actions-cell"><button onClick={() => handleEdit(res)} className="edit-button">✏️ Modifier</button><button onClick={() => handleDeleteClick(res)} className="delete-button">🗑️ Supprimer</button></td></tr>))}</tbody>
             </table>
           </div>
         )}
