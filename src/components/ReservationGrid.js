@@ -14,7 +14,6 @@ function ReservationGrid({ selectedDate, onBack }) {
   const [currentSelection, setCurrentSelection] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [hoveredSalle, setHoveredSalle] = useState(null);
-<<<<<<< HEAD
   const [hoveredReservation, setHoveredReservation] = useState(null);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
@@ -22,12 +21,6 @@ function ReservationGrid({ selectedDate, onBack }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Sécurité Admin
-=======
-  const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // ÉTATS POUR LA SÉCURITÉ ADMIN
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
   const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
 
@@ -39,8 +32,7 @@ function ReservationGrid({ selectedDate, onBack }) {
     agencement: '', nbPersonnes: ''
   });
 
-<<<<<<< HEAD
-  // Gestion de la vignette (identique à par salle)
+  // Gestion de la vignette (Popup d'info)
   useEffect(() => {
     let fadeTimer, removeTimer;
     if (hoveredReservation) {
@@ -50,7 +42,7 @@ function ReservationGrid({ selectedDate, onBack }) {
         removeTimer = setTimeout(() => {
           setHoveredReservation(null);
           setIsFading(false);
-        }, 400); // Disparition en 0.4s
+        }, 400); // Disparition 0.4s
       }, 3000); // Affichage 3s
     }
     return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
@@ -61,13 +53,6 @@ function ReservationGrid({ selectedDate, onBack }) {
     setCurrentDate(d); setSelections([]);
   };
 
-=======
-  const changeDate = (days) => {
-    const d = new Date(currentDate); d.setDate(d.getDate() + days);
-    setCurrentDate(d); setSelections([]);
-  };
-
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
   const handleToday = () => { setCurrentDate(new Date()); setSelections([]); };
 
   const formatRoomName = (name) => {
@@ -75,24 +60,12 @@ function ReservationGrid({ selectedDate, onBack }) {
     return name.replace(/Salle Conseil/gi, 'Conseil').replace(/Salle Mariages/gi, 'Mariages');
   };
 
-<<<<<<< HEAD
-=======
-  // VÉRIFICATION ADMIN SÉCURISÉE
-  const isAdminOnlyRoom = (salle) => {
-    return SALLES_ADMIN_ONLY.some(adminRoom => salle.includes(adminRoom) || adminRoom.includes(salle));
-  };
-
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
   const handleAdminPasswordSubmit = () => {
     if (adminPasswordModal.password === 'R3sa@M0rep@s78') {
       setIsAdminUnlocked(true);
       setAdminPasswordModal({ show: false, password: '' });
     } else {
-<<<<<<< HEAD
       alert('Mot de passe incorrect');
-=======
-      alert('❌ Mot de passe incorrect');
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
       setAdminPasswordModal({ ...adminPasswordModal, password: '' });
     }
   };
@@ -109,7 +82,6 @@ function ReservationGrid({ selectedDate, onBack }) {
 
   useEffect(() => { loadReservations(); }, [loadReservations]);
 
-<<<<<<< HEAD
   const handleMouseDown = (salle, hour, e) => {
     const reserved = reservations.find(res => res.salle.includes(salle.split(' - ')[0]) && hour >= googleSheetsService.timeToFloat(res.heureDebut) && hour < googleSheetsService.timeToFloat(res.heureFin));
     
@@ -124,16 +96,6 @@ function ReservationGrid({ selectedDate, onBack }) {
       return;
     }
 
-=======
-  const handleMouseDown = (salle, hour) => {
-    if (isAdminOnlyRoom(salle) && !isAdminUnlocked) {
-      setAdminPasswordModal({ show: true, password: '' });
-      return;
-    }
-    // Empêcher de glisser sur une cellule déjà réservée
-    if (reservations.find(res => res.salle.includes(salle.split(' - ')[0]) && hour >= googleSheetsService.timeToFloat(res.heureDebut) && hour < googleSheetsService.timeToFloat(res.heureFin))) return;
-
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
     setIsDragging(true);
     setCurrentSelection({ salle, startHour: hour, endHour: hour + 0.5 });
   };
@@ -149,25 +111,6 @@ function ReservationGrid({ selectedDate, onBack }) {
     }
     setIsDragging(false);
     setCurrentSelection(null);
-<<<<<<< HEAD
-=======
-  };
-
-  const preMergeSelections = (selections) => {
-    const bySalle = {};
-    selections.forEach(sel => { if (!bySalle[sel.salle]) bySalle[sel.salle] = []; bySalle[sel.salle].push(sel); });
-    const merged = [];
-    for (const salle in bySalle) {
-      const slots = bySalle[salle].sort((a, b) => a.startHour - b.startHour);
-      let i = 0;
-      while (i < slots.length) {
-        const current = { ...slots[i] };
-        while (i + 1 < slots.length && Math.abs(current.endHour - slots[i + 1].startHour) < 0.01) { current.endHour = slots[i + 1].endHour; i++; }
-        merged.push(current); i++;
-      }
-    }
-    return merged;
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
   };
 
   const renderGrid = () => {
@@ -176,11 +119,7 @@ function ReservationGrid({ selectedDate, onBack }) {
 
     SALLES.forEach((salle, idx) => {
       grid.push(
-<<<<<<< HEAD
         <div key={`h-${idx}`} className="salle-header" style={{ gridColumn: idx + 2 }} onClick={() => { setHoveredSalle(salle); }}>
-=======
-        <div key={`h-${idx}`} className="salle-header" style={{ gridColumn: idx + 2 }} onClick={() => { setHoveredSalle(salle); if(detailsRef.current) detailsRef.current.scrollIntoView({behavior:'smooth'}); }}>
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
           <span className="salle-name">{formatRoomName(salle.split(' - ')[0])}</span>
           <span className="salle-capacity">{salle.split(' - ')[1] || ''}</span>
         </div>
@@ -195,11 +134,7 @@ function ReservationGrid({ selectedDate, onBack }) {
 
       SALLES.forEach((salle, idx) => {
         const reserved = reservations.find(res => res.salle.includes(salle.split(' - ')[0]) && h >= googleSheetsService.timeToFloat(res.heureDebut) && h < googleSheetsService.timeToFloat(res.heureFin));
-<<<<<<< HEAD
         const locked = SALLES_ADMIN_ONLY.some(a => salle.includes(a)) && !isAdminUnlocked;
-=======
-        const locked = isAdminOnlyRoom(salle) && !isAdminUnlocked;
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
         const selected = selections.some(sel => sel.salle === salle && h >= sel.startHour && h < sel.endHour) || (currentSelection && currentSelection.salle === salle && h >= currentSelection.startHour && h < currentSelection.endHour);
         
         let classes = `time-slot ${isFullHour ? 'full-hour-start' : 'half-hour-start'} ${isLastRow ? 'last-row-slot' : ''}`;
@@ -210,16 +145,10 @@ function ReservationGrid({ selectedDate, onBack }) {
 
         grid.push(
           <div key={`c-${salle}-${h}`} className={classes} style={{ gridColumn: idx + 2, gridRow: row, backgroundColor: (reserved && !locked) ? (COULEURS_OBJETS[reserved.objet] || '#ccc') : '' }}
-<<<<<<< HEAD
             onMouseDown={(e) => handleMouseDown(salle, h, e)}
             onMouseEnter={() => handleMouseEnter(salle, h)}
           >
             {locked && <span className="lock-icon">🔒</span>}
-=======
-            onMouseDown={() => handleMouseDown(salle, h)}
-            onMouseEnter={() => handleMouseEnter(salle, h)}
-          >
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
           </div>
         );
       });
@@ -227,11 +156,6 @@ function ReservationGrid({ selectedDate, onBack }) {
     return grid;
   };
 
-<<<<<<< HEAD
-=======
-  const mergedSelections = preMergeSelections(selections);
-
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
   return (
     <div className="reservation-grid-container" onMouseUp={handleMouseUp}>
       <div className="date-navigation-bar">
@@ -259,20 +183,6 @@ function ReservationGrid({ selectedDate, onBack }) {
           {selections.length > 0 ? (
             <div className="reservation-form">
               <h3 className="form-title">Nouvelle Réservation</h3>
-<<<<<<< HEAD
-=======
-              <div className="selections-summary">
-                {mergedSelections.map((sel, i) => (
-                  <div key={i} className="selection-item">
-                    <div className="selection-info">
-                      <p><strong>{sel.salle.split(' - ')[0]}</strong></p>
-                      <p>{googleSheetsService.formatTime(sel.startHour)} - {googleSheetsService.formatTime(sel.endHour)}</p>
-                    </div>
-                    <button className="remove-selection-btn" onClick={() => setSelections(prev => prev.filter(s => !(s.salle === sel.salle && s.startHour >= sel.startHour && s.endHour <= sel.endHour)))}>✕</button>
-                  </div>
-                ))}
-              </div>
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
               <form onSubmit={(e) => e.preventDefault()} className="room-form">
                 <div className="form-row">
                   <input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required />
@@ -287,10 +197,6 @@ function ReservationGrid({ selectedDate, onBack }) {
                   <option value="">Objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
 
-<<<<<<< HEAD
-=======
-                {/* LOGIQUE RECURRENCE RESTAURÉE */}
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
                 <div className="recurrence-section-styled">
                   <div className="recurrence-box">
                     <input type="checkbox" id="rec-grid" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} />
@@ -323,7 +229,6 @@ function ReservationGrid({ selectedDate, onBack }) {
         </div>
       </div>
 
-<<<<<<< HEAD
       {hoveredReservation && (
         <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`}
              style={{ position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: 'translate(-50%, -110%)', zIndex: 1000 }}>
@@ -335,18 +240,11 @@ function ReservationGrid({ selectedDate, onBack }) {
         </div>
       )}
 
-=======
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
       {adminPasswordModal.show && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h3>🔑 Accès Administrateur</h3>
-<<<<<<< HEAD
-            <input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" placeholder="Mot de passe" />
-=======
-            <p>Cette salle est réservée. Veuillez saisir le mot de passe :</p>
-            <input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" />
->>>>>>> 871a5ceb796bd7d4369111f23f183a0707fd1e3f
+            <input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" placeholder="Mot de passe" autoFocus />
             <div className="form-actions">
                 <button className="btn-cancel" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button>
                 <button className="btn-submit" onClick={handleAdminPasswordSubmit}>Débloquer</button>

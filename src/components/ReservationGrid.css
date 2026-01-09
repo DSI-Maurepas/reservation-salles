@@ -22,55 +22,35 @@
   gap: 20px; 
 }
 
-.reservation-grid { 
-  display: grid !important; 
-  grid-template-columns: 45px repeat(9, 1fr); 
-  grid-template-rows: 57px repeat(28, 25px); 
-  width: 100%; background: white; border-right: 1px solid #475569;
-}
-
-.reservation-grid .salle-header { 
-  background-color: #1976d2 !important; color: white !important;           
-  text-align: center; border-right: 1px solid rgba(255,255,255,0.2); 
-  border-bottom: 1px solid #475569; position: sticky; top: 0; z-index: 20;
-}
-
 /* VIGNETTE (POPUP) */
 .reservation-popup-card {
   background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  width: 200px; overflow: hidden; border: 1px solid #e2e8f0; animation: popupIn 0.3s ease;
+  width: 200px; overflow: hidden; border: 1px solid #e2e8f0;
 }
 .popup-card-header { background: #1976d2; color: white; padding: 8px; font-weight: bold; font-size: 0.9rem; }
 .popup-card-body { padding: 10px; font-size: 0.85rem; color: #1e293b; }
 .fading-out { opacity: 0; transition: opacity 0.4s ease; }
-@keyframes popupIn { from { opacity: 0; transform: translate(-50%, -100%); } to { opacity: 1; transform: translate(-50%, -110%); } }
 
 /* RESPONSIVE : 3 LIGNES POUR LE HEADER & FORMULAIRE EN DESSOUS */
 @media (max-width: 1280px) {
   .date-navigation-bar {
-    flex-direction: column; gap: 15px; height: auto; padding: 15px;
+    display: flex !important; flex-direction: column !important; gap: 15px; height: auto; padding: 15px;
   }
   
-  /* Ligne 1 : Bouton Calendrier */
   .nav-group-left { width: 100%; order: 1; display: flex; justify-content: center; }
-  
-  /* Ligne 2 : Bloc Date */
   .central-date-block { width: 100%; order: 2; justify-content: center; }
-  
-  /* Ligne 3 : Boutons Navigation */
-  .nav-group-center { width: 100%; order: 3; justify-content: center; }
-  .nav-group-right { display: none; }
+  .nav-group-center { width: 100%; order: 3; justify-content: center; flex-wrap: wrap; }
 
-  /* Grille au dessus, Formulaire en dessous */
   .reservation-content {
-    display: flex; flex-direction: column;
+    display: flex !important; flex-direction: column !important;
   }
-  .grid-column { order: 1; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 20px; }
-  .reservation-grid { min-width: 1000px; }
+  
+  .grid-column { order: 1; overflow-x: auto; margin-bottom: 20px; }
+  .reservation-grid { min-width: 900px; }
   .form-column { order: 2; width: 100%; max-width: 600px; margin: 0 auto; }
 }
 
 /* BOUTONS STYLE */
 .btn-submit { background: #4caf50; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; }
 .btn-cancel { background: #78909c; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; flex: 1; }
-.nav-nav-btn { background: #1976d2; color: white; border: none; border-radius: 6px; width: 36px; height: 36px; cursor: pointer; }
+.nav-nav-btn { background: #1976d2; color: white; border: none; border-radius: 6px; width: 36px; height: 36px; cursor: pointer; font-size: 1.2rem; }
