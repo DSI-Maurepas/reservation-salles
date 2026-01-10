@@ -91,3 +91,19 @@
 
 /* BOUTON NOUVELLE RESERVATION */
 .btn-submit { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); cursor: pointer; width: 100%; }
+
+/* CADENAS SALLE ADMIN */
+.time-slot.admin-only-locked {
+  background-color: #ffebee !important;
+  cursor: pointer;
+}
+
+.time-slot.admin-only-locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1rem;
+  opacity: 0.6;
+}
