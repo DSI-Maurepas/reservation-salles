@@ -106,14 +106,4 @@
   transform: translate(-50%, -50%);
   font-size: 1rem;
   opacity: 0.6;
-
-  /* Désactiver surlignage heures en drag */
-  .time-label:hover {
-    background: white !important;
-  }
-
-  /* Masquer légende en responsive */
-  .form-column .color-legend-container {
-    display: none !important;
-  }
 }

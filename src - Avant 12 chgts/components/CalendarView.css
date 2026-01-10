@@ -75,12 +75,12 @@
 /* HEADER AGENDA */
 .calendar-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 0.6rem;
   border-bottom: 2px solid #e0e0e0;
-  gap: 0.8rem;
+  gap: 1rem;
 }
 
 .calendar-header h2 {
@@ -257,15 +257,20 @@
   }
 
   .calendar-header {
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 0.8rem;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
     margin-bottom: 0.5rem;
   }
   
-  .nav-button,
+  .nav-button:first-child { order: 1; }
+  .nav-button:last-child { order: 2; }
+  
   .date-selectors {
-    order: 0;
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: center;
+    margin-top: 5px;
   }
 
   .tab-btn {
@@ -284,14 +289,4 @@
   .calendar-view { padding: 0.5rem; }
   .calendar-grid { gap: 3px; }
   .calendar-day { padding: 0.2rem; min-height: 35px; }
-
-  /* Masquer bloc bleu instructions */
-  .capacity-instructions {
-    display: none !important;
-  }
-
-  /* Masquer légende statuts */
-  .calendar-legend {
-    display: none !important;
-  }
 }
