@@ -77,9 +77,9 @@ function ReservationGrid({ selectedDate, onBack }) {
     const res = reservations.find(r => r.salle.includes(sShort) && hour >= googleSheetsService.timeToFloat(r.heureDebut) && hour < googleSheetsService.timeToFloat(r.heureFin));
     if (res) {
       const popupHeight = 220;
-      // Centre du bas de la popup à 50px au-dessus du curseur
-      const finalY = e.clientY - 50 - (popupHeight / 2);
-      const alignment = 'top';
+      const posY = e.clientY - 50;
+      const alignment = (posY - popupHeight < 10) ? 'top' : 'bottom';
+      const finalY = (alignment === 'top') ? e.clientY + 50 : posY;
       setPopupPosition({ x: e.clientX, y: finalY, alignment: alignment });
       setHoveredReservation(res);
       return;
@@ -169,13 +169,13 @@ function ReservationGrid({ selectedDate, onBack }) {
         
         {/* Structure HTML modifiée pour permettre le repositionnement Flexbox */}
         <div className="nav-group-center">
-          <button className="nav-nav-btn nav-prev-week" onClick={() => changeDate(-7)}>◀◀</button>
+          <button className="nav-nav-btn nav-prev-week" onClick={() => changeDate(-7)}>⏪</button>
           <button className="nav-nav-btn nav-prev-day" onClick={() => changeDate(-1)}>◀</button>
           
           <button className="nav-today-button" onClick={handleToday}>Aujourd'hui</button>
           
           <button className="nav-nav-btn nav-next-day" onClick={() => changeDate(1)}>▶</button>
-          <button className="nav-nav-btn nav-next-week" onClick={() => changeDate(7)}>▶▶</button>
+          <button className="nav-nav-btn nav-next-week" onClick={() => changeDate(7)}>⏩</button>
         </div>
 
         <div className="central-date-block">
@@ -242,14 +242,11 @@ function ReservationGrid({ selectedDate, onBack }) {
 
       {hoveredReservation && (
         <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`}
-             onClick={() => { setHoveredReservation(null); setIsFading(false); }}
              style={{ position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: popupPosition.alignment === 'bottom' ? 'translate(-50%, -100%)' : 'translate(-50%, 0)', zIndex: 10005 }}>
           <div className="popup-card-header"><span className="popup-icon">👤</span> {hoveredReservation.prenom} {hoveredReservation.nom}</div>
           <div className="popup-card-body">
             <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
             <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
-            <div className="popup-info-line"><span className="popup-info-icon">📋</span> {hoveredReservation.objet}</div>
-            
             <div className="popup-info-line">
               <span className="popup-info-icon">📅</span> 
               {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} | {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}
