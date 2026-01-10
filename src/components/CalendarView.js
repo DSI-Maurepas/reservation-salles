@@ -239,7 +239,7 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
               <li>Cliquez sur une date pour accéder au tableau de réservation</li>
               <li>Les couleurs indiquent la disponibilité des salles dans une journée</li>
               <li>Les dimanches et jours fériés sont fermés</li>
-              <li>Horaires d'ouverture (Créneau = 1h) : 8h - 22h (Lundi - Samedi)</li>
+              <li>Horaires d'ouverture de 8h à 22h du lundi au samedi - (Créneau de 30 min)</li>
             </ul>
           </div>
         </>
