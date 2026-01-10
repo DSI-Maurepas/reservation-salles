@@ -19,11 +19,12 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [hoveredReservation, setHoveredReservation] = useState(null);
-  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const [isFading, setIsFading] = useState(false);
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
 
   // REFERENCE POUR LE SCROLL AUTO
   const sidebarRef = useRef(null);
+  const grilleRef = useRef(null);
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
   const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
@@ -75,8 +76,73 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const getReservation = (dayIndex, slotStart) => { const slotEnd = slotStart + 0.5; const date = dates[dayIndex]; const dateStr = googleSheetsService.formatDate(date); return reservations.find(res => { if (res.dateDebut !== dateStr) return false; const resStart = googleSheetsService.timeToFloat(res.heureDebut); const resEnd = googleSheetsService.timeToFloat(res.heureFin); return (slotStart < resEnd && slotEnd > resStart); }); };
   const isSlotSelected = (dayIndex, slot) => selections.some(sel => sel.dayIndex === dayIndex && sel.hour === slot);
   
-  const handleMouseDown = (dayIndex, hour, date) => { if (isDateInPast(date)) return; if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; } if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) { setAdminPasswordModal({ show: true, password: '' }); return; } if (isSlotReserved(dayIndex, hour)) return; setIsDragging(false); setDragStart({ dayIndex, hour }); setMouseDownPos({ dayIndex, hour, date }); };
-  const handleMouseEnter = (dayIndex, hour, date) => { if (!dragStart) return; if (!isDragging && mouseDownPos) { if (dayIndex !== mouseDownPos.dayIndex || hour !== mouseDownPos.hour) setIsDragging(true); else return; } if (!isDragging) return; if (isSlotReserved(dayIndex, hour) || isDimanche(date) || isJourFerie(date) || isDateInPast(date)) return; const newSelections = [...selections]; const minDay = Math.min(dragStart.dayIndex, dayIndex); const maxDay = Math.max(dragStart.dayIndex, dayIndex); const minHour = Math.min(dragStart.hour, hour); const maxHour = Math.max(dragStart.hour, hour); for (let d = minDay; d <= maxDay; d++) { const dayDate = dates[d]; if (!isDimanche(dayDate) && !isJourFerie(dayDate) && !isDateInPast(dayDate)) { for (let h = minHour; h <= maxHour; h += 0.5) { const exists = newSelections.some(sel => sel.dayIndex === d && sel.hour === h); if (!exists && !isSlotReserved(d, h)) newSelections.push({ dayIndex: d, hour: h, date: dates[d] }); } } } setSelections(newSelections); };
+  const handleMouseDown = (dayIndex, hour, date, event) => {
+    if (isDateInPast(date)) return;
+    if (isDimanche(date) || isJourFerie(date)) {
+      setBlockedDayModal(true);
+      return;
+    }
+    if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) {
+      setAdminPasswordModal({ show: true, password: '' });
+      return;
+    }
+    
+    // Si créneau réservé, afficher popup (vérifier DATE + HEURE)
+    const dateStr = googleSheetsService.formatDate(date);
+    const reservation = reservations.find(r => 
+      r.salle.includes(selectedRoom.split(' - ')[0]) && 
+      r.dateDebut === dateStr &&
+      hour >= googleSheetsService.timeToFloat(r.heureDebut) && 
+      hour < googleSheetsService.timeToFloat(r.heureFin)
+    );
+    if (reservation) {
+      setHoveredReservation(reservation);
+      setPopupPosition({ x: event.clientX, y: event.clientY - 50 });
+      return;
+    }
+    
+    // Sinon, démarrer sélection
+    setDragStart({ dayIndex, hour });
+    setMouseDownPos({ dayIndex, hour, date });
+  };
+  const handleMouseEnter = (dayIndex, hour, date) => {
+    if (!dragStart) return;
+    
+    // Démarrer drag dès le premier mouvement
+    let justStartedDragging = false;
+    if (!isDragging && mouseDownPos) {
+      if (dayIndex !== mouseDownPos.dayIndex || hour !== mouseDownPos.hour) {
+        setIsDragging(true);
+        justStartedDragging = true;
+      } else {
+        return;
+      }
+    }
+    
+    // CORRECTION : Ne pas return si on vient de démarrer le drag
+    if (!isDragging && !justStartedDragging) return;
+    if (isSlotReserved(dayIndex, hour) || isDimanche(date) || isJourFerie(date) || isDateInPast(date)) return;
+    
+    // Construire sélection rectangle
+    const newSelections = [...selections];
+    const minDay = Math.min(dragStart.dayIndex, dayIndex);
+    const maxDay = Math.max(dragStart.dayIndex, dayIndex);
+    const minHour = Math.min(dragStart.hour, hour);
+    const maxHour = Math.max(dragStart.hour, hour);
+    
+    for (let d = minDay; d <= maxDay; d++) {
+      const dayDate = dates[d];
+      if (!isDimanche(dayDate) && !isJourFerie(dayDate) && !isDateInPast(dayDate)) {
+        for (let h = minHour; h <= maxHour; h += 0.5) {
+          const exists = newSelections.some(sel => sel.dayIndex === d && sel.hour === h);
+          if (!exists && !isSlotReserved(d, h)) {
+            newSelections.push({ dayIndex: d, hour: h, date: dates[d] });
+          }
+        }
+      }
+    }
+    setSelections(newSelections);
+  };
   
   const handleMouseUp = () => { 
     let shouldScroll = false;
@@ -110,7 +176,43 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
 
   const handleCancelSelection = () => { setSelections([]); setShowForm(false); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
   const removeSelection = (index) => { const newSelections = selections.filter((_, i) => i !== index); setSelections(newSelections); if (newSelections.length === 0) setShowForm(false); };
-  const preMergeSelections = (selections) => { const byDate = {}; selections.forEach(sel => { const dateKey = sel.date instanceof Date ? sel.date.toISOString().split('T')[0] : sel.date; if (!byDate[dateKey]) byDate[dateKey] = []; byDate[dateKey].push(sel); }); const merged = []; for (const dateKey in byDate) { const slots = byDate[dateKey].sort((a, b) => a.hour - b.hour); let i = 0; while (i < slots.length) { const current = { date: slots[i].date, hour: slots[i].hour, endHour: slots[i].hour + 0.5 }; while (i + 1 < slots.length && Math.abs(current.endHour - slots[i + 1].startHour) < 0.001) { current.endHour = slots[i + 1].hour + 0.5; i++; } merged.push(current); i++; } } return merged; };
+    const preMergeSelections = (selections) => {
+    if (selections.length === 0) return [];
+    
+    // Grouper par date
+    const byDate = {};
+    selections.forEach(sel => {
+      const dateKey = sel.date instanceof Date ? sel.date.toISOString().split('T')[0] : sel.date;
+      if (!byDate[dateKey]) byDate[dateKey] = [];
+      byDate[dateKey].push(sel);
+    });
+    
+    const merged = [];
+    for (const dateKey in byDate) {
+      const slots = byDate[dateKey].sort((a, b) => a.hour - b.hour);
+      let i = 0;
+      
+      while (i < slots.length) {
+        const current = {
+          date: slots[i].date,
+          dayIndex: slots[i].dayIndex,
+          hour: slots[i].hour,
+          endHour: slots[i].hour + 0.5
+        };
+        
+        // Fusionner créneaux contigus du MÊME JOUR
+        // CORRECTION : Utiliser slots[i+1].hour au lieu de .startHour
+        while (i + 1 < slots.length && Math.abs(current.endHour - slots[i + 1].hour) < 0.01) {
+          current.endHour = slots[i + 1].hour + 0.5;
+          i++;
+        }
+        
+        merged.push(current);
+        i++;
+      }
+    }
+    return merged;
+  };
   const generateRecurrenceDates = (startDate, endDate, type) => { const dates = []; const current = new Date(startDate); const end = new Date(endDate); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); while (current <= end) { dates.push(new Date(current)); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); } return dates; };
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (existing.salle !== candidate.salle && existing.salle.split(' - ')[0] !== candidate.salle) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
   const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '✅ Réservation confirmée !' }); setSelections([]); setShowForm(false); loadWeekReservations(); } catch (error) { alert('Erreur: ' + error.message); } finally { setIsSubmitting(false); } };
@@ -202,7 +304,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
             )}
           </div>
           <div className="week-grid-container">
-            <table className="week-grid" onMouseLeave={() => { /* Rien ici */ }} onMouseUp={handleMouseUp}>
+            <table ref={grilleRef} className="week-grid" onMouseLeave={() => { /* Rien ici */ }} onMouseUp={handleMouseUp}>
               <thead>
                 <tr>
                   <th className="hour-header">Heure</th>
@@ -256,15 +358,8 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                         key={`${dayIndex}-${slot}`} 
                         className={cellClass} 
                         style={bgStyle} 
-                        onMouseDown={() => handleMouseDown(dayIndex, slot, date)} 
-                        onMouseEnter={(e) => { 
-                          handleMouseEnter(dayIndex, slot, date); 
-                          if (reserved && reservation) { 
-                            const rect = e.currentTarget.getBoundingClientRect(); 
-                            setHoveredReservation(reservation); 
-                            setPopupPosition({ x: e.clientX, y: e.clientY - 50 }); 
-                          } 
-                        }} 
+                        onMouseDown={(e) => handleMouseDown(dayIndex, slot, date, e)} 
+                        onMouseEnter={() => handleMouseEnter(dayIndex, slot, date)} 
                       >
                       </td>
                     ); 
@@ -283,7 +378,26 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
         )}
         
         {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><h2>Fermé</h2><p>Dimanche/Férié fermé.</p><button className="blocked-close-button" onClick={() => setBlockedDayModal(false)}>Fermer</button></div></div>}
-        {adminPasswordModal.show && <div className="modal-overlay"><div className="modal-content"><h3>Admin</h3><input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" /><button className="btn-submit" onClick={handleAdminPasswordSubmit}>Valider</button></div></div>}
+        {adminPasswordModal.show && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>🔑 Accès Administrateur</h3>
+            <p>Cette salle est réservée. Veuillez saisir le mot de passe :</p>
+            <input 
+              type="password" 
+              value={adminPasswordModal.password} 
+              onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} 
+              onKeyPress={e => { if (e.key === 'Enter') handleAdminPasswordSubmit(); }}
+              className="form-input"
+              autoFocus
+            />
+            <div className="form-actions">
+              <button className="btn-cancel" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button>
+              <button className="btn-submit" onClick={handleAdminPasswordSubmit}>Débloquer</button>
+            </div>
+          </div>
+        </div>
+      )}
         {isSubmitting && <div className="modal-overlay"><div className="modal-content"><h3>Enregistrement...</h3><div className="progress-bar-container" style={{width:'100%', height:'10px', background:'#eee', borderRadius:'5px', margin:'1rem 0', overflow:'hidden'}}><div style={{width: `${(submissionProgress.current / submissionProgress.total) * 100}%`, height:'100%', background:'#4caf50', transition:'width 0.3s'}}></div></div><p>{submissionProgress.current} / {submissionProgress.total} créneaux traités</p></div></div>}
         {warningModal.show && <div className="modal-overlay"><div className="warning-modal"><div className="warning-modal-header"><h2>⚠️ Attention !</h2></div><div className="warning-modal-body"><p>{warningModal.conflicts.length > 1 ? "Les dates suivantes..." : "La date suivante..."}</p><ul className="conflict-list">{warningModal.conflicts.map((res, i) => (<li key={i}>{new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin}</li>))}</ul><p>Voulez-vous quand même poursuivre ?</p></div><div className="warning-modal-footer"><button className="cancel-button" onClick={() => setWarningModal({ show: false, conflicts: [], validReservations: [] })}>Non, annuler</button><button className="submit-button" onClick={() => finalizeReservation(warningModal.validReservations)}>Oui, poursuivre</button></div></div></div>}
       </div>

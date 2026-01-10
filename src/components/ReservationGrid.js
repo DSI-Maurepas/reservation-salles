@@ -136,7 +136,7 @@ function ReservationGrid({ selectedDate, onBack }) {
             onMouseDown={(e) => handleMouseDown(salle, h, e)}
             onMouseEnter={() => handleMouseEnter(salle, h)}
           >
-            {isLocked && !res && <span className="lock-icon-single">🔒</span>}
+            
           </div>
         );
       });
