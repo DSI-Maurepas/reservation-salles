@@ -165,7 +165,8 @@
   overflow: hidden; 
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); 
   width: 320px; 
-  pointer-events: none; 
+  pointer-events: auto;
+  cursor: pointer; 
   z-index: 10000; 
   border: 1px solid #e2e8f0;
   opacity: 1;
@@ -210,4 +211,22 @@
   .name-full { display: none; }
   .mobile-instruction { display: block; order: 2; }
   .desktop-legend { display: none !important; }
+
+  /* Masquer texte "Heure" en responsive */
+  .hour-header {
+    background: white !important;
+    border-left: none !important;
+    color: transparent !important;
+  }
+
+  /* En-têtes jours : fond bleu + texte blanc */
+  .week-grid th.day-header {
+    background: #1976d2 !important;
+    color: white !important;
+  }
+  
+  .day-header .day-name,
+  .day-header .day-date {
+    color: white !important;
+  }
 }
