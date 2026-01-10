@@ -229,4 +229,14 @@
   .day-header .day-date {
     color: white !important;
   }
+
+  /* Coins carrés pour en-têtes jours */
+  .week-grid th.day-header {
+    border-radius: 0 !important;
+  }
+
+  /* Taille date = taille capacité Par Date */
+  .day-header .day-date {
+    font-size: 0.75rem !important;
+  }
 }
