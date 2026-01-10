@@ -113,7 +113,15 @@
   }
 
   /* Masquer légende en responsive */
-  .form-column .color-legend-container {
+  .color-legend-container {
     display: none !important;
+  }
+
+  /* Colonne heures fixe à gauche */
+  .time-label {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 15 !important;
+    background: white !important;
   }
 }
