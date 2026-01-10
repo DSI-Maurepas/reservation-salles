@@ -46,6 +46,15 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   };
 
   useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom]);
+  
+  // Scroll automatique vers grille en responsive après sélection salle
+  useEffect(() => {
+    if (grilleRef.current && window.innerWidth < 768) {
+      setTimeout(() => {
+        grilleRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+    }
+  }, [selectedRoom]);
 
   // --- SCROLL AUTO AU CHARGEMENT ---
   useEffect(() => {
@@ -371,7 +380,9 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
         </div>
         
         {hoveredReservation && (
-          <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}>
+          <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`}
+          onClick={() => { setHoveredReservation(null); setIsFading(false); }}
+          style={{ pointerEvents: 'auto', cursor: 'pointer' }} style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}>
             <div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div>
             <div className="popup-card-body">{hoveredReservation.email && <div className="popup-info-line"><span className="popup-info-icon">📧</span><span className="popup-info-text">{hoveredReservation.email}</span></div>}{hoveredReservation.service && <div className="popup-info-line"><span className="popup-info-icon">🏢</span><span className="popup-info-text">{hoveredReservation.service}</span></div>}<div className="popup-info-line"><span className="popup-info-icon">📅</span><span className="popup-info-text">{new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} · {hoveredReservation.heureDebut} - {hoveredReservation.heureFin}</span></div>{(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (<>{hoveredReservation.agencement && (<div className="popup-info-line"><span className="popup-info-icon">🪑</span><span className="popup-info-text">Disposition : {hoveredReservation.agencement}</span></div>)}{hoveredReservation.nbPersonnes && (<div className="popup-info-line"><span className="popup-info-icon">👥</span><span className="popup-info-text">{hoveredReservation.nbPersonnes} pers.</span></div>)}</>)}</div>
           </div>
