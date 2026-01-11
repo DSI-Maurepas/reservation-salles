@@ -1,7 +1,7 @@
 // src/components/ReservationGrid.js
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
-import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, COULEURS_OBJETS } from '../config/googleSheets';
+import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, COULEURS_OBJETS, JOURS_FERIES } from '../config/googleSheets';
 import ColorLegend from './ColorLegend';
 import SalleCard from './SalleCard';
 import './ReservationGrid.css';
@@ -72,7 +72,13 @@ function ReservationGrid({ selectedDate, onBack }) {
 
   useEffect(() => { loadReservations(); }, [loadReservations]);
 
+  // Fonctions de vérification dates
+  const isJourFerie = (date) => JOURS_FERIES.includes(googleSheetsService.formatDate(date));
+  const isDimanche = (date) => date.getDay() === 0;
+  const isDateInPast = (date) => { const t = new Date(); t.setHours(0,0,0,0); const c = new Date(date); c.setHours(0,0,0,0); return c < t; };
+
   const handleMouseDown = (salle, hour, e) => {
+    // PRIORITÉ 1 : Vérifier réservation existante (pour popup)
     const sShort = salle.split(' - ')[0];
     const res = reservations.find(r => r.salle.includes(sShort) && hour >= googleSheetsService.timeToFloat(r.heureDebut) && hour < googleSheetsService.timeToFloat(r.heureFin));
     if (res) {
@@ -87,10 +93,10 @@ function ReservationGrid({ selectedDate, onBack }) {
         finalY = e.clientY - 50 - (popupHeight / 2);
         transform = 'translate(0, 0)';  // Pas de décalage
       } else {
-        // DESKTOP : Positionner au clic
+        // DESKTOP : Centré sur pointeur (5ème correction)
         finalX = e.clientX;
-        finalY = e.clientY - 50 - (popupHeight / 2);
-        transform = 'translate(-50%, 0)';  // Centré sur pointeur
+        finalY = e.clientY;
+        transform = 'translate(-50%, -50%)';  // Centré en X et Y
       }
       
       const alignment = 'top';
@@ -98,10 +104,26 @@ function ReservationGrid({ selectedDate, onBack }) {
       setHoveredReservation(res);
       return;
     }
+    // PRIORITÉ 2 : Bloquer dates passées/dimanche/férié (BUG CRITIQUE)
+    if (isDimanche(currentDate)) {
+      alert('Les réservations ne sont pas autorisées le dimanche.');
+      return;
+    }
+    if (isJourFerie(currentDate)) {
+      alert('Les réservations ne sont pas autorisées les jours fériés.');
+      return;
+    }
+    if (isDateInPast(currentDate)) {
+      return;  // Pas de message pour dates passées, juste bloquer
+    }
+    
+    // PRIORITÉ 3 : Vérifier admin
     if (SALLES_ADMIN_ONLY.some(a => salle.includes(a)) && !isAdminUnlocked) {
       setAdminPasswordModal({ show: true, password: '' });
       return;
     }
+    
+    // PRIORITÉ 4 : Permettre sélection
     setIsDragging(true);
     setCurrentSelection({ salle, startHour: hour, endHour: hour + 0.5 });
   };

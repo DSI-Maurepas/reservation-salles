@@ -184,3 +184,14 @@
     left: -9999px !important;
   }
 }
+
+/* Bloc instruction "Sélectionnez..." */
+.no-selection-message {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #64748b;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+  margin-top: 1.5rem;
+}

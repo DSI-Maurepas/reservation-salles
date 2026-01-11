@@ -47,7 +47,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
 
   // REFERENCE POUR LE SCROLL AUTO
   const sidebarRef = useRef(null);
-  const grilleRef = useRef(null);
+  // grilleRef supprimé
 
   const [blockedDayModal, setBlockedDayModal] = useState(false);
   const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
@@ -388,7 +388,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
             )}
           </div>
           <div className="week-grid-container">
-            <table ref={grilleRef} className="week-grid" onMouseLeave={() => { /* Rien ici */ }} onMouseUp={handleMouseUp}>
+            <table  className="week-grid" onMouseLeave={() => { /* Rien ici */ }} onMouseUp={handleMouseUp}>
               <thead>
                 <tr>
                   <th className="hour-header">Heure</th>
