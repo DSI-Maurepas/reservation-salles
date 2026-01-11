@@ -9,6 +9,29 @@ import SalleCard from './SalleCard';
 import './SingleRoomGrid.css';
 
 function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
+  // PROBLÈME 7 : Dimanche → semaine suivante
+  useEffect(() => {
+    const today = new Date();
+    
+    // Si dimanche ET première ouverture de la salle
+    if (today.getDay() === 0 && !hasManuallyNavigated.current) {
+      // Passer au lundi suivant (demain)
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      // Calculer le lundi de cette semaine-là
+      const dayOfWeek = tomorrow.getDay();
+      const mondayDate = new Date(tomorrow);
+      mondayDate.setDate(tomorrow.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+      
+      setCurrentWeekStart(mondayDate);
+    }
+  }, [selectedRoom]);
+  
+  // Ref pour savoir si navigation manuelle
+  const hasManuallyNavigated = React.useRef(false);
+
   const getMondayOfWeek = (d) => { const date = new Date(d); const day = date.getDay(); const diff = date.getDate() - day + (day === 0 ? -6 : 1); const monday = new Date(date.setDate(diff)); monday.setHours(0, 0, 0, 0); return monday; };
   const [currentWeekStart, setCurrentWeekStart] = useState(() => getMondayOfWeek(new Date()));
   const [reservations, setReservations] = useState([]);
@@ -51,7 +74,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   useEffect(() => {
     if (grilleRef.current && window.innerWidth < 768) {
       setTimeout(() => {
-        grilleRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Scroll retiré (Problème 6)
       }, 300);
     }
   }, [selectedRoom]);
@@ -60,7 +83,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   useEffect(() => {
     if (sidebarRef.current) {
         setTimeout(() => {
-            grilleRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Scroll retiré (Problème 6)
         }, 100);
     }
   }, [selectedRoom]);
@@ -75,8 +98,10 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const formatWeekRange = () => { const start = currentWeekStart; const end = new Date(currentWeekStart); end.setDate(currentWeekStart.getDate() + 6); return `${start.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} - ${end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} ${start.getFullYear()}`; };
   const handlePreviousWeek = () => { const d = new Date(currentWeekStart); d.setDate(currentWeekStart.getDate() - 7); setCurrentWeekStart(d); };
   const handleNextWeek = () => { const d = new Date(currentWeekStart); d.setDate(currentWeekStart.getDate() + 7); setCurrentWeekStart(d); };
-  const handlePreviousMonth = () => { const d = new Date(currentWeekStart); d.setMonth(d.getMonth() - 1); setCurrentWeekStart(getMondayOfWeek(d)); };
-  const handleNextMonth = () => { const d = new Date(currentWeekStart); d.setMonth(d.getMonth() + 1); setCurrentWeekStart(getMondayOfWeek(d)); };
+  const handlePreviousMonth = () => {
+    hasManuallyNavigated.current = true; const d = new Date(currentWeekStart); d.setMonth(d.getMonth() - 1); setCurrentWeekStart(getMondayOfWeek(d)); };
+  const handleNextMonth = () => {
+    hasManuallyNavigated.current = true; const d = new Date(currentWeekStart); d.setMonth(d.getMonth() + 1); setCurrentWeekStart(getMondayOfWeek(d)); };
   const handleCurrentWeek = () => { setCurrentWeekStart(getMondayOfWeek(new Date())); };
   const isJourFerie = (date) => JOURS_FERIES.includes(googleSheetsService.formatDate(date));
   const isDimanche = (date) => date.getDay() === 0;
@@ -101,16 +126,23 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       hour < googleSheetsService.timeToFloat(r.heureFin)
     );
     if (reservation) {
-      // Ajuster position pour éviter débordement
+      // Centrer horizontalement en responsive
       const popupWidth = 320;
       const popupHeight = 250;
-      const maxX = window.innerWidth - popupWidth - 10;
-      const minX = 10;
-      const maxY = window.innerHeight - popupHeight - 10;
-      const minY = 10;
       
-      const finalX = Math.max(minX, Math.min(maxX, event.clientX));
-      const finalY = Math.max(minY, Math.min(maxY, event.clientY - 50));
+      let finalX, finalY;
+      
+      if (window.innerWidth < 1280) {
+        // RESPONSIVE : Centrer horizontalement
+        finalX = (window.innerWidth - popupWidth) / 2;
+        finalY = Math.max(10, Math.min(window.innerHeight - popupHeight - 10, event.clientY - 50));
+      } else {
+        // DESKTOP : Positionner au clic
+        const maxX = window.innerWidth - popupWidth - 10;
+        const minX = 10;
+        finalX = Math.max(minX, Math.min(maxX, event.clientX));
+        finalY = Math.max(10, event.clientY - 50);
+      }
       
       setHoveredReservation(reservation);
       setPopupPosition({ x: finalX, y: finalY });
@@ -187,7 +219,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
     
     if (shouldScroll && sidebarRef.current) {
         setTimeout(() => {
-            grilleRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Scroll retiré (Problème 6)
         }, 100);
     }
 

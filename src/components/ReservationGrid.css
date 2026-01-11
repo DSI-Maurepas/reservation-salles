@@ -14,7 +14,22 @@
 .nav-nav-btn { background: #3b82f6; color: white !important; border: none; width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
 /* STRUCTURE */
-.grid-column, .reservation-form { background: white !important; border-radius: 18px !important; padding: 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important; border: 1px solid #e2e8f0; }
+.grid-column { 
+  background: white !important; 
+  border-radius: 18px !important; 
+  padding: 18px; 
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important; 
+  border: 1px solid #e2e8f0;
+  position: relative !important;
+}
+
+.reservation-form { 
+  background: white !important; 
+  border-radius: 18px !important; 
+  padding: 18px; 
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important; 
+  border: 1px solid #e2e8f0; 
+}
 .reservation-content { display: grid; grid-template-columns: minmax(900px, 1fr) 320px; gap: 25px; }
 
 /* EN-TETES SALLES : FORCE BLANC */
@@ -122,7 +137,7 @@
   .time-label {
     position: sticky !important;
     left: 0 !important;
-    z-index: 999 !important;
+    z-index: 9999 !important;
     background: white !important;
   }
   
