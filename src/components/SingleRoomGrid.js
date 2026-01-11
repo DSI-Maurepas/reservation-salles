@@ -157,7 +157,12 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       return;
     }
     
-    // PRIORITÉ 3 : Démarrer sélection
+    // PRIORITÉ 3 : Bloquer sélection sur dates passées (BUG CRITIQUE)
+    if (isDateInPast(date)) {
+      return;  // Pas de sélection sur dates passées
+    }
+    
+    // PRIORITÉ 4 : Démarrer sélection
     setDragStart({ dayIndex, hour });
     setMouseDownPos({ dayIndex, hour, date });
   };
