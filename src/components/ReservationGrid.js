@@ -267,7 +267,17 @@ function ReservationGrid({ selectedDate, onBack }) {
                 </div>
               </form>
             </div>
-          ) : (hoveredSalle ? <SalleCard salle={hoveredSalle} /> : <ColorLegend />)}
+          ) : (
+            <>
+              {hoveredSalle ? <SalleCard salle={hoveredSalle} /> : <ColorLegend />}
+              {selections.length === 0 && (
+                <div className="no-selection-message">
+                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.8rem' }}>👆</span>
+                  <p style={{ margin: 0, fontSize: '1rem', fontWeight: '600' }}>Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
