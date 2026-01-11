@@ -226,6 +226,20 @@
   }
 }
 
+
+/* PROBLÈMES 4 & 5 : Fond bleu + Police blanc première ligne (DESKTOP) */
+@media (min-width: 1281px) {
+  .week-grid th.day-header {
+    background: #1976d2 !important;
+    color: white !important;
+  }
+  
+  .day-header .day-name,
+  .day-header .day-date {
+    color: white !important;
+  }
+}
+
 @media (max-width: 1280px) {
   .single-room-container { padding: 1rem; }
   .week-navigation { display: flex; flex-direction: column; gap: 0.5rem; height: auto; padding: 1rem; }
@@ -253,6 +267,20 @@
     color: transparent !important;
     border-radius: 0 !important;
   }
+  /* PROBLÈME 3 : Retirer TOUS les traits bleus (5ème demande) */
+  .week-grid,
+  .week-grid th,
+  .week-grid td,
+  .hour-header,
+  .day-header {
+    box-shadow: none !important;
+  }
+  
+  .week-grid tbody tr:first-child td:first-child {
+    border-left: none !important;
+    box-shadow: none !important;
+  }
+
 
   /* En-têtes jours : fond bleu + texte blanc */
   .week-grid th.day-header {
