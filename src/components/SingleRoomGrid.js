@@ -91,12 +91,8 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       setBlockedDayModal(true);
       return;
     }
-    if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) {
-      setAdminPasswordModal({ show: true, password: '' });
-      return;
-    }
     
-    // Si créneau réservé, afficher popup (vérifier DATE + HEURE)
+    // PRIORITÉ 1 : Si créneau réservé, afficher popup (AVANT vérification admin)
     const dateStr = googleSheetsService.formatDate(date);
     const reservation = reservations.find(r => 
       r.salle.includes(selectedRoom.split(' - ')[0]) && 
@@ -105,12 +101,29 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       hour < googleSheetsService.timeToFloat(r.heureFin)
     );
     if (reservation) {
+      // Ajuster position pour éviter débordement
+      const popupWidth = 320;
+      const popupHeight = 250;
+      const maxX = window.innerWidth - popupWidth - 10;
+      const minX = 10;
+      const maxY = window.innerHeight - popupHeight - 10;
+      const minY = 10;
+      
+      const finalX = Math.max(minX, Math.min(maxX, event.clientX));
+      const finalY = Math.max(minY, Math.min(maxY, event.clientY - 50));
+      
       setHoveredReservation(reservation);
-      setPopupPosition({ x: event.clientX, y: event.clientY - 50 });
+      setPopupPosition({ x: finalX, y: finalY });
       return;
     }
     
-    // Sinon, démarrer sélection
+    // PRIORITÉ 2 : Si salle verrouillée ET créneau VIDE, demander mot de passe
+    if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) {
+      setAdminPasswordModal({ show: true, password: '' });
+      return;
+    }
+    
+    // PRIORITÉ 3 : Démarrer sélection
     setDragStart({ dayIndex, hour });
     setMouseDownPos({ dayIndex, hour, date });
   };
@@ -184,7 +197,30 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   };
 
   const handleCancelSelection = () => { setSelections([]); setShowForm(false); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
-  const removeSelection = (index) => { const newSelections = selections.filter((_, i) => i !== index); setSelections(newSelections); if (newSelections.length === 0) setShowForm(false); };
+  const removeSelection = (index) => {
+    // Identifier la réservation complète (créneaux contigus)
+    const toRemove = mergedForDisplay[index];
+    
+    // Trouver TOUS les créneaux entre startHour et endHour
+    const selectionsToRemove = selections.filter(sel => 
+      sel.date && toRemove.date &&
+      sel.date.getTime() === toRemove.date.getTime() &&
+      sel.hour >= toRemove.hour &&
+      sel.hour < toRemove.endHour
+    );
+    
+    // Retirer TOUS les créneaux d'un coup
+    const newSelections = selections.filter(sel => 
+      !selectionsToRemove.some(remove => 
+        sel.date && remove.date &&
+        sel.date.getTime() === remove.date.getTime() &&
+        Math.abs(sel.hour - remove.hour) < 0.01
+      )
+    );
+    
+    setSelections(newSelections);
+    if (newSelections.length === 0) setShowForm(false);
+  };
     const preMergeSelections = (selections) => {
     if (selections.length === 0) return [];
     
