@@ -267,6 +267,34 @@
     color: transparent !important;
     border-radius: 0 !important;
   }
+  /* PROBLÈME 2 & 6 : Retirer DÉFINITIVEMENT trait bleu (5ème demande !) */
+  .week-grid,
+  .week-grid *,
+  .week-grid th,
+  .week-grid td,
+  .week-grid tbody,
+  .week-grid tbody tr,
+  .week-grid tbody tr:first-child,
+  .week-grid tbody tr:first-child td,
+  .week-grid tbody tr:first-child td:first-child,
+  .hour-header,
+  .day-header {
+    border-left: none !important;
+    border-right: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+  
+  /* Copier exactement style Par Date pour première ligne */
+  .week-grid th {
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    border-left: none !important;
+  }
+  
+  .hour-header {
+    border: none !important;
+  }
+
   /* PROBLÈME 3 : Retirer TOUS les traits bleus (5ème demande) */
   .week-grid,
   .week-grid th,

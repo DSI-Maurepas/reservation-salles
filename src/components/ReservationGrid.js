@@ -79,20 +79,22 @@ function ReservationGrid({ selectedDate, onBack }) {
       const popupHeight = 220;
       const popupWidth = 280;
       
-      let finalX, finalY;
+      let finalX, finalY, transform;
       
       if (window.innerWidth < 1280) {
-        // RESPONSIVE : Centrer horizontalement
+        // RESPONSIVE : Centrer horizontalement SANS transform horizontal
         finalX = (window.innerWidth - popupWidth) / 2;
         finalY = e.clientY - 50 - (popupHeight / 2);
+        transform = 'translate(0, 0)';  // Pas de décalage
       } else {
         // DESKTOP : Positionner au clic
         finalX = e.clientX;
         finalY = e.clientY - 50 - (popupHeight / 2);
+        transform = 'translate(-50%, 0)';  // Centré sur pointeur
       }
       
       const alignment = 'top';
-      setPopupPosition({ x: finalX, y: finalY, alignment: alignment });
+      setPopupPosition({ x: finalX, y: finalY, alignment, transform });
       setHoveredReservation(res);
       return;
     }
@@ -272,7 +274,7 @@ function ReservationGrid({ selectedDate, onBack }) {
       {hoveredReservation && (
         <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`}
              onClick={() => { setHoveredReservation(null); setIsFading(false); }}
-             style={{ position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: popupPosition.alignment === 'bottom' ? 'translate(-50%, -100%)' : 'translate(-50%, 0)', zIndex: 10005 }}>
+             style={{ position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: popupPosition.transform || 'translate(-50%, 0)', zIndex: 10005 }}>
           <div className="popup-card-header"><span className="popup-icon">👤</span> {hoveredReservation.prenom} {hoveredReservation.nom}</div>
           <div className="popup-card-body">
             <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
