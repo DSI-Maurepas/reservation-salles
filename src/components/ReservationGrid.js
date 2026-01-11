@@ -77,10 +77,22 @@ function ReservationGrid({ selectedDate, onBack }) {
     const res = reservations.find(r => r.salle.includes(sShort) && hour >= googleSheetsService.timeToFloat(r.heureDebut) && hour < googleSheetsService.timeToFloat(r.heureFin));
     if (res) {
       const popupHeight = 220;
-      // Centre du bas de la popup à 50px au-dessus du curseur
-      const finalY = e.clientY - 50 - (popupHeight / 2);
+      const popupWidth = 280;
+      
+      let finalX, finalY;
+      
+      if (window.innerWidth < 1280) {
+        // RESPONSIVE : Centrer horizontalement
+        finalX = (window.innerWidth - popupWidth) / 2;
+        finalY = e.clientY - 50 - (popupHeight / 2);
+      } else {
+        // DESKTOP : Positionner au clic
+        finalX = e.clientX;
+        finalY = e.clientY - 50 - (popupHeight / 2);
+      }
+      
       const alignment = 'top';
-      setPopupPosition({ x: e.clientX, y: finalY, alignment: alignment });
+      setPopupPosition({ x: finalX, y: finalY, alignment: alignment });
       setHoveredReservation(res);
       return;
     }

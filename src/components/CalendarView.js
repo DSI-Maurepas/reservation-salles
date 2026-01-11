@@ -126,7 +126,6 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
 
   // MODIF : Wrapper pour forcer le scroll en haut lors de la sélection d'une salle
   const handleRoomSelectWrapper = (room) => {
-    window.scrollTo(0, 0); // Remonte tout en haut de la page
     if (onRoomSelect) {
       onRoomSelect(room);
     }

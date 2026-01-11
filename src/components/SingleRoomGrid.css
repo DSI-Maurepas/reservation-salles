@@ -274,4 +274,17 @@
   .day-header .day-date {
     font-size: 0.75rem !important;
   }
+
+  /* PROBLÈME 3 : Retirer outline première ligne (5ème demande) */
+  .week-grid th,
+  .hour-header,
+  .day-header {
+    outline: none !important;
+    border-top: none !important;
+  }
+
+  /* PROBLÈME 4 : Police dates pas en gras */
+  .day-header .day-date {
+    font-weight: 400 !important;
+  }
 }
