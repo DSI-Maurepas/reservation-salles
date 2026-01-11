@@ -122,7 +122,7 @@
   .time-label {
     position: sticky !important;
     left: 0 !important;
-    z-index: 15 !important;
+    z-index: 999 !important;
     background: white !important;
   }
   
@@ -130,5 +130,25 @@
   .recurrence-options input[type="date"] {
     width: 100% !important;
     box-sizing: border-box !important;
+  }
+
+  /* PROBLÈME 8 : Masquer TOUTE la légende (3ème demande) */
+  .color-legend-container,
+  .color-legend,
+  .legend-header,
+  .legend-items,
+  .legend-item,
+  .legend-footer,
+  .legend-hover-tip,
+  [class*="legend"],
+  [class*="color-legend"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
   }
 }

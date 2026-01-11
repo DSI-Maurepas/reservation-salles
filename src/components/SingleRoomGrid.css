@@ -46,7 +46,16 @@
 }
 
 .week-grid th { display: table-cell !important; height: 50px !important; padding: 0 !important; background: #1976d2; color: white; border: 1px solid #1565c0; text-align: center; vertical-align: middle; }
-.hour-header { width: 52px; background: white !important; color: #1976d2 !important; border: 1px solid #e2e8f0 !important; text-align: center !important; vertical-align: middle !important; padding: 0 !important; }
+.hour-header { 
+  width: 52px; 
+  background: white !important; 
+  color: #1976d2 !important; 
+  border: 1px solid #e2e8f0 !important;
+  border-left: none !important;
+  text-align: center !important; 
+  vertical-align: middle !important; 
+  padding: 0 !important; 
+}
 .day-header .day-name { display: block; font-weight: 800; text-transform: uppercase; font-size: 0.85rem; text-align: center; }
 .day-header .day-date { font-size: 0.8rem; color: white !important; text-align: center; display: block; margin-top: 2px; }
 
@@ -196,6 +205,27 @@
 .warning-modal-footer { padding: 1.5rem; background: #f9f9f9; display: flex; justify-content: space-between; gap: 1rem; }
 
 /* RESPONSIVE DESIGN */
+
+/* PROBLÈME 2 : Bordure bleue carrée première ligne (DESKTOP) */
+.week-grid th.day-header {
+  border: 1px solid #1976d2 !important;
+  border-radius: 0 !important;
+}
+
+.hour-header {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0 !important;
+}
+
+
+/* PROBLÈME 4 : Date blanc/gris clair (DESKTOP) */
+@media (min-width: 1281px) {
+  .day-header .day-date {
+    color: #f0f0f0 !important;
+    font-weight: 400 !important;
+  }
+}
+
 @media (max-width: 1280px) {
   .single-room-container { padding: 1rem; }
   .week-navigation { display: flex; flex-direction: column; gap: 0.5rem; height: auto; padding: 1rem; }

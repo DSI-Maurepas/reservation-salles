@@ -373,3 +373,16 @@
   line-height: 1.3;
   flex: 1;
 }
+
+
+/* PROBLÈME 8 : Masquer TOUT en responsive (3ème demande) */
+@media (max-width: 1280px) {
+  .color-legend-container {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+}
