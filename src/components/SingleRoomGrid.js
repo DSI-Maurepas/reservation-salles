@@ -111,7 +111,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const isSlotSelected = (dayIndex, slot) => selections.some(sel => sel.dayIndex === dayIndex && sel.hour === slot);
   
   const handleMouseDown = (dayIndex, hour, date, event) => {
-    if (isDateInPast(date)) return;
+    // PROBLÈME 7 : Permettre popup sur semaines passées
     if (isDimanche(date) || isJourFerie(date)) {
       setBlockedDayModal(true);
       return;
@@ -126,26 +126,28 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       hour < googleSheetsService.timeToFloat(r.heureFin)
     );
     if (reservation) {
-      // Centrer horizontalement en responsive
+      // PROBLÈME 2 & 6 : Popup au pointeur (pas centrée)
       const popupWidth = 320;
       const popupHeight = 250;
       
-      let finalX, finalY;
+      let finalX, finalY, transform;
       
       if (window.innerWidth < 1280) {
-        // RESPONSIVE : Centrer horizontalement
+        // RESPONSIVE : Centre horizontal SANS transform
         finalX = (window.innerWidth - popupWidth) / 2;
         finalY = Math.max(10, Math.min(window.innerHeight - popupHeight - 10, event.clientY - 50));
+        transform = 'translate(0, -100%)';  // Seulement vertical
       } else {
-        // DESKTOP : Positionner au clic
+        // DESKTOP : Positionner au pointeur
         const maxX = window.innerWidth - popupWidth - 10;
         const minX = 10;
         finalX = Math.max(minX, Math.min(maxX, event.clientX));
         finalY = Math.max(10, event.clientY - 50);
+        transform = 'translate(-50%, -100%)';  // Centré sur pointeur
       }
       
       setHoveredReservation(reservation);
-      setPopupPosition({ x: finalX, y: finalY });
+      setPopupPosition({ x: finalX, y: finalY, transform });
       return;
     }
     
@@ -450,7 +452,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
         {hoveredReservation && (
           <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`}
           onClick={() => { setHoveredReservation(null); setIsFading(false); }}
-          style={{ pointerEvents: 'auto', cursor: 'pointer' }} style={{position:'fixed', left:popupPosition.x, top:popupPosition.y, transform:'translate(-50%, -100%)', zIndex:10001}}>
+          style={{ pointerEvents: 'auto', cursor: 'pointer', position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: popupPosition.transform || 'translate(-50%, -100%)', zIndex: 10001 }}>
             <div className="popup-card-header"><span className="popup-icon">👤</span><span className="popup-name">{hoveredReservation.prenom} {hoveredReservation.nom}</span></div>
             <div className="popup-card-body">
               {hoveredReservation.service && (
