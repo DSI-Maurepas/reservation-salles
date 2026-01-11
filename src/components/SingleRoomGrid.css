@@ -240,6 +240,17 @@
   }
 }
 
+
+/* PROBLÈME 5 : Retirer trait bleu DESKTOP (case Heure) */
+.week-grid th.hour-header,
+.week-grid thead tr th:first-child,
+.week-grid tbody tr td:first-child {
+  border-left: none !important;
+  border-right: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 @media (max-width: 1280px) {
   .single-room-container { padding: 1rem; }
   .week-navigation { display: flex; flex-direction: column; gap: 0.5rem; height: auto; padding: 1rem; }
@@ -267,6 +278,40 @@
     color: transparent !important;
     border-radius: 0 !important;
   }
+  /* PROBLÈME 5 : Retirer trait bleu RESPONSIVE (5ème demande DÉFINITIVE) */
+  .week-grid,
+  .week-grid *,
+  .week-grid th,
+  .week-grid th.hour-header,
+  .week-grid thead,
+  .week-grid thead tr,
+  .week-grid thead tr th,
+  .week-grid thead tr th:first-child,
+  .week-grid tbody,
+  .week-grid tbody tr,
+  .week-grid tbody tr:first-child,
+  .week-grid tbody tr td,
+  .week-grid tbody tr td:first-child,
+  .hour-header {
+    border-left: none !important;
+    border-right: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    border-left-width: 0 !important;
+    border-left-style: none !important;
+    border-left-color: transparent !important;
+  }
+  
+  /* Forcer border simple pour th */
+  .week-grid th {
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    border-left: none !important;
+  }
+  
+  .week-grid th:first-child {
+    border-left: none !important;
+  }
+
   /* PROBLÈME 2 & 6 : Retirer DÉFINITIVEMENT trait bleu (5ème demande !) */
   .week-grid,
   .week-grid *,
@@ -342,5 +387,12 @@
   /* PROBLÈME 4 : Police dates pas en gras */
   .day-header .day-date {
     font-weight: 400 !important;
+  }
+
+  /* PROBLÈME 4 : Champ "jusqu'au" même taille que les autres */
+  .recurrence-options input[type="date"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
   }
 }

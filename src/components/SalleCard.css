@@ -101,3 +101,8 @@
 .tag-icon {
   font-size: 1rem;
 }
+
+/* PROBLÈME 3 : Capacité alignée à gauche (pas centrée) */
+.info-value {
+  text-align: left !important;
+}
