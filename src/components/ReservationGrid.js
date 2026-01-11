@@ -17,6 +17,7 @@ function ReservationGrid({ selectedDate, onBack }) {
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0, alignment: 'bottom' });
   const [isFading, setIsFading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [blockedDayModal, setBlockedDayModal] = useState(false);
 
   const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
   const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
@@ -105,16 +106,12 @@ function ReservationGrid({ selectedDate, onBack }) {
       return;
     }
     // PRIORITÉ 2 : Bloquer dates passées/dimanche/férié (BUG CRITIQUE)
-    if (isDimanche(currentDate)) {
-      alert('Les réservations ne sont pas autorisées le dimanche.');
-      return;
-    }
-    if (isJourFerie(currentDate)) {
-      alert('Les réservations ne sont pas autorisées les jours fériés.');
+    if (isDimanche(currentDate) || isJourFerie(currentDate)) {
+      setBlockedDayModal(true);  // Modal comme Par Salle
       return;
     }
     if (isDateInPast(currentDate)) {
-      return;  // Pas de message pour dates passées, juste bloquer
+      return;  // Bloquer silencieusement
     }
     
     // PRIORITÉ 3 : Vérifier admin
@@ -180,6 +177,12 @@ function ReservationGrid({ selectedDate, onBack }) {
         const selected = selections.some(sel => sel.salle === salle && h >= sel.startHour && h < sel.endHour) || (currentSelection && currentSelection.salle === salle && h >= currentSelection.startHour && h < currentSelection.endHour);
         let classes = `time-slot ${isFullHour ? 'full-hour-start' : 'half-hour-start'}`;
         if (h === HORAIRES.HEURE_FIN - 0.5) classes += ' last-row-slot';
+        
+        // Ajouter classes pour dates invalides (dimanche/férié/passé)
+        if (isDimanche(currentDate)) classes += ' dimanche';
+        if (isJourFerie(currentDate)) classes += ' jour-ferie';
+        if (isDateInPast(currentDate)) classes += ' past-date';
+        
         if (res) classes += ' reserved occupied';
         else if (isLocked) classes += ' admin-only-locked';
         else if (selected) classes += ' selected';
@@ -278,7 +281,7 @@ function ReservationGrid({ selectedDate, onBack }) {
                         <option value="biweekly">Toutes les 2 semaines</option>
                         <option value="monthly">Tous les mois</option>
                       </select>
-                      <input type="date" className="form-input" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} required />
+                      <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} required />
                     </div>
                   )}
                 </div>
@@ -294,14 +297,38 @@ function ReservationGrid({ selectedDate, onBack }) {
               {hoveredSalle ? <SalleCard salle={hoveredSalle} /> : <ColorLegend />}
               {selections.length === 0 && (
                 <div className="no-selection-message">
-                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.8rem' }}>👆</span>
-                  <p style={{ margin: 0, fontSize: '1rem', fontWeight: '600' }}>Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p>
+                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>👆</div>
+                  <div style={{ fontSize: '1rem', fontWeight: '600', lineHeight: '1.4' }}>
+                    Sélectionnez un ou plusieurs créneaux<br/>pour commencer votre réservation
+                  </div>
                 </div>
               )}
             </>
           )}
         </div>
       </div>
+
+
+      {/* Modal Dimanche/Férié fermé */}
+      {blockedDayModal && (
+        <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}>
+          <div className="blocked-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="warning-modal-header">
+              <span style={{ fontSize: '3rem' }}>🚫</span>
+              <h2 style={{ margin: '0.5rem 0 0 0', color: 'white' }}>Fermé</h2>
+            </div>
+            <p style={{ fontSize: '1.1rem', margin: '1.5rem 0', color: '#475569' }}>
+              Dimanche/Férié fermé.
+            </p>
+            <button onClick={() => setBlockedDayModal(false)} 
+                    style={{ padding: '0.8rem 2rem', background: '#3b82f6', color: 'white', 
+                             border: 'none', borderRadius: '8px', fontSize: '1rem', 
+                             fontWeight: '600', cursor: 'pointer' }}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
 
       {hoveredReservation && (
         <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`}

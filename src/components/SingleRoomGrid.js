@@ -131,12 +131,12 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
         finalY = Math.max(10, Math.min(window.innerHeight - popupHeight - 10, event.clientY - 50));
         transform = 'translate(0, -100%)';  // Seulement vertical
       } else {
-        // DESKTOP : Positionner au pointeur
+        // DESKTOP : Centré EXACTEMENT sur pointeur
         const maxX = window.innerWidth - popupWidth - 10;
         const minX = 10;
         finalX = Math.max(minX, Math.min(maxX, event.clientX));
-        finalY = Math.max(10, event.clientY - 50);
-        transform = 'translate(-50%, -100%)';  // Centré sur pointeur
+        finalY = event.clientY;  // Pas de décalage
+        transform = 'translate(-50%, -50%)';  // Centre popup sur pointeur
       }
       
       setHoveredReservation(reservation);
@@ -374,7 +374,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                   )}
                   <textarea className="form-textarea" placeholder="Description (facultative)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                   <div className="recurrence-section-styled"><div className="recurrence-box"><input type="checkbox" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} /><label>Réservation récurrente</label></div>
-                  {formData.recurrence && (<div className="recurrence-options slide-down"><div className="form-group"><select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}><option value="weekly">Chaque semaine</option><option value="biweekly">Une semaine sur 2</option><option value="monthly">Chaque mois</option></select></div><div className="form-group" style={{marginBottom:0}}><label>Jusqu'au :</label><input type="date" className="form-input" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(new Date())} required={formData.recurrence} /></div></div>)}</div>
+                  {formData.recurrence && (<div className="recurrence-options slide-down"><div className="form-group"><select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}><option value="weekly">Chaque semaine</option><option value="biweekly">Une semaine sur 2</option><option value="monthly">Chaque mois</option></select></div><div className="form-group" style={{marginBottom:0}}><input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(new Date())} required={formData.recurrence} /></div></div>)}</div>
                   <div className="form-actions"><button type="button" className="btn-cancel" onClick={handleCancelSelection}>Annuler</button><button type="submit" className="btn-submit" disabled={isSubmitting}>Valider</button></div>
                 </form>
               </div>
