@@ -98,7 +98,24 @@ function ReservationGrid({ selectedDate, onBack }) {
   };
 
   const handleMouseUp = () => {
-    if (isDragging && currentSelection) setSelections(prev => [...prev, currentSelection]);
+    if (isDragging && currentSelection) {
+      // Vérifier si déjà sélectionné (TOGGLE)
+      const isAlreadySelected = selections.some(
+        sel => sel.salle === currentSelection.salle && 
+               Math.abs(sel.startHour - currentSelection.startHour) < 0.01
+      );
+      
+      if (isAlreadySelected) {
+        // TOGGLE OFF - Retirer le créneau
+        setSelections(prev => prev.filter(
+          sel => !(sel.salle === currentSelection.salle && 
+                   Math.abs(sel.startHour - currentSelection.startHour) < 0.01)
+        ));
+      } else {
+        // TOGGLE ON - Ajouter le créneau
+        setSelections(prev => [...prev, currentSelection]);
+      }
+    }
     setIsDragging(false);
     setCurrentSelection(null);
   };
