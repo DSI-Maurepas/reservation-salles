@@ -70,14 +70,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
 
   useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom]);
   
-  // Scroll automatique vers grille en responsive après sélection salle
-  useEffect(() => {
-    if (grilleRef.current && window.innerWidth < 768) {
-      setTimeout(() => {
-        // Scroll retiré (Problème 6)
-      }, 300);
-    }
-  }, [selectedRoom]);
+  // useEffect scroll supprimé (grilleRef n'existe plus)
 
   // --- SCROLL AUTO AU CHARGEMENT ---
   useEffect(() => {
