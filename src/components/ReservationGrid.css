@@ -195,3 +195,61 @@
   border: 2px dashed #cbd5e1;
   margin-top: 1.5rem;
 }
+
+
+/* Cellules invalides (passé/dimanche/férié) */
+.time-slot.past-date,
+.time-slot.dimanche,
+.time-slot.jour-ferie {
+  background: repeating-linear-gradient(
+    45deg,
+    #f1f5f9,
+    #f1f5f9 10px,
+    #e2e8f0 10px,
+    #e2e8f0 20px
+  ) !important;
+  cursor: not-allowed !important;
+  position: relative;
+}
+
+.time-slot.past-date::after {
+  content: '🚫';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  opacity: 0.4;
+}
+
+
+/* Modal Dimanche/Férié fermé */
+.blocked-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.blocked-modal {
+  background: white;
+  padding: 0;
+  border-radius: 20px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.warning-modal-header {
+  background: #ff9800;
+  padding: 1.5rem;
+  border-radius: 20px 20px 0 0;
+  text-align: center;
+}
