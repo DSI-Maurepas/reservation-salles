@@ -115,6 +115,7 @@
   /* Masquer légende en responsive */
   .color-legend-container {
     display: none !important;
+    visibility: hidden !important;
   }
 
   /* Colonne heures fixe à gauche */
@@ -123,5 +124,11 @@
     left: 0 !important;
     z-index: 15 !important;
     background: white !important;
+  }
+  
+  /* PROBLÈME 4 : Champ "Jusqu'au" largeur 100% */
+  .recurrence-options input[type="date"] {
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 }
