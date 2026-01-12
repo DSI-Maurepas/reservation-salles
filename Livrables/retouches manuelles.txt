@@ -6,3 +6,4 @@
 
 316 srg.css
   .single-room-container { padding: 0.8rem; }
+

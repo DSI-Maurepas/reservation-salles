@@ -7,26 +7,40 @@
 
 /* NAVIGATION ECRAN LARGE */
 .date-navigation-bar { 
-  display: grid; 
-  grid-template-columns: 1fr auto 1fr; 
+  display: flex;
   align-items: center; 
   margin-bottom: 25px; 
   padding: 0.8rem 1.5rem; 
   background: white; 
   border-radius: 12px; 
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  position: relative; /* ✅ Pour le positionnement absolu du wrapper */
 }
 
 .nav-group-left {
-  justify-self: start;
+  /* ✅ Reste dans le flux, position naturelle à gauche - NE PAS TOUCHER */
+  z-index: 1;
+}
+
+.nav-center-wrapper {
+  position: absolute; /* ✅ Sort du flux pour centrage absolu */
+  left: 50%;
+  transform: translateX(-50%); /* ✅ Centre parfaitement */
 }
 
 .nav-group-center { 
   display: flex; 
   align-items: center; 
   gap: 10px; 
-  justify-self: center; /* ✅ CORRECTION : Centrage de la navigation */
-  grid-column: 2;
+}
+
+/* ✅ Gestion des deux versions de date */
+.responsive-date {
+  display: none !important; /* Cachée en desktop */
+}
+
+.desktop-date {
+  display: flex !important; /* Visible en desktop */
 }
 
 /* ✅ CORRECTION 3 : Bloc date intégré dans la navigation desktop */
@@ -148,28 +162,42 @@
     justify-content: center !important; 
   }
   
-  /* ✅ Ligne 2 : Date du jour */
-  .central-date-block { 
+  /* ✅ Ligne 2 : Date du jour (version responsive) */
+  .responsive-date { 
+    display: flex !important; /* ✅ Afficher en responsive */
     order: 2 !important; 
     width: 100% !important; 
     background: transparent !important; 
     border: none !important; 
     padding: 0 !important; 
-    display: flex !important; 
     justify-content: center !important; 
     height: auto !important;
   }
   
-  .central-date-block .date-display h2 { 
+  /* ✅ Cacher la version desktop de la date */
+  .desktop-date {
+    display: none !important;
+  }
+  
+  .responsive-date .date-display h2 { 
     font-size: 0.95rem !important; 
     color: #1e40af !important; 
     white-space: nowrap !important; 
   }
   
-  /* ✅ Ligne 3 : Boutons de navigation (◀◀ ◀ Aujourd'hui ▶ ▶▶) */
+  /* ✅ Ligne 3 : Wrapper + Boutons de navigation */
+  .nav-center-wrapper {
+    position: relative !important; /* ✅ Override position absolute */
+    left: auto !important;
+    transform: none !important;
+    order: 3 !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+  
   .nav-group-center { 
-    order: 3 !important; 
-    width: 100% !important; 
+    width: auto !important;
     display: flex !important; 
     justify-content: center !important; 
     align-items: center !important; 
