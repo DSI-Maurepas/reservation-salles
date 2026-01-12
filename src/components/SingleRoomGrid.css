@@ -407,6 +407,13 @@
   .recurrence-options input[type="date"] {
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
     box-sizing: border-box !important;
+    flex: 1 !important;
+  }
+  
+  .recurrence-options .form-group {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }

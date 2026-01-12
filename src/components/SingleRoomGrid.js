@@ -8,7 +8,7 @@ import { getSalleData, sallesData } from '../data/sallesData';
 import SalleCard from './SalleCard';
 import './SingleRoomGrid.css';
 
-function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
+function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess }) {
   // PROBLÈME 7 : Dimanche → semaine suivante
   useEffect(() => {
     const today = new Date();
@@ -68,7 +68,7 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
     return SALLES_ADMIN_ONLY.some(adminRoom => room.includes(adminRoom) || adminRoom.includes(room));
   };
 
-  useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom]);
+  useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom, editingReservation]);
   
   // useEffect scroll supprimé (grilleRef n'existe plus)
 
@@ -81,7 +81,34 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
     }
   }, [selectedRoom]);
 
-  const loadWeekReservations = async () => { setLoading(true); try { const allReservations = await googleSheetsService.getAllReservations(); const weekEnd = new Date(currentWeekStart); weekEnd.setDate(currentWeekStart.getDate() + 6); const filtered = allReservations.filter(res => { const resSalleName = res.salle.split(' - ')[0]; if (resSalleName !== selectedRoom && res.salle !== selectedRoom) return false; if (res.statut === 'cancelled') return false; const resDate = new Date(res.dateDebut); return resDate >= currentWeekStart && resDate <= weekEnd; }); setReservations(filtered); } catch (error) { console.error('Erreur chargement:', error); } setLoading(false); };
+  const loadWeekReservations = async () => { 
+    setLoading(true); 
+    try { 
+      const allReservations = await googleSheetsService.getAllReservations(); 
+      const weekEnd = new Date(currentWeekStart); 
+      weekEnd.setDate(currentWeekStart.getDate() + 6); 
+      
+      const filtered = allReservations.filter(res => { 
+        const resSalleName = res.salle.split(' - ')[0]; 
+        if (resSalleName !== selectedRoom && res.salle !== selectedRoom) return false; 
+        if (res.statut === 'cancelled') return false; 
+        
+        // ✅ FILTRAGE LOCAL : Exclure la réservation en cours d'édition
+        if (editingReservation && res.id === editingReservation.id) {
+          console.log('🔵 Réservation en édition filtrée (non affichée comme occupée):', res.id);
+          return false;
+        }
+        
+        const resDate = new Date(res.dateDebut); 
+        return resDate >= currentWeekStart && resDate <= weekEnd; 
+      }); 
+      
+      setReservations(filtered); 
+    } catch (error) { 
+      console.error('Erreur chargement:', error); 
+    } 
+    setLoading(false); 
+  };
   
   const handleAdminPasswordSubmit = () => { if (adminPasswordModal.password === 'R3sa@M0rep@s78') { setIsAdminUnlocked(true); setAdminPasswordModal({ show: false, password: '' }); } else { alert('❌ Mot de passe incorrect'); setAdminPasswordModal({ ...adminPasswordModal, password: '' }); } };
   const getDates = () => { const dates = []; for (let i = 0; i < 7; i++) { const date = new Date(currentWeekStart); date.setDate(currentWeekStart.getDate() + i); dates.push(date); } return dates; };
@@ -293,7 +320,21 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
   const generateRecurrenceDates = (startDate, endDate, type) => { const dates = []; const current = new Date(startDate); const end = new Date(endDate); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); while (current <= end) { dates.push(new Date(current)); if (type === 'monthly') current.setMonth(current.getMonth() + 1); else if (type === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); } return dates; };
   const checkConflicts = (candidates, allExistingReservations) => { const conflicts = []; const valid = []; candidates.forEach(candidate => { const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); const hasConflict = allExistingReservations.some(existing => { if (existing.statut === 'cancelled') return false; if (existing.salle !== candidate.salle && existing.salle.split(' - ')[0] !== candidate.salle) return false; const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); return (candidateStart < existingEnd && candidateEnd > existingStart); }); if (hasConflict) conflicts.push(candidate); else valid.push(candidate); }); return { conflicts, valid }; };
   const finalizeReservation = async (reservationsToSave) => { setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); setWarningModal({ show: false, conflicts: [], validReservations: [] }); try { const createdReservations = []; for (const res of reservationsToSave) { const result = await googleSheetsService.addReservation(res); createdReservations.push({ ...res, id: result.id }); setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); } setSuccessModal({ show: true, reservations: createdReservations, message: '✅ Réservation confirmée !' }); setSelections([]); setShowForm(false); loadWeekReservations(); } catch (error) { alert('Erreur: ' + error.message); } finally { setIsSubmitting(false); } };
-  const handleFormSubmit = async (e) => { e.preventDefault(); if (dispositions && !formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(sel.date); const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); const dates = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } };
+  const handleFormSubmit = async (e) => { e.preventDefault(); 
+    
+    // MODIFICATION : Supprimer ancienne réservation si mode édition
+    if (editingReservation) {
+      try {
+        console.log('Mode édition : Suppression réservation', editingReservation.id);
+        await googleSheetsService.deleteReservation(editingReservation.id);
+      } catch (err) {
+        console.error('Erreur suppression:', err);
+        alert('Erreur lors de la modification');
+        return;
+      }
+    }
+    
+    if (dispositions && !formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); setIsSubmitting(true); try { const mergedSelections = preMergeSelections(selections); let allCandidates = []; mergedSelections.forEach(sel => { const dateStr = googleSheetsService.formatDate(sel.date); const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; allCandidates.push(baseRes); if (formData.recurrence && formData.recurrenceJusquau) { const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); const dates = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); dates.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); } }); const allExisting = await googleSheetsService.getAllReservations(); const { conflicts, valid } = checkConflicts(allCandidates, allExisting); setIsSubmitting(false); if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } else { await finalizeReservation(valid); } } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } };
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
   const successModalContent = successModal.show ? ( <div className="success-modal-overlay" onClick={() => setSuccessModal({ ...successModal, show: false })} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '70px' }}> <div className="success-modal" onClick={e => e.stopPropagation()}> <div className="success-modal-header"><h2>{successModal.reservations.length > 1 ? "Réservations confirmées !" : "Réservation confirmée !"}</h2></div> <div className="success-modal-body"> <p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? "créneaux confirmés" : "créneau confirmé"}</b></p> <div className="reservations-list"> {successModal.reservations.map((res, i) => ( <div key={i} className="reservation-item-success"> <span className="calendar-icon">📅</span> {res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin} </div> ))} </div> <div className="ical-download-section"> <button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Télécharger .ics</button> </div> </div> <div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({ ...successModal, show: false })}>Fermer</button></div> </div> </div> ) : null;
 
@@ -319,6 +360,65 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
       clearTimeout(removeTimer);
     };
   }, [hoveredReservation]);
+
+  // MODIFICATION : Pré-remplir formulaire si editingReservation
+
+  // CORRECTION MAJEURE : Pré-remplir formulaire + pré-sélectionner créneaux + naviguer vers bonne semaine
+  useEffect(() => {
+    if (editingReservation) {
+      console.log('🔧 Mode édition activé pour réservation:', editingReservation.id);
+      
+      // 1. Pré-remplir le formulaire avec les données existantes
+      setFormData({
+        nom: editingReservation.nom || '',
+        prenom: editingReservation.prenom || '',
+        email: editingReservation.email || '',
+        telephone: editingReservation.telephone || '',
+        service: editingReservation.service || '',
+        objet: editingReservation.objet || '',
+        description: editingReservation.description || '',
+        recurrence: editingReservation.recurrence || false,
+        recurrenceType: editingReservation.recurrenceType || 'weekly',
+        recurrenceJusquau: editingReservation.recurrenceJusquau || '',
+        agencement: editingReservation.agencement || '',
+        nbPersonnes: editingReservation.nbPersonnes || ''
+      });
+      
+      // 2. Calculer la semaine de la réservation et naviguer vers elle
+      const resDate = new Date(editingReservation.dateDebut);
+      const resWeekStart = getMondayOfWeek(resDate);
+      setCurrentWeekStart(resWeekStart);
+      hasManuallyNavigated.current = true; // Empêcher le reset automatique dimanche
+      
+      // 3. Pré-sélectionner les créneaux de la réservation existante
+      const dayOfWeek = resDate.getDay();
+      // Conversion : 0=Dimanche→6, 1=Lundi→0, 2=Mardi→1, etc.
+      const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      
+      const startHour = googleSheetsService.timeToFloat(editingReservation.heureDebut);
+      const endHour = googleSheetsService.timeToFloat(editingReservation.heureFin);
+      
+      const newSelections = [];
+      for (let h = startHour; h < endHour; h += 0.5) {
+        newSelections.push({
+          dayIndex: dayIndex,
+          hour: h,
+          date: resDate
+        });
+      }
+      
+      setSelections(newSelections);
+      setShowForm(true);
+      
+      console.log('✅ Modification prête:', {
+        semaine: resWeekStart.toLocaleDateString('fr-FR'),
+        jour: dayIndex,
+        créneaux: newSelections.length,
+        horaire: `${editingReservation.heureDebut} - ${editingReservation.heureFin}`
+      });
+    }
+  }, [editingReservation]);
+
 
   return (
     <>
@@ -420,8 +520,9 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
                     
                     if (reserved) cellClass += ' occupied';
                     if (selected) cellClass += ' selected';
-                    if (blocked) cellClass += ' blocked';
-                    if (past) cellClass += ' past-date';
+                    // Blocked/Past : SEULEMENT si pas réservé
+                    if (blocked && !reserved) cellClass += ' blocked';
+                    if (past && !reserved) cellClass += ' past-date';
                     
                     // --- APPLIQUER LA CLASSE DE VERROUILLAGE MÊME LE MIDI ---
                     if (isAdmin && !isAdminUnlocked && !reserved) {
@@ -494,7 +595,27 @@ function SingleRoomGrid({ selectedRoom, onBack, onSuccess }) {
           </div>
         )}
         
-        {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><h2>Fermé</h2><p>Dimanche/Férié fermé.</p><button className="blocked-close-button" onClick={() => setBlockedDayModal(false)}>Fermer</button></div></div>}
+        
+        {/* CORRECTION : Modale harmonisée avec style ReservationGrid */}
+        {blockedDayModal && (
+          <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}>
+            <div className="blocked-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="warning-modal-header">
+                <span style={{ fontSize: '3rem' }}>🚫</span>
+                <h2 style={{ margin: '0.5rem 0 0 0', color: 'white' }}>Fermé</h2>
+              </div>
+              <p style={{ fontSize: '1.1rem', margin: '1.5rem 0', color: '#475569' }}>
+                Dimanche/Férié fermé.
+              </p>
+              <button onClick={() => setBlockedDayModal(false)} 
+                      style={{ padding: '0.8rem 2rem', background: '#3b82f6', color: 'white', 
+                               border: 'none', borderRadius: '8px', fontSize: '1rem', 
+                               fontWeight: '600', cursor: 'pointer' }}>
+                Fermer
+              </button>
+            </div>
+          </div>
+        )}
         {adminPasswordModal.show && (
         <div className="modal-overlay">
           <div className="modal-content">

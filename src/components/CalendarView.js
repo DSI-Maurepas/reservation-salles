@@ -12,6 +12,8 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
   const [loading, setLoading] = useState(false);
   
   const [activeLegend, setActiveLegend] = useState(null);
+  const [editingReservation, setEditingReservation] = useState(null);
+
 
   const LEGEND_DATA = [
     { status: 'available', label: 'Disponible', description: '🟢 Disponible (0 réservation)' },
@@ -34,6 +36,31 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
       day: now.getDate()
     };
   };
+
+  
+  // Détecter paramètre edit dans URL pour modification
+  useEffect(() => {
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.split('?')[1] || '');
+    const editId = params.get('edit');
+    const salleParam = params.get('salle');
+    const dateParam = params.get('date');
+    
+    if (editId && salleParam && dateParam) {
+      // Charger réservation à modifier
+      googleSheetsService.getAllReservations().then(allRes => {
+        const resEdit = allRes.find(r => r.id === editId);
+        if (resEdit) {
+          setEditingReservation(resEdit);
+          // Ouvrir directement Par Salle avec cette salle
+          const decodedSalle = decodeURIComponent(salleParam);
+          if (onRoomSelect) {
+            onRoomSelect(decodedSalle, resEdit);
+          }
+        }
+      }).catch(err => console.error('Erreur chargement réservation:', err));
+    }
+  }, []);
 
   useEffect(() => {
     setViewMode(defaultView);
@@ -129,7 +156,7 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
     // PROBLÈME 1 : Forcer scroll en haut pour TOUTES les salles
     window.scrollTo(0, 0);
     if (onRoomSelect) {
-      onRoomSelect(room);
+      onRoomSelect(room, editingReservation);
     }
   };
 
