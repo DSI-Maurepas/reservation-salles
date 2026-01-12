@@ -596,21 +596,18 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
         )}
         
         
-        {/* CORRECTION : Modale harmonisée avec style ReservationGrid */}
+        {/* ✅ CORRECTION : Modale harmonisée avec classes CSS (responsive) */}
         {blockedDayModal && (
           <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}>
             <div className="blocked-modal" onClick={(e) => e.stopPropagation()}>
               <div className="warning-modal-header">
-                <span style={{ fontSize: '3rem' }}>🚫</span>
-                <h2 style={{ margin: '0.5rem 0 0 0', color: 'white' }}>Fermé</h2>
+                <span className="blocked-modal-emoji">🚫</span>
+                <h2 className="blocked-modal-title">Fermé</h2>
               </div>
-              <p style={{ fontSize: '1.1rem', margin: '1.5rem 0', color: '#475569' }}>
+              <p className="blocked-modal-message">
                 Dimanche/Férié fermé.
               </p>
-              <button onClick={() => setBlockedDayModal(false)} 
-                      style={{ padding: '0.8rem 2rem', background: '#3b82f6', color: 'white', 
-                               border: 'none', borderRadius: '8px', fontSize: '1rem', 
-                               fontWeight: '600', cursor: 'pointer' }}>
+              <button onClick={() => setBlockedDayModal(false)} className="blocked-close-button">
                 Fermer
               </button>
             </div>

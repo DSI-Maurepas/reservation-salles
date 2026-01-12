@@ -253,3 +253,82 @@
   border-radius: 20px 20px 0 0;
   text-align: center;
 }
+
+/* ✅ AJOUT : Styles détaillés de la modale "Fermé" */
+.blocked-modal-emoji {
+  font-size: 3rem;
+  display: block;
+}
+
+.blocked-modal-title {
+  margin: 0.5rem 0 0 0;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.blocked-modal-message {
+  font-size: 1.1rem;
+  margin: 1.5rem 0;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.blocked-close-button {
+  padding: 0.8rem 2rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.blocked-close-button:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.blocked-close-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ✅ RESPONSIVE MOBILE */
+@media (max-width: 768px) {
+  .blocked-modal {
+    width: 85%;
+    padding: 0;
+  }
+
+  .warning-modal-header {
+    padding: 1.2rem;
+  }
+
+  .blocked-modal-emoji {
+    font-size: 2.5rem;
+  }
+
+  .blocked-modal-title {
+    font-size: 1.3rem;
+  }
+
+  .blocked-modal-message {
+    font-size: 1rem;
+    margin: 1.2rem 1rem;
+    padding: 0 0.5rem;
+  }
+
+  .blocked-close-button {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.95rem;
+    width: 80%;
+    margin: 0 auto 1rem;
+    display: block;
+  }
+}
+
