@@ -104,7 +104,7 @@
 .hour-cell-half { 
   background: white; 
   border-top: none !important; 
-  border-bottom: 1px solid #64748b !important; 
+  border-bottom: none !important; /* ✅ CORRECTION : Lignes horizontales retirées */
   border-right: 1px solid #64748b !important; 
   text-align: center !important; 
 }
