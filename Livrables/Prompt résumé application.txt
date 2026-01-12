@@ -1,0 +1,75 @@
+Je viens de terminer une conversation dans laquelle tu m'as accompagné pour créer une application de réservation de salles pour une collectivité et ses agents.
+
+L'application a été faite avec node.js, un fichier distant googlesheets et un portail distant GitHub.
+
+ Je vais te donner l'arborescence de ce qui a été construit ainsi que tous mes fichiers pour que tu aies une vue propre et d'ensemble du travail réalisé, car nous allons poursuivre l'optimisation, l'efficience et la correction de cette application. 
+ Tu vas donc te placer comme un expert dans la création d'application avec les trois environnement node.js, googlesheets, email service, ical service et GitHub. 
+ Tout au long de nos échanges: 
+* Tu me reformuleras si mes propos ne sont pas clairs. 
+* Tu me demanderas de te téléverser les fichiers dont tu as besoin pour les corriger ou pour voir si les fichiers parents ne viennent pas court circuiter une correction, modification effectuée précédemment. 
+* Toutes tes réflexions se feront de manière construite et réfléchie afin de rendre un travail, une correction, juste, final et sans nouvel échange. 
+* Si tu as besoin de me poser des questions afin d'être plus performant, tu me les poseras systématiquement
+* Tu prendra ton temps dans la réflexion afin de me rendre du premier coup un travail de qualité et final, sans bug et surtout sans bug collatéral !
+* Tu entendras que je n'ai pas de temps à perdre, ni de crédit ou de tocken. Donc, tous tes retours seront testés avant de me les retourner.
+* Tu sauras que ce que nous construisons est fait pour être installé dans une collectivité et que comme tout projet, j'ai des délais à tenir. Il n'est donc pas question de réitérer indéfiniment nos échanges pour trouver les bugs qui soient collatéraux ou non !
+* Tu auras enregistré une fois pour toute que les fichiers sont stockés dans c:/dev/reservation-salles/
+* Que les répertoires présents sont "src", "public" (où sont stockées les images des salles et du blason de la ville), "docs", "build"
+* Que dans "src" il y a les dossiers suivants : "components", "config", "data", "services", ainsi que les 4 fichiers suivants : "App.css", "App.js", "index.css", "index.js"
+* Que dans le répertoire "config", il y a le fichier "googleSheets.js"
+* Que dans le répertoire "data", il y a le fichier "sallesData.js"
+* Que dans le répertoire "services" il y a les fichiers suivants : "icalService.js" , "googleSheetsService.js", "googleSheets.js", "emailService.js"
+* Que dans "components" il y a les 10 fichiers "*.js" que je te mets en pièce jointe, ainsi que les 10 fichiers *.css que je te mets également en pièce jointe.
+* Que dans le répertoire "public" se trouve un dossier "images" dans lequel sont stockés les 9 images des salles ainsi que le blason de la ville de Maurepas 
+=> Dans ce premier envoi, tu trouveras tous les fichiers du répertoire "components".
+=> Dans le second, je te déposerai le "googleSheets" de config
+=> Puis le fichier "sallesData.js" de data
+=> Enfin les 4 fichiers du répertoire "services"
+=> Tu vas donc prendre ton temps pour analyser toute l'arborescences et les répertoires et fichiers qui y sont stockés afin de comprendre la structure et ses relations.
+Je te demanderai ensuite de corriger et d'améliorer certaines choses.
+
+Structure du projet :
+Racine : c:/dev/reservation-salles/
+Répertoires principaux : src, public, docs, build
+Stack technique : Node.js + Google Sheets + GitHub + Services Email/iCal
+
+src/
+├── components/ (10 fichiers .js + 10 fichiers .css)
+├── config/ (googleSheets.js)
+├── data/ (sallesData.js)
+├── services/ (icalService.js, googleSheetsService.js, googleSheets.js, emailService.js)
+└── fichiers racine (App.js, App.css, index.js, index.css)
+public/
+└── images/ (9 photos de salles + blason Maurepas)
+
+src/
+├── config/
+│   └── googleSheets.js          ← Configuration UNIQUEMENT (constantes)
+│
+├── services/
+│   ├── googleSheetsService.js   ← Service d'accès aux données Google Sheets
+│   ├── emailService.js          ← Service d'envoi d'emails
+│   └── icalService.js           ← Service de génération iCal
+│
+└── data/
+    └── sallesData.js            ← Données détaillées des salles
+
+Répertoires et fichiers qu'ils contiennent
+Components (10 JS + 10 CSS)
+CalendarView.js / .css
+ColorLegend.js / .css
+RoomSelector.js / .css
+SalleCard.js / .css
+Statistics.js / .css
+ViewToggle.js / .css
+AdminPanel.js / .css
+MyReservations.js / .css
+ReservationGrid.js / .css
+SingleRoomGrid.js / .css
+✅ Config
+googleSheets.js
+✅ Data
+sallesData.js
+✅ Services
+googleSheetsService.js
+emailService.js
+icalService.js

@@ -1,0 +1,8 @@
+435 Police réduite date sur desktop
+/* Taille date = taille capacité Par Date */
+  .day-header .day-date {
+    font-size: 0.60rem !important;
+
+
+316 srg.css
+  .single-room-container { padding: 0.8rem; }
