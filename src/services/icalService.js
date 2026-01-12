@@ -1,9 +1,10 @@
 // src/services/icalService.js
+// CORRECTION : Format .ics optimisé pour ajout au calendrier par défaut (pas de nouveau calendrier)
 
 const icalService = {
   /**
-   * Formate une date JS en chaîne iCal (YYYYMMDDTHHmm00)
-   * Prend en compte le fuseau horaire local pour l'affichage correct
+   * Formate une date JS en chaîne iCal avec fuseau horaire
+   * Format : TZID=Europe/Paris:YYYYMMDDTHHmm00
    */
   formatDateToIcalString: (dateStr, timeStr) => {
     if (!dateStr || !timeStr) return '';
@@ -17,14 +18,35 @@ const icalService = {
 
   /**
    * Génère le contenu du fichier .ics
+   * OPTIMISÉ : Ajout au calendrier par défaut (pas de création de nouveau calendrier)
    */
   generateICSContent: (reservations) => {
+    // ✅ CORRECTION : Utiliser METHOD:REQUEST pour forcer l'ajout au calendrier par défaut
     let icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
       'PRODID:-//Mairie de Maurepas//Reservation Salles//FR',
       'CALSCALE:GREGORIAN',
-      'METHOD:PUBLISH' // Indique qu'il s'agit d'événements à publier/ajouter
+      'METHOD:REQUEST', // ✅ REQUEST au lieu de PUBLISH pour ajout au calendrier
+      'X-WR-CALNAME:Réservations Mairie Maurepas',
+      'X-WR-TIMEZONE:Europe/Paris',
+      'BEGIN:VTIMEZONE',
+      'TZID:Europe/Paris',
+      'BEGIN:DAYLIGHT',
+      'TZOFFSETFROM:+0100',
+      'TZOFFSETTO:+0200',
+      'TZNAME:CEST',
+      'DTSTART:19700329T020000',
+      'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+      'END:DAYLIGHT',
+      'BEGIN:STANDARD',
+      'TZOFFSETFROM:+0200',
+      'TZOFFSETTO:+0100',
+      'TZNAME:CET',
+      'DTSTART:19701025T030000',
+      'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+      'END:STANDARD',
+      'END:VTIMEZONE'
     ];
 
     reservations.forEach((res, index) => {
@@ -37,25 +59,35 @@ const icalService = {
       // Création d'un UID unique pour l'événement
       const uid = `res-${res.id || index}-${Date.now()}@maurepas.fr`;
       
-      // Description détaillée
+      // Timestamp actuel au format iCal
+      const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      
+      // Description détaillée (échapper les retours à la ligne pour compatibilité)
       let description = `Réservation de salle : ${res.salle}\\n`;
       description += `Service : ${res.service}\\n`;
       description += `Objet : ${res.objet}\\n`;
       if (res.description) description += `Note : ${res.description}\\n`;
       if (res.agencement) description += `Disposition : ${res.agencement}\\n`;
       if (res.nbPersonnes) description += `Nombre de personnes : ${res.nbPersonnes}\\n`;
+      description += `\\nAgent : ${res.prenom || ''} ${res.nom || ''}`;
+      if (res.email) description += `\\nEmail : ${res.email}`;
+      if (res.telephone) description += `\\nTéléphone : ${res.telephone}`;
 
+      // ✅ AMÉLIORATION : Ajout de propriétés pour forcer l'intégration au calendrier
       icsContent.push(
         'BEGIN:VEVENT',
         `UID:${uid}`,
-        `DTSTAMP:${new Date().toISOString().replace(/[-:.]/g, '')}`,
-        `DTSTART:${startDateTime}`,
-        `DTEND:${endDateTime}`,
-        `SUMMARY:Réservation ${salleNom}`,
+        `DTSTAMP:${dtstamp}`,
+        `DTSTART;TZID=Europe/Paris:${startDateTime}`, // ✅ Avec fuseau horaire
+        `DTEND;TZID=Europe/Paris:${endDateTime}`,     // ✅ Avec fuseau horaire
+        `SUMMARY:📅 Réservation ${salleNom}`, // ✅ Emoji pour visibilité
         `DESCRIPTION:${description}`,
         `LOCATION:Mairie de Maurepas - ${res.salle}`,
-        'STATUS:CONFIRMED',
+        'STATUS:CONFIRMED', // ✅ Événement confirmé
+        'CLASS:PUBLIC',     // ✅ Événement public
+        'TRANSP:OPAQUE',    // ✅ Bloque le temps (occupé)
         'SEQUENCE:0',
+        `ORGANIZER;CN="Mairie de Maurepas":MAILTO:reservation@maurepas.fr`,
         'END:VEVENT'
       );
     });
@@ -78,9 +110,15 @@ const icalService = {
       const link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
       
-      // Nom du fichier : reservation_DATE.ics
+      // ✅ AMÉLIORATION : Nom de fichier plus explicite
       const dateStr = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
-      link.download = `reservations_maurepas_${dateStr}.ics`;
+      const firstName = reservations[0]?.prenom || '';
+      const lastName = reservations[0]?.nom || '';
+      const nomFichier = firstName && lastName 
+        ? `reservation_${firstName}_${lastName}_${dateStr}.ics`
+        : `reservations_maurepas_${dateStr}.ics`;
+      
+      link.download = nomFichier;
       
       // Déclenchement
       document.body.appendChild(link);
@@ -89,6 +127,8 @@ const icalService = {
       // Nettoyage
       document.body.removeChild(link);
       window.URL.revokeObjectURL(link.href);
+      
+      console.log('✅ Fichier .ics généré:', nomFichier);
     } catch (error) {
       console.error("Erreur lors de la génération du fichier ICS :", error);
       alert("Une erreur est survenue lors de la création du fichier calendrier.");

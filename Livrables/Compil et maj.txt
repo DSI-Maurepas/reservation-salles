@@ -32,3 +32,33 @@ git commit -m "Mise à jour : Compilation et déploiement vers /docs"
 git push origin main
 
 echo "🚀 Terminé ! Votre application a été compilée et envoyée."
+
+///////////////////////////////////
+
+cd /c/dev/reservation-salles
+npm run build
+rm -rf docs/*
+cp -rf build/* docs/
+git add .
+git commit -m "Votre message ici"
+git push origin main
+
+///////////////////////////
+
+cd /c/dev/reservation-salles
+npm start
+
+///////////////////////////
+
+Rapatrier en local les fichiers du serveur distant
+
+cd /c/dev/reservation-salles && git pull origin main
+
+////////////////////////////
+
+cd /c/dev/reservation-salles && npm run build && rm -rf docs/* && cp -rf build/* docs/ && git add . && git commit -m "Fix: GoogleSheets robuste" && git push origin main
+
+////////////////////////////
+
+MàJ :
+cd /c/dev/Reservation-salles && rm -rf build && npm run build && rm -rf docs/* && cp -rf build/* docs/ && git add . && git commit -m "Fix: icalService + 7 corrections testees" && git push origin main

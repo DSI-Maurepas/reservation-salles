@@ -205,7 +205,7 @@ src/
 │   ├── emailService.js
 │   └── icalService.js
 │
-└── fichiers racine  ⚠️ Non fournis
+└── fichiers racine  
     ├── App.js
     ├── App.css
     ├── index.js

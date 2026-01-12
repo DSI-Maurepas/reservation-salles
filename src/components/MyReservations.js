@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
+import icalService from '../services/icalService'; // ✅ AJOUT : Service iCal centralisé
 import { MOTIFS_ANNULATION, COULEURS_OBJETS } from '../config/googleSheets';
 import './MyReservations.css';
 
@@ -110,9 +111,10 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   };
 
   const handleEdit = (reservation) => {
-    if (onEditReservation && typeof onEditReservation === 'function') { 
-        onEditReservation(reservation); 
-    }
+    const dateStr = reservation.dateDebut;
+    const salle = reservation.salle;
+    const newHash = `#calendar?salle=${encodeURIComponent(salle)}&date=${dateStr}&edit=${reservation.id}`;
+    window.location.hash = newHash;
   };
 
   const handleDeleteClick = (reservation) => { 
@@ -157,18 +159,11 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `reservations_${userEmail}.xls`; link.click();
   };
 
+  // ✅ CORRECTION : Utilisation du service iCal centralisé pour format standardisé
   const exportToICalendar = () => {
-    const events = filteredReservations.map(res => {
-      const startDate = new Date(`${res.dateDebut}T${res.heureDebut}:00`);
-      const endDate = new Date(`${res.dateDebut}T${res.heureFin}:00`);
-      return ['BEGIN:VEVENT', `DTSTART:${formatICalDate(startDate)}`, `DTEND:${formatICalDate(endDate)}`, `SUMMARY:${res.salle} - ${res.objet}`, `DESCRIPTION:Service: ${res.service}`, `LOCATION:${res.salle}`, 'END:VEVENT'].join('\r\n');
-    });
-    const icalContent = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mairie//FR', ...events, 'END:VCALENDAR'].join('\r\n');
-    const blob = new Blob([icalContent], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `reservations_${userEmail}.ics`; link.click();
+    icalService.generateAndDownload(filteredReservations);
   };
 
-  const formatICalDate = (date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   const formatMobileRoomName = (name) => { if (!name) return ''; return name.replace('Salle Conseil', 'Conseil').replace('Salle Mariages', 'Mariages').replace('Salle N°', 'Salle ').replace('Salle CCAS', 'CCAS'); };
 
   if (loading) return <div className="my-reservations-container"><div className="loading-container"><div className="spinner"></div><p>Chargement...</p></div></div>;

@@ -16,6 +16,8 @@ function AdminPanel() {
   const [loading, setLoading] = useState(false);
   const [filterSalle, setFilterSalle] = useState('all');
   const [filterDate, setFilterDate] = useState('');
+  const [filterDateStart, setFilterDateStart] = useState('');
+  const [filterDateEnd, setFilterDateEnd] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
@@ -48,7 +50,7 @@ function AdminPanel() {
 
   useEffect(() => {
     applyFilters();
-  }, [reservations, filterSalle, filterDate, searchTerm, sortColumn, sortDirection]);
+  }, [reservations, filterSalle, filterDate, filterDateStart, filterDateEnd, searchTerm, sortColumn, sortDirection]);
 
   const handleAuthenticate = (e) => {
     e.preventDefault();
@@ -99,6 +101,14 @@ function AdminPanel() {
     let filtered = [...reservations];
     if (filterSalle !== 'all') filtered = filtered.filter(res => res.salle === filterSalle);
     if (filterDate) filtered = filtered.filter(res => res.dateDebut === filterDate);
+    // Filtre période (de/à)
+    if (filterDateStart) {
+      filtered = filtered.filter(res => res.dateDebut >= filterDateStart);
+    }
+    if (filterDateEnd) {
+      filtered = filtered.filter(res => res.dateDebut <= filterDateEnd);
+    }
+    
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(res =>
@@ -167,7 +177,8 @@ function AdminPanel() {
 
   const handleEdit = (reservation) => {
     const dateStr = reservation.dateDebut;
-    const newHash = `#?date=${dateStr}&edit=${reservation.id}`;
+    const salle = reservation.salle;
+    const newHash = `#calendar?salle=${encodeURIComponent(salle)}&date=${dateStr}&edit=${reservation.id}`;
     window.location.hash = newHash;
   };
 
@@ -221,6 +232,14 @@ function AdminPanel() {
         <div className="filters-grid">
           <div className="filter-group"><label>Salle</label><select value={filterSalle} onChange={(e) => setFilterSalle(e.target.value)}><option value="all">Toutes les salles</option>{SALLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
           <div className="filter-group"><label>Date</label><input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} /></div>
+          <div className="filter-group">
+            <label>Période</label>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input type="date" value={filterDateStart} onChange={(e) => setFilterDateStart(e.target.value)} placeholder="Du" style={{ flex: 1 }} />
+              <span>à</span>
+              <input type="date" value={filterDateEnd} onChange={(e) => setFilterDateEnd(e.target.value)} placeholder="Au" style={{ flex: 1 }} />
+            </div>
+          </div>
           <div className="filter-group"><label>Recherche</label><input type="text" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Nom, email, service..." /></div>
         </div>
       </div>

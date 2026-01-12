@@ -6,7 +6,7 @@ import ColorLegend from './ColorLegend';
 import SalleCard from './SalleCard';
 import './ReservationGrid.css';
 
-function ReservationGrid({ selectedDate, onBack }) {
+function ReservationGrid({ selectedDate, onBack, editingReservation }) {
   const [currentDate, setCurrentDate] = useState(selectedDate);
   const [reservations, setReservations] = useState([]);
   const [selections, setSelections] = useState([]);
@@ -179,9 +179,14 @@ function ReservationGrid({ selectedDate, onBack }) {
         if (h === HORAIRES.HEURE_FIN - 0.5) classes += ' last-row-slot';
         
         // Ajouter classes pour dates invalides (dimanche/férié/passé)
-        if (isDimanche(currentDate)) classes += ' dimanche';
-        if (isJourFerie(currentDate)) classes += ' jour-ferie';
-        if (isDateInPast(currentDate)) classes += ' past-date';
+        // IMPORTANT : Dimanche/Férié grisé SAUF si réservé
+        if ((isDimanche(currentDate) || isJourFerie(currentDate)) && !res) {
+          classes += ' dimanche jour-ferie';
+        }
+        // Passé : grisé SEULEMENT si VIDE
+        if (isDateInPast(currentDate) && !res) {
+          classes += ' past-date';
+        }
         
         if (res) classes += ' reserved occupied';
         else if (isLocked) classes += ' admin-only-locked';

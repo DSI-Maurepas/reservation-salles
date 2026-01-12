@@ -115,8 +115,8 @@ Si vous avez des questions :
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Cordialement,
-Le service de gestion des salles
-Mairie
+Le service évènementiel
+Mairie de Maurepas
 
 ---
 Ceci est un message automatique, merci de ne pas y répondre.
@@ -167,8 +167,8 @@ Après création de chaque template :
 1. Dans EmailJS, cliquez sur "Test It"
 2. Remplissez les variables de test :
    ```
-   to_email: votre.email@mairie.fr
-   to_name: Jean Dupont
+   to_email: j.matrat@maurepas.fr
+   to_name: Joël MATRAT
    salle: Salle du Conseil
    date_debut: 15/12/2024
    heure_debut: 14:00
