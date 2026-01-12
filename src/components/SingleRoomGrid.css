@@ -135,7 +135,7 @@
   align-items: center; 
   justify-content: center; 
 }
-.admin-only-locked::after { content: '🔒'; font-size: 0.8rem; opacity: 0.5; }
+.admin-only-locked::after { content: '🔒'; font-size: 0.7rem; opacity: 0.4; }
 
 /* RÈGLE SPÉCIFIQUE POUR LA COMBINAISON MIDI + VERROUILLÉ (Double sécurité) */
 .time-slot.lunch-break.admin-only-locked {
@@ -144,7 +144,7 @@
 }
 .time-slot.lunch-break.admin-only-locked::after {
   content: '🔒' !important; /* Force l'affichage du cadenas */
-  opacity: 0.5;
+  opacity: 0.4;
 }
 
 /* LEGENDE BUREAU */
@@ -196,8 +196,23 @@
   transition: opacity 0.4s ease-in-out;
 }
 .reservation-popup-card.fading-out { opacity: 0; }
-.popup-card-header { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); padding: 0.8rem; font-weight: 700; color: white; border-bottom: none; display: flex; align-items: center; gap: 0.8rem; }
-.popup-card-body { padding: 1rem; color: #475569; font-size: 0.9rem; }
+.popup-card-header { 
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); 
+  padding: 0.8rem; 
+  font-weight: 700; 
+  color: white; 
+  border-bottom: none; 
+  display: flex; 
+  align-items: center; 
+  gap: 0.8rem; 
+  text-align: left; /* ✅ CORRECTION 1 : Aligné à gauche */
+}
+.popup-card-body { 
+  padding: 1rem; 
+  color: #475569; 
+  font-size: 0.9rem; 
+  text-align: left; /* ✅ CORRECTION 1 : Aligné à gauche */
+}
 .popup-info-line { margin-bottom: 0.6rem; display: flex; align-items: flex-start; gap: 0.8rem; }
 .popup-info-icon { font-size: 1.1rem; width: 24px; text-align: center; }
 .popup-info-text { flex: 1; font-weight: 500; }
@@ -313,12 +328,12 @@
 }
 
 @media (max-width: 1280px) {
-  .single-room-container { padding: 1rem; }
-  .week-navigation { display: flex; flex-direction: column; gap: 0.5rem; height: auto; padding: 1rem; }
-  .nav-group-left { width: 100%; justify-content: center; grid-column: auto; margin-bottom: 0.5rem; order: 1; }
-  .nav-group-center { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; order: 2; }
-  .week-date-display { width: 100%; text-align: center; order: 1; margin-bottom: 0.5rem; font-size: 1.1rem; }
-  .week-nav-btn { order: 2; padding: 0.3rem 0.5rem; font-size: 0.7rem; white-space: nowrap; }
+  .single-room-container { padding: 0.7rem; }
+  .week-navigation { display: flex; flex-direction: column; gap: 0.2rem; height: auto; padding: 0.3rem; }
+  .nav-group-left { width: 100%; justify-content: center; grid-column: auto; margin-bottom: 0.2rem; order: 1; }
+  .nav-group-center { width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; order: 2; }
+  .week-date-display { width: 100%; text-align: center; order: 1; margin-bottom: 0.2rem; font-size: 1rem; }
+  .week-nav-btn { order: 2; padding: 0.3rem 0.4rem; font-size: 1.2rem; white-space: nowrap; }
   .single-room-layout { display: flex; flex-direction: column !important; gap: 1.5rem; }
   .week-grid-container { order: 1; width: 100%; overflow-x: auto; }
   .room-sidebar { order: 2; width: 100%; position: static; min-height: 100vh; padding-bottom: 50px; }
@@ -434,7 +449,7 @@
 
   /* Taille date = taille capacité Par Date */
   .day-header .day-date {
-    font-size: 0.75rem !important;
+    font-size: 0.60rem !important;
   }
 
   /* PROBLÈME 3 : Retirer outline première ligne (5ème demande) */
