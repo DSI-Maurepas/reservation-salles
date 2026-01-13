@@ -120,7 +120,7 @@ function Statistics({ reservations }) {
   useEffect(() => {
     let fadeTimer, removeTimer;
     if (hoveredSlice) {
-      fadeTimer = setTimeout(() => { setIsFading(true); removeTimer = setTimeout(() => { setHoveredSlice(null); setIsFading(false); }, 400); }, 3000);
+      fadeTimer = setTimeout(() => { setIsFading(true); removeTimer = setTimeout(() => { setHoveredSlice(null); setIsFading(false); }, 400); }, 4000);
     }
     return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
   }, [hoveredSlice]);
