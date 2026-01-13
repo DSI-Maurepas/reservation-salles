@@ -38,13 +38,13 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     if (userEmail) loadUserReservations();
   }, [userEmail]);
 
-  // ✅ Timer automatique pour fermer la popup après 4 secondes
+  // ✅ Timer automatique pour fermer la popup après 6 secondes
   useEffect(() => {
     if (detailsModal.show && detailsModal.reservation) {
-      // Démarrer timer de 4 secondes
+      // Démarrer timer de 6 secondes
       const displayTimer = setTimeout(() => {
         handleClosePopup();
-      }, 4000);
+      }, 6000);
 
       return () => clearTimeout(displayTimer);
     }

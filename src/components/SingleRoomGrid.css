@@ -399,7 +399,7 @@
     border-left: none !important;
   }
 
-  /* PROBLÈME 2 & 6 : Retirer DÉFINITIVEMENT trait bleu (5ème demande !) */
+  /* PROBLÈME 2 & 6 : Retirer DÉFINITIVEMENT trait bleu */
   .week-grid,
   .week-grid *,
   .week-grid th,
@@ -427,7 +427,7 @@
     border: none !important;
   }
 
-  /* PROBLÈME 3 : Retirer TOUS les traits bleus (5ème demande) */
+  /* PROBLÈME 3 : Retirer TOUS les traits bleus */
   .week-grid,
   .week-grid th,
   .week-grid td,
