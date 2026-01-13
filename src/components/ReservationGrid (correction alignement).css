@@ -17,19 +17,10 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.nav-group-left {
-  min-width: 120px;
-}
-
 .nav-group-center { 
   display: flex; 
   align-items: center; 
   gap: 10px; 
-}
-
-.nav-spacer {
-  min-width: 120px;
-  visibility: hidden;
 }
 
 .central-date-block { 
@@ -159,17 +150,11 @@
     width: 100% !important; 
     display: flex !important; 
     justify-content: center !important; 
-    min-width: auto !important;
   }
   
-  /* Cacher le spacer */
-  .nav-spacer {
-    display: none !important;
-  }
-  
-  /* ✅ Ligne 2 : Date du jour (dans nav-group-center) */
-  .nav-group-center .central-date-block { 
-    order: -1 !important; /* Sort en premier */
+  /* ✅ Ligne 2 : Date du jour */
+  .central-date-block { 
+    order: 2 !important; 
     width: 100% !important; 
     background: transparent !important; 
     border: none !important; 
@@ -177,29 +162,22 @@
     display: flex !important; 
     justify-content: center !important; 
     height: auto !important;
-    margin-bottom: 12px !important;
   }
   
-  .nav-group-center .central-date-block .date-display h2 { 
+  .central-date-block .date-display h2 { 
     font-size: 0.95rem !important; 
     color: #1e40af !important; 
     white-space: nowrap !important; 
   }
   
-  /* ✅ Ligne 2-3 : Nav-group-center contient date ET boutons */
+  /* ✅ Ligne 3 : Boutons de navigation */
   .nav-group-center { 
-    order: 2 !important; 
+    order: 3 !important; 
     width: 100% !important; 
     display: flex !important; 
-    flex-wrap: wrap !important;
-    justify-content: center !important;
+    justify-content: center !important; 
     align-items: center !important; 
     gap: 10px !important; 
-  }
-  
-  /* Date en 100% width pour forcer ligne séparée */
-  .nav-group-center .central-date-block {
-    flex-basis: 100% !important;
   }
 
   /* Maintien largeur grille */

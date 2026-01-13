@@ -417,20 +417,23 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
           <button className="back-button-original" onClick={onBack}>◀ Calendrier</button>
         </div>
         
+        {/* ✅ STRUCTURE ORIGINALE RESTAURÉE : Navigation au centre */}
         <div className="nav-group-center">
           <button className="nav-nav-btn nav-prev-week" onClick={() => changeDate(-7)}>◀◀</button>
           <button className="nav-nav-btn nav-prev-day" onClick={() => changeDate(-1)}>◀</button>
+          
           <button className="nav-today-button" onClick={handleToday}>Aujourd'hui</button>
-          <div className="central-date-block">
-            <div className="date-display">
-              <h2>{currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h2>
-            </div>
-          </div>
+          
           <button className="nav-nav-btn nav-next-day" onClick={() => changeDate(1)}>▶</button>
           <button className="nav-nav-btn nav-next-week" onClick={() => changeDate(7)}>▶▶</button>
         </div>
-        
-        <div className="nav-spacer"></div>
+
+        {/* ✅ STRUCTURE ORIGINALE RESTAURÉE : Date à droite */}
+        <div className="central-date-block">
+          <div className="date-display">
+            <h2>{currentDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</h2>
+          </div>
+        </div>
       </div>
 
       <div className="reservation-content">

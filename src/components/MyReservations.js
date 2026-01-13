@@ -31,6 +31,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const [confirmModal, setConfirmModal] = useState({ show: false, type: '', reservation: null, motif: '' });
   const [cancelModal, setCancelModal] = useState({ show: false, reservation: null });
   const [selectedMotif, setSelectedMotif] = useState('');
+  const [detailsModal, setDetailsModal] = useState({ show: false, reservation: null }); // ✅ Modal détails pour responsive
 
   useEffect(() => {
     if (userEmail) loadUserReservations();
@@ -137,6 +138,14 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     }
   };
 
+  // ✅ Fonction pour ouvrir la fiche détails en responsive uniquement
+  const handleRowClick = (reservation) => {
+    // Ouvrir la modal uniquement en mode responsive (< 768px)
+    if (window.innerWidth < 768) {
+      setDetailsModal({ show: true, reservation });
+    }
+  };
+
   const handleExport = () => {
     if (exportFormat === 'csv') exportToCSV();
     else if (exportFormat === 'xlsx') exportToXLSX();
@@ -209,7 +218,11 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
               </thead>
               <tbody>
                 {getSortedReservations().map((reservation, index) => (
-                  <tr key={index} style={{ backgroundColor: toPastel(COULEURS_OBJETS[reservation.objet] || '#f9f9f9') }}>
+                  <tr 
+                    key={index} 
+                    style={{ backgroundColor: toPastel(COULEURS_OBJETS[reservation.objet] || '#f9f9f9'), cursor: window.innerWidth < 768 ? 'pointer' : 'default' }}
+                    onClick={() => handleRowClick(reservation)}
+                  >
                     <td>{(() => { const parts = reservation.salle.split(' - '); return (<><div className="salle-nom desktop-view">{parts[0]}</div><div className="salle-nom mobile-view">{formatMobileRoomName(parts[0])}</div>{parts[1] && (<><div className="salle-capacite desktop-view">{parts[1]}</div><div className="salle-capacite mobile-view">{parts[1].replace('Personnes', 'Pers.')}</div></>)}</>); })()}</td>
                     <td><span className="desktop-view">{new Date(reservation.dateDebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span><span className="mobile-view">{new Date(reservation.dateDebut).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span></td>
                     <td><span className="desktop-view">{reservation.heureDebut} - {reservation.heureFin}</span><span className="mobile-view">{reservation.heureDebut} {reservation.heureFin}</span></td>
@@ -217,11 +230,11 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
                     <td className="col-objet">{reservation.objet}</td>
                     <td>
                       <div className="actions-wrapper">
-                        <button onClick={() => handleEdit(reservation)} className="edit-button">
+                        <button onClick={(e) => { e.stopPropagation(); handleEdit(reservation); }} className="edit-button">
                           <span className="btn-text">Modifier</span>
                           <span className="btn-icon">✏️</span>
                         </button>
-                        <button onClick={() => handleDeleteClick(reservation)} className="delete-button">
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteClick(reservation); }} className="delete-button">
                           <span className="btn-text">Annuler</span>
                           <span className="btn-icon">🗑️</span>
                         </button>
@@ -237,6 +250,33 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     </div>
     {cancelModal.show && (<div className="cancel-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}><div className="cancel-modal" onClick={(e) => e.stopPropagation()}><h3>⚠️ Confirmer l'annulation</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {cancelModal.reservation.salle}</p><p><strong>📝 Objet :</strong> {cancelModal.reservation.objet}</p></div><div className="motif-selection"><label><strong>💬 Motif :</strong></label><select value={selectedMotif} onChange={(e) => setSelectedMotif(e.target.value)} className="motif-select"><option value="">-- Motif --</option>{MOTIFS_ANNULATION.map((m, i) => <option key={i} value={m}>{m}</option>)}</select></div><div className="modal-actions"><button onClick={() => setCancelModal({ show: false, reservation: null })} className="cancel-action-btn">Annuler</button><button onClick={handleDeleteConfirm} className="confirm-action-btn" disabled={!selectedMotif}>Confirmer</button></div></div></div>)}
     {confirmModal.show && (<div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}><div className="confirmation-modal" onClick={(e) => e.stopPropagation()}><h3>{confirmModal.type === 'cancel' ? '✅ Annulation confirmée' : '✅ Modification confirmée'}</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>{confirmModal.motif && <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>}</div><button onClick={() => setConfirmModal({ ...confirmModal, show: false })}>Fermer</button></div></div>)}
+    
+    {/* ✅ Modal détails responsive */}
+    {detailsModal.show && detailsModal.reservation && (
+      <div className="details-modal-overlay" onClick={() => setDetailsModal({ show: false, reservation: null })}>
+        <div className="details-modal" onClick={(e) => e.stopPropagation()}>
+          <h3>📋 Détails de la réservation</h3>
+          <div className="reservation-details">
+            <p><strong>🏢 Salle :</strong> {detailsModal.reservation.salle}</p>
+            <p><strong>📅 Date :</strong> {new Date(detailsModal.reservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            <p><strong>🕐 Horaire :</strong> {detailsModal.reservation.heureDebut} - {detailsModal.reservation.heureFin}</p>
+            <p><strong>👤 Nom :</strong> {detailsModal.reservation.prenom} {detailsModal.reservation.nom}</p>
+            <p><strong>📧 Email :</strong> {detailsModal.reservation.email}</p>
+            {detailsModal.reservation.telephone && <p><strong>📞 Téléphone :</strong> {detailsModal.reservation.telephone}</p>}
+            <p><strong>🏛️ Service :</strong> {detailsModal.reservation.service}</p>
+            <p><strong>📝 Objet :</strong> {detailsModal.reservation.objet}</p>
+            {detailsModal.reservation.description && <p><strong>💬 Description :</strong> {detailsModal.reservation.description}</p>}
+            {(detailsModal.reservation.salle.toLowerCase().includes('conseil') || detailsModal.reservation.salle.toLowerCase().includes('mariages')) && (
+              <>
+                {detailsModal.reservation.agencement && <p><strong>🪑 Disposition :</strong> {detailsModal.reservation.agencement}</p>}
+                {detailsModal.reservation.nbPersonnes && <p><strong>👥 Nombre de personnes :</strong> {detailsModal.reservation.nbPersonnes}</p>}
+              </>
+            )}
+          </div>
+          <button onClick={() => setDetailsModal({ show: false, reservation: null })} className="close-modal-btn">Fermer</button>
+        </div>
+      </div>
+    )}
     </>
   );
 }

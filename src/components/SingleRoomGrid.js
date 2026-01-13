@@ -447,7 +447,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
               <>
                 <SalleCard salle={selectedRoom} />
                 {/* INSTRUCTION BUREAU (Caché sur Mobile via CSS) */}
-                <div className="no-selection-message desktop-legend"><p>👆 Sélectionnez un ou plusieurs créneaux pour commencer votre réservation</p></div>
+                <div className="no-selection-message desktop-legend"><p>Sélectionnez un ou plusieurs créneaux pour commencer votre réservation 👆</p></div>
               </>
             )}
             {showForm && selections.length > 0 && (
