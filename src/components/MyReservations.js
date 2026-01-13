@@ -31,11 +31,33 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const [confirmModal, setConfirmModal] = useState({ show: false, type: '', reservation: null, motif: '' });
   const [cancelModal, setCancelModal] = useState({ show: false, reservation: null });
   const [selectedMotif, setSelectedMotif] = useState('');
-  const [detailsModal, setDetailsModal] = useState({ show: false, reservation: null }); // ✅ Modal détails pour responsive
+  const [detailsModal, setDetailsModal] = useState({ show: false, reservation: null }); // ✅ Popup détails pour responsive
+  const [popupClosing, setPopupClosing] = useState(false); // ✅ Gestion fermeture popup
 
   useEffect(() => {
     if (userEmail) loadUserReservations();
   }, [userEmail]);
+
+  // ✅ Timer automatique pour fermer la popup après 4 secondes
+  useEffect(() => {
+    if (detailsModal.show && detailsModal.reservation) {
+      // Démarrer timer de 4 secondes
+      const displayTimer = setTimeout(() => {
+        handleClosePopup();
+      }, 4000);
+
+      return () => clearTimeout(displayTimer);
+    }
+  }, [detailsModal.show]);
+
+  // ✅ Fonction pour fermer la popup avec animation
+  const handleClosePopup = () => {
+    setPopupClosing(true);
+    setTimeout(() => {
+      setDetailsModal({ show: false, reservation: null });
+      setPopupClosing(false);
+    }, 400); // Durée de l'animation de fermeture
+  };
 
   const loadUserReservations = async () => {
     setLoading(true);
@@ -252,28 +274,72 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     {confirmModal.show && (<div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}><div className="confirmation-modal" onClick={(e) => e.stopPropagation()}><h3>{confirmModal.type === 'cancel' ? '✅ Annulation confirmée' : '✅ Modification confirmée'}</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>{confirmModal.motif && <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>}</div><button onClick={() => setConfirmModal({ ...confirmModal, show: false })}>Fermer</button></div></div>)}
     
     {/* ✅ Modal détails responsive */}
+    {/* ✅ Popup détails flottante pour responsive */}
     {detailsModal.show && detailsModal.reservation && (
-      <div className="details-modal-overlay" onClick={() => setDetailsModal({ show: false, reservation: null })}>
-        <div className="details-modal" onClick={(e) => e.stopPropagation()}>
-          <h3>📋 Détails de la réservation</h3>
-          <div className="reservation-details">
-            <p><strong>🏢 Salle :</strong> {detailsModal.reservation.salle}</p>
-            <p><strong>📅 Date :</strong> {new Date(detailsModal.reservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            <p><strong>🕐 Horaire :</strong> {detailsModal.reservation.heureDebut} - {detailsModal.reservation.heureFin}</p>
-            <p><strong>👤 Nom :</strong> {detailsModal.reservation.prenom} {detailsModal.reservation.nom}</p>
-            <p><strong>📧 Email :</strong> {detailsModal.reservation.email}</p>
-            {detailsModal.reservation.telephone && <p><strong>📞 Téléphone :</strong> {detailsModal.reservation.telephone}</p>}
-            <p><strong>🏛️ Service :</strong> {detailsModal.reservation.service}</p>
-            <p><strong>📝 Objet :</strong> {detailsModal.reservation.objet}</p>
-            {detailsModal.reservation.description && <p><strong>💬 Description :</strong> {detailsModal.reservation.description}</p>}
-            {(detailsModal.reservation.salle.toLowerCase().includes('conseil') || detailsModal.reservation.salle.toLowerCase().includes('mariages')) && (
-              <>
-                {detailsModal.reservation.agencement && <p><strong>🪑 Disposition :</strong> {detailsModal.reservation.agencement}</p>}
-                {detailsModal.reservation.nbPersonnes && <p><strong>👥 Nombre de personnes :</strong> {detailsModal.reservation.nbPersonnes}</p>}
-              </>
-            )}
+      <div 
+        className={`reservation-details-popup ${popupClosing ? 'closing' : ''}`}
+        onClick={handleClosePopup}
+      >
+        <div className="popup-card-header">
+          📋 Détails de la réservation
+        </div>
+        <div className="popup-card-body">
+          <div className="popup-info-line">
+            <span className="popup-info-icon">🏢</span>
+            <span><strong>Salle :</strong> {detailsModal.reservation.salle}</span>
           </div>
-          <button onClick={() => setDetailsModal({ show: false, reservation: null })} className="close-modal-btn">Fermer</button>
+          <div className="popup-info-line">
+            <span className="popup-info-icon">📅</span>
+            <span><strong>Date :</strong> {new Date(detailsModal.reservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+          </div>
+          <div className="popup-info-line">
+            <span className="popup-info-icon">🕐</span>
+            <span><strong>Horaire :</strong> {detailsModal.reservation.heureDebut} - {detailsModal.reservation.heureFin}</span>
+          </div>
+          <div className="popup-info-line">
+            <span className="popup-info-icon">👤</span>
+            <span><strong>Nom :</strong> {detailsModal.reservation.prenom} {detailsModal.reservation.nom}</span>
+          </div>
+          <div className="popup-info-line">
+            <span className="popup-info-icon">📧</span>
+            <span><strong>Email :</strong> {detailsModal.reservation.email}</span>
+          </div>
+          {detailsModal.reservation.telephone && (
+            <div className="popup-info-line">
+              <span className="popup-info-icon">📞</span>
+              <span><strong>Téléphone :</strong> {detailsModal.reservation.telephone}</span>
+            </div>
+          )}
+          <div className="popup-info-line">
+            <span className="popup-info-icon">🏛️</span>
+            <span><strong>Service :</strong> {detailsModal.reservation.service}</span>
+          </div>
+          <div className="popup-info-line">
+            <span className="popup-info-icon">📝</span>
+            <span><strong>Objet :</strong> {detailsModal.reservation.objet}</span>
+          </div>
+          {detailsModal.reservation.description && (
+            <div className="popup-info-line">
+              <span className="popup-info-icon">💬</span>
+              <span><strong>Description :</strong> {detailsModal.reservation.description}</span>
+            </div>
+          )}
+          {(detailsModal.reservation.salle.toLowerCase().includes('conseil') || detailsModal.reservation.salle.toLowerCase().includes('mariages')) && (
+            <>
+              {detailsModal.reservation.agencement && (
+                <div className="popup-info-line">
+                  <span className="popup-info-icon">🪑</span>
+                  <span><strong>Disposition :</strong> {detailsModal.reservation.agencement}</span>
+                </div>
+              )}
+              {detailsModal.reservation.nbPersonnes && (
+                <div className="popup-info-line">
+                  <span className="popup-info-icon">👥</span>
+                  <span><strong>Nombre de personnes :</strong> {detailsModal.reservation.nbPersonnes}</span>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     )}
