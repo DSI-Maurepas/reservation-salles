@@ -227,3 +227,95 @@
     text-align: center !important; 
   }
 }
+
+/* ✅ POPUP FLOTTANTE DÉTAILS RÉSERVATION (Responsive uniquement) */
+.reservation-details-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  z-index: 10000;
+  pointer-events: auto;
+  cursor: pointer;
+  
+  /* Animation d'apparition */
+  animation: popupFadeIn 0.3s ease-out;
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+}
+
+/* Animation fermeture */
+.reservation-details-popup.closing {
+  opacity: 0;
+}
+
+@keyframes popupFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Header popup */
+.reservation-details-popup .popup-card-header {
+  background: #3b82f6;
+  color: white;
+  padding: 0.8rem;
+  font-weight: 700;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+/* Body popup */
+.reservation-details-popup .popup-card-body {
+  padding: 1rem;
+  color: #475569;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  text-align: left;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* Lignes d'information alignées à gauche */
+.reservation-details-popup .popup-info-line {
+  margin-bottom: 0.7rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  text-align: left;
+}
+
+.reservation-details-popup .popup-info-line:last-child {
+  margin-bottom: 0;
+}
+
+.reservation-details-popup .popup-info-icon {
+  font-size: 1rem;
+  width: 20px;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+.reservation-details-popup .popup-info-line span {
+  text-align: left;
+}
+
+.reservation-details-popup .popup-info-line strong {
+  font-weight: 600;
+  color: #1e293b;
+}
