@@ -1,0 +1,23 @@
+La gestion du mot de passe Admin (R3sa@M0rep@s78) est codée en dur à trois endroits différents (SingleRoomGrid, ReservationGrid, AdminPanel). 
+Je veux que tu centralise cette constante dans le fichier de config.
+
+La gestion du "Drag & Drop" pour sélectionner des créneaux est fonctionnelle mais verbeuse. 
+De plus, dans reservationgrid, je veux que tu supprimes l'effet de surlignage des horaires qu'entraîne le drag and drop  
+
+Performance et Données Optimisation de Statistics.js & AdminPanel.js
+Propose moi un système de cache simple ou une vérification pour ne pas rappeler l'API Google si les données ont été chargées il y a moins de 120 secondes.
+
+En mode écran, dans "Mes réservation", 
+=> ajoute sur la première ligne de boutons (📅 Toutes, 📜 Passées, 📆 Aujourd'hui, 🔜 À venir) 
+=> deux champs pour filtrer la liste des réservations entre deux dates 
+=> enfin 2 boutons calés à droite :
+- 1 vert "Exporter Excel" et 
+- 1 bleu "Exporter iCal"
+Si ces 6 boutons + 2 champs de sélection de période dépasse ne rentre pas sur une ligne, tu peux réduire la police et / ou supprimer les emoji !
+
+=> Dès lors où les 2 boutons "Exporter" seront placés sur la première ligne, tu supprimes le second bloc qui propose les différent exports 📅 iCalendar (.ics), 📊 CSV et 📗 Excel (.xls) ainsi que le bouton ⬇️ Exporter
+
+=> ATTENTION dans la version responsive, tugardes absolument les  boutons "tous", "aujourd'hui" et "à venir" comme ils sontt (ordre et emoji sans texte), et tu retires le bouton de téléchargement iCal.
+
+
+// Dans "Mes réservation" laisser le champ "mon email" mais ajouter à côté "changer de compte"

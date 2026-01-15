@@ -26,13 +26,14 @@ function ColorLegend({ onHoverColor }) {
       {/* Message survol salles - EN HAUT */}
       <div className="legend-hover-tip">
         <span className="hover-arrow">←</span>
-        <span className="hover-text">Survolez le nom d'une salle pour en connaître ses propriétés</span>
+        <span className="hover-text">Cliquez sur le nom d'une salle pour en connaître ses propriétés</span>
       </div>
 
       <div className="legend-header">
-        <div className="legend-icon">🎨</div>
-        <h3>Légende des couleurs</h3>
-        <p className="legend-subtitle">Survolez pour identifier dans la grille</p>
+        <div className="legend-icon">💡</div>
+        <h3>Fiche d'information du créneau réservé</h3>
+        <p className="legend-subtitle">Cliquez sur 1 créneau réservé pour ouvrir sa fiche d'information</p>
+		<p className="legend-subtitle">Cliquez sur sa fiche pour la refermer</p>
       </div>
 
       <div className="legend-items">
