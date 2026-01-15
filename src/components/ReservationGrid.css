@@ -88,7 +88,17 @@
 /* EN-TETES SALLES : FORCE BLANC */
 .reservation-grid .salle-header { background-color: #1e40af !important; text-align: center; border-bottom: 1px solid #64748b; border-right: 1px solid rgba(255,255,255,0.3); display: flex; flex-direction: column; justify-content: center; align-items: center; position: sticky; top: 0; z-index: 20; }
 .reservation-grid .salle-header span.salle-name-white { color: #ffffff !important; font-weight: 800; font-size: 0.85rem; display: block; }
-.reservation-grid .salle-header span.salle-capacity-white { color: #ffffff !important; font-size: 0.75rem; opacity: 0.9; display: block; }
+/* Capacité sous le nom de la salle : gris clair, sans gras, centré, sans retour */
+.reservation-grid .salle-header span.salle-capacity-sub {
+  color: #ffffff  !important;      /* blanc */
+  font-weight: 400 !important;    /* sans gras */
+  font-size: 0.80rem;             /* pour tenir "100 Pers." */
+  line-height: 1;
+  opacity: 0.95;
+  display: block;
+  text-align: center;
+  white-space: nowrap;            /* pas de retour à la ligne */
+}
 
 /* GRILLE */
 .reservation-grid { display: grid !important; grid-template-columns: 45px repeat(9, 1fr); grid-template-rows: 60px repeat(28, 25px); width: 100%; }

@@ -7,6 +7,7 @@ import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, COUL
 import ColorLegend from './ColorLegend';
 import SalleCard from './SalleCard';
 import './ReservationGrid.css';
+import { getSalleData } from '../data/sallesData';
 
 function ReservationGrid({ selectedDate, onBack, editingReservation }) {
   const [currentDate, setCurrentDate] = useState(selectedDate);
@@ -164,16 +165,30 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
   const renderGrid = () => {
     const grid = [];
     grid.push(<div key="corner" className="grid-corner"></div>);
-    SALLES.forEach((salle, idx) => {
-      const parts = salle.split(' - ');
-      const capacity = parts[1] ? parts[1].replace(/Personnes/gi, 'Pers.') : '';
-      grid.push(
-        <div key={`h-${idx}`} className="salle-header" style={{ gridColumn: idx + 2 }} onClick={() => setHoveredSalle(salle)}>
-          <span className="salle-name-white">{parts[0].replace(/Salle Conseil/gi, 'Conseil').replace(/Salle Mariages/gi, 'Mariages')}</span>
-          <span className="salle-capacity-white">{capacity}</span>
-        </div>
-      );
-    });
+SALLES.forEach((salle, idx) => {
+  const parts = salle.split(' - ');
+  const shortName = parts[0]; // ex: "Salle Conseil"
+  const salleData = getSalleData(salle) || getSalleData(shortName);
+  const cap = salleData?.capacite;
+
+  const displayName = shortName
+    .replace(/Salle Conseil/gi, 'Conseil')
+    .replace(/Salle Mariages/gi, 'Mariages');
+
+  const displayCap = typeof cap === 'number' ? `${cap} Pers.` : '';
+
+  grid.push(
+    <div
+      key={`h-${idx}`}
+      className="salle-header"
+      style={{ gridColumn: idx + 2 }}
+      onClick={() => setHoveredSalle(salle)}
+    >
+      <span className="salle-name-white">{displayName}</span>
+      <span className="salle-capacity-sub">{displayCap}</span>
+    </div>
+  );
+});
     for (let h = HORAIRES.HEURE_DEBUT; h < HORAIRES.HEURE_FIN; h += 0.5) {
       const row = (h - HORAIRES.HEURE_DEBUT) / 0.5 + 2;
       const isFullHour = h % 1 === 0;

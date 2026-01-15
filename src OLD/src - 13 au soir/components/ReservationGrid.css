@@ -1,0 +1,255 @@
+/* src/components/ReservationGrid.css */
+
+.reservation-grid-container { width: 100%; padding: 1rem 2rem; box-sizing: border-box; }
+
+/* BOUTON CALENDRIER ORIGINAL */
+.back-button-original { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+
+/* NAVIGATION ECRAN LARGE */
+.date-navigation-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding: 0.8rem 1.5rem; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+.nav-group-center { display: flex; align-items: center; gap: 10px; }
+.central-date-block { display: flex; align-items: center; gap: 15px; background: #f8fafc; padding: 6px 18px; border-radius: 10px; border: 1px solid #e2e8f0; }
+
+.nav-today-button { background: #3b82f6; color: white !important; border: none; padding: 0.4rem 1rem; border-radius: 6px; font-weight: 700; cursor: pointer; height: 36px; }
+.nav-nav-btn { background: #3b82f6; color: white !important; border: none; width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+/* STRUCTURE */
+.grid-column { 
+  background: white !important; 
+  border-radius: 18px !important; 
+  padding: 18px; 
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important; 
+  border: 1px solid #e2e8f0;
+  position: relative !important;
+}
+
+.reservation-form { 
+  background: white !important; 
+  border-radius: 18px !important; 
+  padding: 18px; 
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important; 
+  border: 1px solid #e2e8f0; 
+}
+.reservation-content { display: grid; grid-template-columns: minmax(900px, 1fr) 320px; gap: 25px; }
+
+/* EN-TETES SALLES : FORCE BLANC */
+.reservation-grid .salle-header { background-color: #1e40af !important; text-align: center; border-bottom: 1px solid #64748b; border-right: 1px solid rgba(255,255,255,0.3); display: flex; flex-direction: column; justify-content: center; align-items: center; position: sticky; top: 0; z-index: 20; }
+.reservation-grid .salle-header span.salle-name-white { color: #ffffff !important; font-weight: 800; font-size: 0.85rem; display: block; }
+.reservation-grid .salle-header span.salle-capacity-white { color: #ffffff !important; font-size: 0.75rem; opacity: 0.9; display: block; }
+
+/* GRILLE */
+.reservation-grid { display: grid !important; grid-template-columns: 45px repeat(9, 1fr); grid-template-rows: 60px repeat(28, 25px); width: 100%; }
+.time-slot { background: white; border-right: 1px solid #94a3b8; border-top: 1px dotted rgba(0,0,0,0.3); position: relative; }
+.full-hour-start { border-top: 1px solid #64748b; }
+
+/* REPAS MIDI */
+.lunch-break::after { content: '🍽️'; font-size: 1.1rem; opacity: 0.25; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+
+/* FICHE PROPRIETE */
+.reservation-popup-card { background: white; border-radius: 12px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25); width: 280px; overflow: hidden; border: 1px solid #e2e8f0; pointer-events: none; }
+.popup-card-header { background: #3b82f6; color: white; padding: 0.8rem; font-weight: 700; text-align: center; }
+.popup-card-body { padding: 1rem; color: #475569; font-size: 0.85rem; line-height: 1.5; }
+
+/* --- RESPONSIVE : 3 LIGNES STRICTES --- */
+@media (max-width: 1280px) {
+  .date-navigation-bar { 
+    display: flex !important; 
+    flex-direction: column !important; 
+    gap: 12px !important; 
+    padding: 15px !important; 
+    align-items: center !important; 
+  }
+  
+  /* Ligne 1 : Calendrier */
+  .nav-group-left { 
+    order: 1 !important; 
+    width: 100% !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+  }
+  
+  /* Ligne 2 : Bloc Navigation symétrique (⏪ ◀ Aujourd'hui ▶ ⏩) */
+  .nav-group-center { 
+    order: 2 !important; 
+    width: 100% !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+    align-items: center !important; 
+    gap: 10px !important; 
+  }
+  
+  /* Ligne 3 : Date du jour */
+  .central-date-block { 
+    order: 3 !important; 
+    width: 100% !important; 
+    background: transparent !important; 
+    border: none !important; 
+    padding: 0 !important; 
+    display: flex !important; 
+    justify-content: center !important; 
+  }
+  .central-date-block .date-display h2 { 
+    font-size: 0.95rem !important; 
+    color: #1e40af !important; 
+    white-space: nowrap !important; 
+  }
+
+  /* Cache le doublon du bouton Aujourd'hui s'il reste dans le bloc date en responsive */
+  .central-date-block .nav-today-button { display: none !important; }
+
+  /* Maintien largeur grille */
+  .reservation-content { display: flex !important; flex-direction: column !important; }
+  .grid-column { overflow-x: auto !important; margin-bottom: 20px !important; width: 100% !important; }
+  .reservation-grid { min-width: 1050px !important; } 
+  .form-column { width: 100% !important; max-width: 600px !important; margin: 0 auto !important; }
+}
+
+/* BOUTON NOUVELLE RESERVATION */
+.btn-submit { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); cursor: pointer; width: 100%; }
+
+/* CADENAS SALLE ADMIN */
+.time-slot.admin-only-locked {
+  background-color: #ffebee !important;
+  cursor: pointer;
+}
+
+.time-slot.admin-only-locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1rem;
+  opacity: 0.6;
+}
+
+/* PROBLÈME 1 : Règles hors ::after (5ème demande sticky) */
+@media (max-width: 1280px) {
+  /* Désactiver surlignage heures en drag */
+  .time-label:hover {
+    background: white !important;
+  }
+
+  /* Masquer légende en responsive */
+  .color-legend-container {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* COLONNE HEURES STICKY - ENFIN ! */
+  .time-label {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+    background: white !important;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.2) !important;
+    border-right: 2px solid #e2e8f0 !important;
+  }
+  
+  /* Forcer overflow sur parent */
+  .grid-column {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    position: relative !important;
+  }
+  
+  .reservation-grid {
+    position: relative !important;
+  }
+  
+  /* PROBLÈME 4 : Champ "Jusqu'au" largeur 100% */
+  .recurrence-options input[type="date"] {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* PROBLÈME 8 : Masquer TOUTE la légende */
+  .color-legend-container,
+  .color-legend,
+  .legend-header,
+  .legend-items,
+  .legend-item,
+  .legend-footer,
+  .legend-hover-tip,
+  [class*="legend"],
+  [class*="color-legend"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+  }
+}
+
+/* Bloc instruction "Sélectionnez..." */
+.no-selection-message {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #64748b;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #cbd5e1;
+  margin-top: 1.5rem;
+}
+
+
+/* Cellules invalides (passé/dimanche/férié) */
+.time-slot.past-date,
+.time-slot.dimanche,
+.time-slot.jour-ferie {
+  background: repeating-linear-gradient(
+    45deg,
+    #f1f5f9,
+    #f1f5f9 10px,
+    #e2e8f0 10px,
+    #e2e8f0 20px
+  ) !important;
+  cursor: not-allowed !important;
+  position: relative;
+}
+
+.time-slot.past-date::after {
+  content: '🚫';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  opacity: 0.4;
+}
+
+
+/* Modal Dimanche/Férié fermé */
+.blocked-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.blocked-modal {
+  background: white;
+  padding: 0;
+  border-radius: 20px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.warning-modal-header {
+  background: #ff9800;
+  padding: 1.5rem;
+  border-radius: 20px 20px 0 0;
+  text-align: center;
+}
