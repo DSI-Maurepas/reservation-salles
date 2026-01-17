@@ -373,7 +373,14 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
           {selections.length > 0 ? (
             <div className="reservation-form">
               <h3 className="form-title">Nouvelle Réservation</h3>
-              <p className="selection-count">{selections.length} créneau(x)</p>
+              
+              {/* ✅ CORRECTION : Texte conditionnel */}
+              <p className="selection-count">
+                {selections.length > 1 
+                  ? `Réservation de ${selections.length} créneaux` 
+                  : 'Confirmer la réservation'}
+              </p>
+
               <div className="selections-summary">{preMergeSelections(selections).map((sel, idx) => (<div key={idx} className="selection-item">{sel.salle.split(' - ')[0]} : {googleSheetsService.formatTime(sel.startHour)} - {googleSheetsService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => setSelections(prev => prev.filter(s => !(s.salle === sel.salle && s.startHour >= sel.startHour && s.endHour <= sel.endHour)))}>✕</button></div>))}</div>
               <form onSubmit={handleFormSubmit} className="room-form">
                 <div className="form-row">
@@ -385,6 +392,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                 <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service...*</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
                 <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez l'objet...*</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
                 
+                {/* ✅ CORRECTION : Affichage dynamique des dispositions */}
                 {specialRoomSelection && (
                   <>
                     <select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})} required>
@@ -399,6 +407,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                 <div className="recurrence-section-styled">
                   <div className="recurrence-box"><input type="checkbox" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} /><label>Réservation récurrente</label></div>
                   {formData.recurrence && (<div className="recurrence-options slide-down"><div className="form-group"><select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}><option value="weekly">Chaque semaine</option><option value="biweekly">Une semaine sur 2</option><option value="monthly">Chaque mois</option></select></div><div className="form-group" style={{marginBottom:0}}>
+                    {/* ✅ CORRECTION : Date min = date de la grille en cours */}
                     <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(currentDate)} required={formData.recurrence} />
                   </div></div>)}</div>
                 
