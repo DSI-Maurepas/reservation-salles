@@ -8,7 +8,7 @@
   margin-bottom: 2rem; 
   font-size: 2rem; 
   text-align: center; 
-  text-shadow: 0 4px 4px rgba(0,0,0,0.2);
+  text-shadow: 0 5px 10px rgba(0,0,0,0.6);
 }
 
 .no-data { text-align: center; padding: 3rem; color: #64748b; font-size: 1.1rem; }
@@ -24,10 +24,10 @@
   display: flex; 
   align-items: center; 
   gap: 0.5rem; 
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.9); 
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.9); 
   transition: all 0.3s ease; 
 }
-.summary-card:hover { transform: translateY(-5px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9); }
+.summary-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px rgba(0, 0, 0, 0.9); }
 .summary-icon { font-size: 3rem; opacity: 0.8; }
 .summary-content { flex: 1; }
 .summary-value { font-size: 1.6rem; font-weight: 700; color: #1976d2; margin-bottom: 0.1rem; }
@@ -46,7 +46,7 @@
   border: 2px solid #e2e8f0; 
   border-radius: 16px; 
   padding: 0.7rem; 
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9); 
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.9); 
   transition: all 0.3s ease; 
   max-width: 100%; 
 }
@@ -91,7 +91,7 @@
   transform: translate(-50%, -100%);
   background: white;
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+  box-shadow: 0 8px 10px rgba(0,0,0,0.7);
   padding: 0;
   z-index: 10000;
   min-width: 180px;

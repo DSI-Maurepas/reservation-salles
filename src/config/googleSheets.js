@@ -18,11 +18,11 @@ export const GOOGLE_CONFIG = {
 };
 
 export const EMAIL_CONFIG = {
-  // ⚠️ À COMPLÉTER avec vos identifiants EmailJS réels
-  SERVICE_ID: 'VOTRE_SERVICE_ID',
-  TEMPLATE_ID_CONFIRMATION: 'VOTRE_TEMPLATE_CONFIRMATION',
-  TEMPLATE_ID_ANNULATION: 'VOTRE_TEMPLATE_ANNULATION',
-  USER_ID: 'VOTRE_USER_ID'
+  // ⚠️ Identifiants EmailJS
+  SERVICE_ID: 'service_xoen8ug',            // Commun aux deux envois
+  TEMPLATE_ID_CONFIRMATION: 'template_awkvaoh', // Votre template de confirmation
+  TEMPLATE_ID_ANNULATION: 'template_i9aqlt9',   // Votre template d'annulation
+  USER_ID: 'QFnQAOzHCSEtZoeVe'      // Mettez ici votre "Public Key"
 };
 
 // CONFIGURATION APPLICATIVE
