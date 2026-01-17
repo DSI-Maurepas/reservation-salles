@@ -2,10 +2,10 @@
 
 .statistics-container { padding: 2rem; max-width: 1400px; margin: 0 auto; }
 
-/* Titre en BLANC */
+/* ✅ Titre en BLANC, CENTRÉ */
 .statistics-container h2 { 
   color: white; 
-  margin-bottom: 1rem; 
+  margin-bottom: 2rem; 
   font-size: 2rem; 
   text-align: center; 
   text-shadow: 0 4px 4px rgba(0,0,0,0.2);
@@ -39,8 +39,6 @@
   grid-template-columns: repeat(2, 1fr); 
   gap: 1rem; 
   max-width: 100%; 
-  /* CORRECTION : On retire l'overflow hidden ici pour ne pas couper les ombres */
-  /* overflow: hidden; */ 
 }
 
 .chart-card { 
@@ -51,8 +49,6 @@
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9); 
   transition: all 0.3s ease; 
   max-width: 100%; 
-  /* CORRECTION : On retire l'overflow hidden ici aussi */
-  /* overflow: hidden; */
 }
 .chart-card:hover { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); }
 .chart-card h3 { color: #334155; margin-bottom: 0.4rem; font-size: 1.2rem; text-align: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.3rem; }

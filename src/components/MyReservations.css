@@ -59,17 +59,29 @@
 .filter-btn:hover { background: #e3f2fd; transform: translateY(-2px); }
 .filter-btn.active { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); color: white; border-color: #1976d2; }
 
-/* Section export (Desktop) */
-.export-section { 
-  display: flex; gap: 0.8rem; align-items: center; margin-bottom: 1.5rem; padding: 1rem; background: white; border-radius: 12px; 
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); 
+/* ✅ NOUVEAU BOUTON EXPORT EXCEL */
+.btn-export-excel {
+  margin-left: auto; /* Pousse à droite si possible */
+  border-color: #2e7d32;
+  color: #2e7d32;
+  background-color: white;
 }
-.export-section select { flex: 1; padding: 0.7rem 1rem; border: 2px solid #4caf50; border-radius: 8px; font-size: 1rem; font-weight: 600; color: #2e7d32; background: white; cursor: pointer; }
-.export-btn { padding: 0.7rem 1.5rem; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
-.export-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); }
+.btn-export-excel:hover {
+  background-color: #e8f5e9;
+}
 
-/* Bouton export Mobile */
-.mobile-export-btn { display: none; width: 100%; padding: 0.8rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; text-align: center; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); }
+/* ✅ NOUVEAU STYLE BOUTON DÉCONNEXION */
+.btn-logout {
+  border-color: #ef5350;
+  color: #ef5350;
+  background-color: white;
+  margin-left: 0.5rem; /* Espace avec le bouton export */
+}
+.btn-logout:hover {
+  background-color: #ffebee;
+  border-color: #d32f2f;
+  color: #d32f2f;
+}
 
 /* --- STYLE CARTE & TABLEAU --- */
 .reservations-card {
@@ -185,11 +197,20 @@
   .my-reservations-container { padding: 1rem; }
   .search-section form { flex-direction: column; }
   .desktop-export { display: none !important; }
-  .mobile-export-btn { display: block !important; }
+  /* ✅ Suppression styles bouton mobile qui n'existe plus */
   .filter-buttons { justify-content: space-between; gap: 0.5rem; flex-wrap: nowrap; }
   .btn-label-text { display: none; }
   .filter-btn { padding: 0.6rem 0.5rem; font-size: 0.9rem; flex: 1; display: flex; justify-content: center; align-items: center; gap: 4px; }
   .btn-past { display: none !important; }
+  
+  /* PROTECTION RESPONSIVE */
+  .btn-export-excel { display: none !important; }
+  
+  /* ✅ Pour le bouton déconnexion sur mobile */
+  .btn-logout { 
+    margin-left: 0; 
+    /* Il prendra la place disponible grâce à flex:1 de filter-btn */
+  }
   
   /* Colonnes inutiles masquées */
   .col-service, .col-objet { display: none !important; }

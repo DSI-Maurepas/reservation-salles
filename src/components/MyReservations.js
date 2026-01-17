@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import * as XLSX from 'xlsx'; // ⚠️ Nécessite: npm install xlsx
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
-import icalService from '../services/icalService'; // ✅ AJOUT : Service iCal centralisé
+import icalService from '../services/icalService'; // Service iCal centralisé
 import { MOTIFS_ANNULATION, COULEURS_OBJETS } from '../config/googleSheets';
 import './MyReservations.css';
 
@@ -26,7 +26,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const [filter, setFilter] = useState('all'); 
   const [loading, setLoading] = useState(false);
   const [searchEmail, setSearchEmail] = useState(userEmail);
-  const [exportFormat, setExportFormat] = useState('ical');
   const [sortColumn, setSortColumn] = useState(null);
   const [sortDirection, setSortDirection] = useState('asc');
   
@@ -34,18 +33,23 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const [confirmModal, setConfirmModal] = useState({ show: false, type: '', reservation: null, motif: '' });
   const [cancelModal, setCancelModal] = useState({ show: false, reservation: null });
   const [selectedMotif, setSelectedMotif] = useState('');
-  const [detailsModal, setDetailsModal] = useState({ show: false, reservation: null }); // ✅ Popup détails pour responsive
-  const [popupClosing, setPopupClosing] = useState(false); // ✅ Gestion fermeture popup
+  const [detailsModal, setDetailsModal] = useState({ show: false, reservation: null }); // Popup détails pour responsive
+  const [popupClosing, setPopupClosing] = useState(false); // Gestion fermeture popup
 
   // --- CHARGEMENT ---
   useEffect(() => {
-    if (userEmail) loadUserReservations();
+    if (userEmail) {
+      loadUserReservations();
+    } else {
+      // ✅ CORRECTION : Vider les listes si l'email est vide (déconnexion)
+      setReservations([]);
+      setFilteredReservations([]);
+    }
   }, [userEmail]);
 
-  // ✅ Timer automatique pour fermer la popup après 4 secondes
+  // Timer automatique pour fermer la popup après 4 secondes
   useEffect(() => {
     if (detailsModal.show && detailsModal.reservation) {
-      // Démarrer timer de 4 secondes
       const displayTimer = setTimeout(() => {
         handleClosePopup();
       }, 4000);
@@ -54,13 +58,13 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     }
   }, [detailsModal.show]);
 
-  // ✅ Fonction pour fermer la popup avec animation
+  // Fonction pour fermer la popup avec animation
   const handleClosePopup = () => {
     setPopupClosing(true);
     setTimeout(() => {
       setDetailsModal({ show: false, reservation: null });
       setPopupClosing(false);
-    }, 400); // Durée de l'animation de fermeture
+    }, 400); 
   };
   
   const loadUserReservations = async () => {
@@ -164,26 +168,12 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     }
   };
 
-  // ✅ Fonction pour ouvrir la fiche détails en responsive uniquement
+  // Fonction pour ouvrir la fiche détails en responsive uniquement
   const handleRowClick = (reservation) => {
     // Ouvrir la modal uniquement en mode responsive (< 768px)
     if (window.innerWidth < 768) {
       setDetailsModal({ show: true, reservation });
     }
-  };
-
-  const handleExport = () => {
-    if (exportFormat === 'csv') exportToCSV();
-    else if (exportFormat === 'xlsx') exportToXLSX();
-    else exportToICalendar();
-  };
-
-  const exportToCSV = () => {
-    const headers = ['Salle', 'Date', 'Heure Début', 'Heure Fin', 'Service', 'Objet'];
-    const rows = filteredReservations.map(res => [res.salle, new Date(res.dateDebut).toLocaleDateString('fr-FR'), res.heureDebut, res.heureFin, res.service, res.objet]);
-    const csvContent = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `reservations_${userEmail}.csv`; link.click();
   };
 
   const exportToXLSX = () => {
@@ -194,7 +184,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `reservations_${userEmail}.xls`; link.click();
   };
 
-  // ✅ CORRECTION : Utilisation du service iCal centralisé pour format standardisé
   const exportToICalendar = () => {
     icalService.generateAndDownload(filteredReservations);
   };
@@ -213,20 +202,24 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
         </div>
       )}
 
-
       <div className="filter-buttons">
         <button onClick={() => filterReservations('all')} className={`filter-btn ${filter === 'all' ? 'active' : ''}`}>📅 <span className="btn-label-text">Toutes</span> ({reservations.length})</button>
         <button onClick={() => filterReservations('past')} className={`filter-btn btn-past ${filter === 'past' ? 'active' : ''}`}>📜 <span className="btn-label-text">Passées</span> ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureFin || r.heureDebut}`) < new Date()).length})</button>
         <button onClick={() => filterReservations('today')} className={`filter-btn ${filter === 'today' ? 'active' : ''}`}>📆 <span className="btn-label-text">Aujourd'hui</span> ({reservations.filter(r => { const d = new Date(r.dateDebut); return d.toDateString() === new Date().toDateString(); }).length})</button>
         <button onClick={() => filterReservations('upcoming')} className={`filter-btn ${filter === 'upcoming' ? 'active' : ''}`}>🔜 <span className="btn-label-text">À venir</span> ({reservations.filter(r => new Date(`${r.dateDebut}T${r.heureDebut}`) > new Date()).length})</button>
+        
+        {/* BOUTON EXPORT XLSX (Desktop uniquement) */}
+        <button onClick={exportToXLSX} className="filter-btn btn-export-excel">
+          📥 <span className="btn-label-text">Exporter (XLSX)</span>
+        </button>
+
+        {/* BOUTON DÉCONNEXION */}
+        <button onClick={() => { setUserEmail(''); setSearchEmail(''); }} className="filter-btn btn-logout">
+          ❌ <span className="btn-label-text">Déconnexion</span>
+        </button>
       </div>
 
-      <div className="export-section desktop-export">
-        <select value={exportFormat} onChange={(e) => setExportFormat(e.target.value)}><option value="ical">📅 iCalendar (.ics)</option><option value="csv">📊 CSV</option><option value="xlsx">📗 Excel (.xls)</option></select>
-        <button onClick={handleExport} className="export-btn">⬇️ Exporter</button>
-      </div>
-
-      <button onClick={exportToICalendar} className="mobile-export-btn">📅 iCalendar (.ics)</button>
+      {/* Bouton Export Mobile SUPPRIMÉ comme demandé précédemment */}
 
       {filteredReservations.length === 0 ? <div className="no-reservations"><p>Aucune réservation trouvée pour cet email.</p></div> : (
         <div className="reservations-card">
@@ -278,7 +271,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     {cancelModal.show && (<div className="cancel-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}><div className="cancel-modal" onClick={(e) => e.stopPropagation()}><h3>⚠️ Confirmer l'annulation</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {cancelModal.reservation.salle}</p><p><strong>📝 Objet :</strong> {cancelModal.reservation.objet}</p></div><div className="motif-selection"><label><strong>💬 Motif :</strong></label><select value={selectedMotif} onChange={(e) => setSelectedMotif(e.target.value)} className="motif-select"><option value="">-- Motif --</option>{MOTIFS_ANNULATION.map((m, i) => <option key={i} value={m}>{m}</option>)}</select></div><div className="modal-actions"><button onClick={() => setCancelModal({ show: false, reservation: null })} className="cancel-action-btn">Annuler</button><button onClick={handleDeleteConfirm} className="confirm-action-btn" disabled={!selectedMotif}>Confirmer</button></div></div></div>)}
     {confirmModal.show && (<div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}><div className="confirmation-modal" onClick={(e) => e.stopPropagation()}><h3>{confirmModal.type === 'cancel' ? '✅ Annulation confirmée' : '✅ Modification confirmée'}</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>{confirmModal.motif && <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>}</div><button onClick={() => setConfirmModal({ ...confirmModal, show: false })}>Fermer</button></div></div>)}
     
-    {/* ✅ Modal détails responsive */}
     {/* ✅ Popup détails flottante pour responsive */}
     {detailsModal.show && detailsModal.reservation && (
       <div 
