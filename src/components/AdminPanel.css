@@ -47,7 +47,7 @@
   gap: 1rem;
 }
 
-/* ✅ NOUVEAU STYLE BOUTONS ADMIN (Style transféré de Statistiques) */
+/* STYLE BOUTONS ADMIN */
 .download-excel-btn { 
   background: white; 
   color: #2e7d32; 
@@ -59,12 +59,12 @@
   display: flex; 
   align-items: center; 
   gap: 0.5rem; 
-  transition: all 0.2s;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: all 0.5s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
 }
 .download-excel-btn:hover { 
   background: #e8f5e9; 
-  transform: translateY(-2px); 
+  transform: translateY(-4px); 
 }
 
 .logout-btn { 
@@ -75,12 +75,12 @@
   border-radius: 8px; 
   cursor: pointer; 
   font-weight: 600;
-  transition: all 0.2s;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: all 0.5s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
 }
 .logout-btn:hover { 
   background: #ffebee; 
-  transform: translateY(-2px); 
+  transform: translateY(-4px); 
   color: #d32f2f;
   border-color: #d32f2f;
 }
@@ -93,7 +93,7 @@
   background: white;
   padding: 1rem;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.6);
   align-items: center;
   flex-wrap: nowrap; 
   overflow-x: auto; 
@@ -124,7 +124,7 @@
   background: white;
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
 
 .admin-table-container {
@@ -135,7 +135,19 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+  table-layout: fixed; /* ✅ IMPORTANT : Permet de fixer la largeur des colonnes */
 }
+
+/* ✅ DEFINITION LARGEUR COLONNES */
+/* 1: Salle, 2: Date, 3: Horaire, 4: Agent, 5: Service, 6: Objet, 7: Email, 8: Actions */
+.admin-table th:nth-child(1) { width: 6%; } /* Salle */
+.admin-table th:nth-child(2) { width: 9%; }  /* Date */
+.admin-table th:nth-child(3) { width: 10%; }  /* Horaire */
+.admin-table th:nth-child(4) { width: 10%; } /* Agent */
+.admin-table th:nth-child(5) { width: 16%; } /* Service */
+.admin-table th:nth-child(6) { width: 15%; } /* Objet */
+.admin-table th:nth-child(7) { width: 16%; } /* Email */
+.admin-table th:nth-child(8) { width: 18%; } /* Actions */
 
 .admin-table th {
   background: #f8fafc;
@@ -146,6 +158,9 @@
   border-bottom: 2px solid #e2e8f0;
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-table td {
@@ -153,13 +168,28 @@
   border-bottom: 1px solid #e2e8f0;
   font-size: 0.9rem;
   color: #1e293b;
+  
+  /* ✅ CORRECTION : Autoriser le retour à la ligne */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-wrap: break-word; /* Coupe les mots trop longs si nécessaire (ex: emails) */
+  vertical-align: top; /* Alignement en haut pour les cellules multi-lignes */
 }
 
-.salle-cell { display: flex; align-items: center; gap: 0.8rem; }
-.salle-color-dot { width: 10px; height: 10px; border-radius: 50%; }
-.salle-name { font-weight: 600; }
+.salle-cell { display: flex; align-items: center; gap: 0.7rem; }
+.salle-color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+.salle-name { 
+  font-weight: 600; 
+  /* ✅ CORRECTION : Autoriser le retour à la ligne pour le nom de salle */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
 .sort-icon { margin-left: 0.5rem; color: #94a3b8; font-size: 0.8rem; }
-.actions-wrapper { display: flex; gap: 0.5rem; }
+.actions-wrapper { display: flex; gap: 0.5rem; flex-wrap: wrap; } /* Wrap pour les boutons si colonne étroite */
 .edit-button, .delete-button { padding: 0.4rem 0.8rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
 .edit-button { background: #e3f2fd; color: #1976d2; }
 .delete-button { background: #fee2e2; color: #ef4444; }
