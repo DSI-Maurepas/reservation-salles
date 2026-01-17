@@ -5,7 +5,6 @@ import './App.css';
 import CalendarView from './components/CalendarView';
 import ReservationGrid from './components/ReservationGrid';
 import SingleRoomGrid from './components/SingleRoomGrid';
-import VehicleGrid from './components/VehicleGrid'; 
 import MyReservations from './components/MyReservations';
 import AdminPanel from './components/AdminPanel';
 import googleSheetsService from './services/googleSheetsService';
@@ -17,7 +16,7 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [editReservationId, setEditReservationId] = useState(null);
-  const [editingReservation, setEditingReservation] = useState(null); 
+  const [editingReservation, setEditingReservation] = useState(null); // ✅ AJOUT
   const [userEmail, setUserEmail] = useState(localStorage.getItem('userEmail') || '');
   const [loading, setLoading] = useState(true);
 
@@ -174,7 +173,7 @@ function App() {
               className="blason-maurepas"
             />
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'left', textAlign: 'center', color: 'white' }}>
-              <h1 style={{ margin: 0, lineHeight: '1.2', fontSize: '1.5rem', color: 'white' }}>Portail de Réservations</h1>
+              <h1 style={{ margin: 0, lineHeight: '1.2', fontSize: '1.5rem', color: 'white' }}>Réservation de Salles</h1>
               <div style={{ fontSize: '1rem', fontWeight: '500', color: 'white' }}>Mairie de MAUREPAS</div>
             </div>
           </div>
@@ -184,19 +183,6 @@ function App() {
               onClick={() => setCurrentView('calendar')}
             >
               📅 Calendrier
-            </button>
-            {/* ✅ MODIFICATION ICÔNE CLIO */}
-            <button 
-              className={currentView === 'vehicle' ? 'active' : ''}
-              onClick={() => setCurrentView('vehicle')}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <img 
-                src={`${process.env.PUBLIC_URL}/images/32x32.png`} 
-                alt="Auto" 
-                style={{ height: '20px', width: 'auto' }} 
-              />
-              Clio
             </button>
             <button 
               className={currentView === 'myreservations' ? 'active' : ''}
@@ -239,12 +225,6 @@ function App() {
             editingReservation={editingReservation}
             onBack={handleBackFromRoom}
             onSuccess={handleReservationSuccess}
-          />
-        )}
-
-        {currentView === 'vehicle' && (
-          <VehicleGrid 
-            onBack={() => setCurrentView('calendar')}
           />
         )}
 

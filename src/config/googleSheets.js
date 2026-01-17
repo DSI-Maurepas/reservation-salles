@@ -68,7 +68,43 @@ export const OBJETS_RESERVATION = [
   'Entretien RH', 'Usage logistique / technique', 'Permanence (élus ou services)', 'Autre'
 ];
 
-export const COULEURS_OBJETS = {  'Réunion de service': '#64B5F6',  'Réunion Élus / Commissions': '#F06292',  'Réunion avec prestataire': '#0D47A1',  'Formation interne': '#81C784',  'Formation externe (prestataires)': '#1B5E20',  'Événement municipal / public': '#FFA726',  'Entretien RH': '#FF7043',  'Usage logistique / technique': '#AB47BC',  'Permanence (élus ou services)': '#880E4F',  'Autre': '#BDBDBD'};
+export const OBJETS_VEHICULE = [
+  'Astreinte', 
+  'Déplacement Professionnel',
+  'Formation',
+  'Hors département',
+  'Mission Technique',
+  'Réunion Extérieure',
+  'Transport de Matériel',
+  'Usage logistique / technique',
+  'Autre'
+];
+
+// ✅ MISE À JOUR : Ajout des couleurs pour les objets Véhicule
+export const COULEURS_OBJETS = {
+  // Objets Salles
+  'Réunion de service': '#64B5F6', // Bleu clair
+  'Réunion Élus / Commissions': '#F06292', // Rose
+  'Réunion avec prestataire': '#0D47A1', // Bleu foncé
+  'Formation interne': '#81C784', // Vert clair
+  'Formation externe (prestataires)': '#1B5E20', // Vert foncé
+  'Événement municipal / public': '#FFA726', // Orange
+  'Entretien RH': '#FF7043', // Corail
+  'Permanence (élus ou services)': '#880E4F', // Bordeaux
+  
+  // Objets Véhicule (Nouveaux)
+  'Astreinte': '#E57373', // Rouge clair
+  'Déplacement Professionnel': '#BA68C8', // Violet
+  'Formation': '#81C784', // Vert (Cohérent avec salles)
+  'Hors département': '#F06292', // Rose soutenu
+  'Mission Technique': '#4DB6AC', // Sarcelle (Teal)
+  'Réunion Extérieure': '#7986CB', // Indigo clair
+  'Transport de Matériel': '#A1887F', // Marron clair
+  
+  // Communs
+  'Usage logistique / technique': '#AB47BC', // Violet/Mauve
+  'Autre': '#BDBDBD' // Gris
+};
 
 export const HORAIRES = {
   HEURE_DEBUT: 8,
