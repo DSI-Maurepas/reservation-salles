@@ -63,14 +63,6 @@ export const SALLES_DATA = {
     photo: process.env.PUBLIC_URL + '/images/Salle_CCAS.jpg',
     equipements: ['Paperboard', 'Prise réseau', 'WiFi', 'Prises électriques', 'WiFi public', 'Prises réseau'],
     dispositions: null
-  },
-  // ✅ MISE A JOUR VÉHICULE CLIO (Image locale)
-  'CLIO': {
-    nom: 'CLIO',
-    capacite: 5,
-    photo: process.env.PUBLIC_URL + '/images/Clio_A.jpg', 
-    equipements: ['5 Places', 'Climatisation', 'GPS', 'Bluetooth'],
-    dispositions: null
   }
 };
 
@@ -137,14 +129,6 @@ export const sallesData = [
     nom: 'Salle CCAS',
     image: 'Salle_CCAS.jpg',
     capacite: 12,
-    dispositions: null
-  },
-  // ✅ MISE A JOUR VÉHICULE CLIO DANS LA LISTE
-  {
-    id: 10,
-    nom: 'CLIO',
-    image: 'Clio_A.jpg',
-    capacite: 5,
     dispositions: null
   }
 ];
