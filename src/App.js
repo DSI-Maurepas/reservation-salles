@@ -183,7 +183,7 @@ function App() {
               className={currentView === 'calendar' ? 'active' : ''}
               onClick={() => setCurrentView('calendar')}
             >
-              📅 Calendrier
+              📅 Réservations
             </button>
             {/* ✅ MODIFICATION ICÔNE CLIO */}
             <button 
