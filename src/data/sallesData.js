@@ -19,14 +19,14 @@ export const SALLES_DATA = {
     nom: 'Salle 16e A',
     capacite: 12,
     photo: process.env.PUBLIC_URL + '/images/16e_A.jpg',
-    equipements: ['Vidéoprojecteur', 'Écran', 'WiFi', 'Tableau blanc'],
+    equipements: ['Écran', '3 Prises électriques', 'WiFi', 'Tableau blanc', 'Prises réseau'],
     dispositions: null
   },
   'Salle 16e B': {
     nom: 'Salle 16e B',
     capacite: 19,
     photo: process.env.PUBLIC_URL + '/images/16e_B.jpg',
-    equipements: ['Écran', 'WiFi', 'Tableau blanc'],
+    equipements: ['Vidéoprojecteur', 'WiFi', 'Tableau blanc', 'Paperboard', 'Prises réseau', '4 Prises électriques'],
     dispositions: null
   },
   'Salle N°1': {
@@ -61,7 +61,7 @@ export const SALLES_DATA = {
     nom: 'Salle CCAS',
     capacite: 12,
     photo: process.env.PUBLIC_URL + '/images/Salle_CCAS.jpg',
-    equipements: ['Vidéoprojecteur', 'Écran', 'WiFi', 'Tableau blanc'],
+    equipements: ['Paperboard', 'Prise réseau', 'WiFi', 'Prises électriques', 'WiFi public', 'Prises réseau'],
     dispositions: null
   }
 };
