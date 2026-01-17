@@ -5,7 +5,7 @@ import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
 import icalService from '../services/icalService';
 import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, COULEURS_OBJETS, JOURS_FERIES, APP_CONFIG } from '../config/googleSheets';
-import { getSalleData, sallesData } from '../data/sallesData'; // ✅ AJOUT : Import de sallesData pour les dispositions
+import { getSalleData, sallesData } from '../data/sallesData'; 
 import ColorLegend from './ColorLegend';
 import SalleCard from './SalleCard';
 import './ReservationGrid.css';
@@ -43,6 +43,14 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
     agencement: '', nbPersonnes: ''
   });
 
+  // ✅ CORRECTION : Vérification de la session Admin au chargement
+  useEffect(() => {
+    const sessionAuth = sessionStorage.getItem('isAdminAuthenticated');
+    if (sessionAuth === 'true') {
+      setIsAdminUnlocked(true);
+    }
+  }, []);
+
   const changeDate = (days) => {
     const d = new Date(currentDate); d.setDate(d.getDate() + days);
     setCurrentDate(d); setSelections([]);
@@ -52,6 +60,8 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
   const handleAdminPasswordSubmit = () => {
     if (adminPasswordModal.password === APP_CONFIG.ADMIN_PASSWORD) {
       setIsAdminUnlocked(true);
+      // ✅ CORRECTION : Enregistrement dans la session
+      sessionStorage.setItem('isAdminAuthenticated', 'true');
       setAdminPasswordModal({ show: false, password: '' });
     } else {
       alert('Mot de passe incorrect');
@@ -178,20 +188,38 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
     });
   };
 
+  // ✅ Fonction utilitaire pour générer le nom court (mobile)
+  const getShortName = (fullName) => {
+    return fullName
+      .replace(/Salle Conseil/gi, 'Conseil')
+      .replace(/Salle Mariages/gi, 'Mariages')
+      .replace(/Salle N°/gi, 'N°')
+      .replace(/Salle CCAS/gi, 'CCAS');
+  };
+
   const renderGrid = () => {
     const grid = [];
     grid.push(<div key="corner" className="grid-corner"></div>);
     SALLES.forEach((salle, idx) => {
       const parts = salle.split(' - ');
       const nomSimple = parts[0];
-      const nom = nomSimple.replace(/Salle Conseil/gi, 'Conseil').replace(/Salle Mariages/gi, 'Mariages');
+      const nomLong = nomSimple.replace(/Salle Conseil/gi, 'Conseil').replace(/Salle Mariages/gi, 'Mariages');
+      // Nom court pour mobile
+      const nomCourt = getShortName(nomSimple);
+      
       const salleData = getSalleData(nomSimple);
       const capacity = salleData ? `${salleData.capacite} Pers.` : '';
+      const capacityShort = salleData ? `${salleData.capacite}p` : ''; // Capacité raccourcie mobile
 
       grid.push(
         <div key={`h-${idx}`} className="salle-header" style={{ gridColumn: idx + 2 }} onClick={() => handleSalleHeaderClick(salle)}>
-          <span className="salle-name-white">{nom}</span>
-          <span className="salle-capacity-white">{capacity}</span>
+          {/* Version Desktop */}
+          <span className="salle-name-desktop">{nomLong}</span>
+          <span className="salle-capacity-desktop">{capacity}</span>
+          
+          {/* Version Mobile (sera affichée via CSS) */}
+          <span className="salle-name-mobile">{nomCourt}</span>
+          <span className="salle-capacity-mobile">{capacityShort}</span>
         </div>
       );
     });
@@ -357,7 +385,6 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                 <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service...*</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
                 <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez l'objet...*</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
                 
-                {/* ✅ CORRECTION : Affichage dynamique des dispositions */}
                 {specialRoomSelection && (
                   <>
                     <select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})} required>
@@ -444,11 +471,13 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                   </div>
                 ))}
               </div>
+              
               <div className="ical-info-text">
                 {successModal.reservations.length > 1 
                   ? "Intégration dans un agenda parallèle à transférer ensuite dans le votre" 
                   : "Intégration dans votre agenda"}
               </div>
+              
               <button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>
                 📥 Calendrier iCal
               </button>

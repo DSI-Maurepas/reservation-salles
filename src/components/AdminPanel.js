@@ -28,7 +28,8 @@ function AdminPanel() {
   const [selectedMotif, setSelectedMotif] = useState('');
 
   useEffect(() => {
-    const sessionAuth = localStorage.getItem('isAdminAuthenticated');
+    // ✅ CORRECTION : Utilisation de sessionStorage pour la session active
+    const sessionAuth = sessionStorage.getItem('isAdminAuthenticated');
     if (sessionAuth === 'true') setIsAuthenticated(true);
   }, []);
 
@@ -41,7 +42,8 @@ function AdminPanel() {
     e.preventDefault();
     if (adminPassword === APP_CONFIG.ADMIN_PASSWORD) {
       setIsAuthenticated(true);
-      localStorage.setItem('isAdminAuthenticated', 'true');
+      // ✅ CORRECTION : Stockage dans la session
+      sessionStorage.setItem('isAdminAuthenticated', 'true');
     } else {
       alert('❌ Mot de passe incorrect.');
       setAdminPassword('');
@@ -51,7 +53,8 @@ function AdminPanel() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setAdminPassword('');
-    localStorage.removeItem('isAdminAuthenticated');
+    // ✅ CORRECTION : Nettoyage de la session
+    sessionStorage.removeItem('isAdminAuthenticated');
   };
 
   const loadAllReservations = async () => {

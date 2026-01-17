@@ -82,6 +82,14 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
 
   useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom, editingReservation]);
 
+  // ✅ Vérification de la session Admin au chargement
+  useEffect(() => {
+    const sessionAuth = sessionStorage.getItem('isAdminAuthenticated');
+    if (sessionAuth === 'true') {
+      setIsAdminUnlocked(true);
+    }
+  }, []);
+
   const loadWeekReservations = async () => { 
     setLoading(true); 
     try { 
@@ -104,7 +112,9 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
   
   const handleAdminPasswordSubmit = () => { 
     if (adminPasswordModal.password === APP_CONFIG.ADMIN_PASSWORD) { 
-      setIsAdminUnlocked(true); 
+      setIsAdminUnlocked(true);
+      // ✅ Enregistrement dans la session
+      sessionStorage.setItem('isAdminAuthenticated', 'true');
       setAdminPasswordModal({ show: false, password: '' }); 
     } else { 
       alert('❌ Mot de passe incorrect'); 
@@ -292,6 +302,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
   };
 
   const finalizeReservation = async (reservationsToSave) => { 
+    // Fermeture immédiate de la modale d'avertissement
     setWarningModal({ show: false, conflicts: [], validReservations: [] });
 
     setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); 
@@ -490,16 +501,25 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
           </div>
         </div>
         
-        {/* ✅ CORRECTION : SUPPRESSION DES TITRES */}
+        {/* ✅ CORRECTION : FICHE CENTRÉE SUR LE POINTEUR (translate -50% -50%) */}
         {hoveredReservation && (
-          <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{ position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: popupPosition.transform, zIndex: 10001 }} onClick={() => setHoveredReservation(null)}>
+          <div 
+            className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} 
+            style={{ 
+              position: 'fixed', 
+              left: popupPosition.x, 
+              top: popupPosition.y, 
+              transform: 'translate(-50%, -50%)', 
+              zIndex: 10001 
+            }} 
+            onClick={() => setHoveredReservation(null)}
+          >
             <div className="popup-card-header"><span className="popup-icon">👤</span> {hoveredReservation.prenom} {hoveredReservation.nom}</div>
             <div className="popup-card-body">
               <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
               <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
               <div className="popup-info-line"><span className="popup-info-icon">📝</span> {hoveredReservation.objet}</div>
               <div className="popup-info-line"><span className="popup-info-icon">📅</span> {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} - {hoveredReservation.heureDebut} à {hoveredReservation.heureFin}</div>
-              
               {(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (
                 <>
                   <div className="popup-info-line"><span className="popup-info-icon">🪑</span> {hoveredReservation.agencement || 'N/A'}</div>

@@ -29,7 +29,7 @@
 .reservation-form { background: white !important; border-radius: 18px !important; padding: 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important; border: 1px solid #e2e8f0; }
 .reservation-content { display: grid; grid-template-columns: minmax(900px, 1fr) 320px; gap: 25px; }
 
-/* EN-TETES SALLES */
+/* EN-TETES SALLES - DESKTOP PAR DÉFAUT */
 .reservation-grid .salle-header { 
   background-color: #1e40af !important; 
   text-align: center; 
@@ -52,6 +52,11 @@
   display: block; 
   margin-top: 2px; 
 }
+
+/* Gestion affichage Desktop/Mobile */
+.salle-name-desktop { display: block; color: white; font-weight: 800; font-size: 0.85rem; }
+.salle-capacity-desktop { display: block; color: white; font-size: 0.70rem; font-weight: normal; margin-top: 2px; }
+.salle-name-mobile, .salle-capacity-mobile { display: none; }
 
 /* GRILLE */
 .reservation-grid { 
@@ -125,126 +130,55 @@
 .blocked-close-button:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); }
 .blocked-close-button:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
 
-/* ✅ RESPONSIVE CORRIGÉ */
 @media (max-width: 768px) {
-  /* 1. Correction Boutons hors écran */
-  .date-navigation-bar { 
-    display: flex !important; 
-    flex-direction: column !important; 
-    gap: 12px !important; 
-    padding: 15px !important; 
-    align-items: center !important; 
-    height: auto !important; /* Laisse le contenu définir la hauteur */
-  }
-  .nav-group-left { 
-    order: 1 !important; 
-    width: 100% !important; 
-    display: flex !important; 
-    justify-content: center !important; 
-    min-width: auto !important; 
-  }
+  .date-navigation-bar { display: flex !important; flex-direction: column !important; gap: 12px !important; padding: 15px !important; align-items: center !important; height: auto !important; }
+  .nav-group-left { order: 1 !important; width: 100% !important; display: flex !important; justify-content: center !important; min-width: auto !important; }
   .nav-spacer { display: none !important; }
-  .nav-group-center { 
-    order: 2 !important; 
-    width: 100% !important; 
-    display: flex !important; 
-    flex-wrap: wrap !important; /* Permet le retour à la ligne */
-    justify-content: center !important; 
-    align-items: center !important; 
-    gap: 10px !important; 
-  }
-  .nav-group-center .central-date-block { 
-    order: -1 !important; 
-    width: 100% !important; /* Force le titre sur sa propre ligne */
-    background: transparent !important; 
-    border: none !important; 
-    padding: 0 !important; 
-    display: flex !important; 
-    justify-content: center !important; 
-    height: auto !important; 
-    margin-bottom: 12px !important; 
-  }
-  .nav-group-center .central-date-block .date-display h2 { 
-    font-size: 0.95rem !important; 
-    color: #1e40af !important; 
-    white-space: nowrap !important; 
-  }
+  .nav-group-center { order: 2 !important; width: 100% !important; display: flex !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; gap: 10px !important; }
+  .nav-group-center .central-date-block { order: -1 !important; width: 100% !important; background: transparent !important; border: none !important; padding: 0 !important; display: flex !important; justify-content: center !important; height: auto !important; margin-bottom: 12px !important; }
+  .nav-group-center .central-date-block .date-display h2 { font-size: 0.95rem !important; color: #1e40af !important; white-space: nowrap !important; }
   .nav-group-center .central-date-block { flex-basis: 100% !important; }
-
-  /* 2. Correction Layout & Formulaire sous la grille */
-  .reservation-content { 
-    display: flex !important; 
-    flex-direction: column !important; /* Empile grille puis formulaire */
-    width: 100% !important;
-  }
+  .reservation-content { display: flex !important; flex-direction: column !important; width: 100% !important; }
   
-  /* 3. Correction Grille bloquée (Scroll) */
-  .grid-column { 
-    display: block !important;
-    overflow-x: auto !important; /* Restaure le scroll */
-    margin-bottom: 20px !important; 
-    width: 100% !important; 
-    max-width: 100vw !important; /* Empêche l'overflow du parent */
-  }
+  /* ✅ CORRECTION GRID MOBILE : Colonnes moins larges (55px) */
+  .grid-column { display: block !important; overflow-x: auto !important; margin-bottom: 20px !important; width: 100% !important; max-width: 100vw !important; }
   .reservation-grid { 
-    min-width: 1050px !important; /* Force la largeur pour déclencher le scroll */
-    width: 1050px !important;
+    /* 45px pour heure + 9 colonnes de 55px */
+    display: grid !important;
+    grid-template-columns: 45px repeat(9, 55px) !important; 
+    min-width: 540px !important; /* Largeur totale réduite pour scroll */
+    width: auto !important;
     position: relative !important; 
   }
   
-  .form-column { 
-    width: 100% !important; 
-    max-width: 100% !important; 
-    margin: 0 auto !important; 
-  }
-  
-  /* Sticky des heures */
-  .time-label { 
-    position: -webkit-sticky !important; 
-    position: sticky !important; 
-    left: 0 !important; 
-    z-index: 9999 !important; 
-    background: white !important; 
-    box-shadow: 2px 0 8px rgba(0,0,0,0.2) !important; 
-    border-right: 2px solid #e2e8f0 !important; 
-  }
+  .form-column { width: 100% !important; max-width: 100% !important; margin: 0 auto !important; }
+  .time-label { position: -webkit-sticky !important; position: sticky !important; left: 0 !important; z-index: 9999 !important; background: white !important; box-shadow: 2px 0 8px rgba(0,0,0,0.2) !important; border-right: 2px solid #e2e8f0 !important; }
   .time-label:hover { background: white !important; }
-  
   .recurrence-options input[type="date"] { width: 100% !important; box-sizing: border-box !important; }
   .color-legend-container { display: none !important; visibility: hidden !important; opacity: 0 !important; height: 0 !important; width: 0 !important; overflow: hidden !important; position: absolute !important; left: -9999px !important; }
 
-  /* ✅ STYLE RESPONSIVE FICHE SALLE : OVERLAY POPUP */
-  .salle-detail-wrapper {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 10002;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
+  /* ✅ GESTION AFFICHAGE NOM SALLES MOBILE */
+  .salle-name-desktop, .salle-capacity-desktop { display: none !important; }
+  .salle-name-mobile { 
+    display: block !important; 
+    color: white !important; 
+    font-weight: 700 !important; 
+    font-size: 0.75rem !important; /* Police plus petite */
+    font-family: 'Arial Narrow', sans-serif !important; /* Condensed */
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
-  .salle-detail-wrapper > div {
-    background: white;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 350px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-  }
-
-  /* ✅ STYLE RESPONSIVE FICHE RÉSERVATION : OVERLAY POPUP CENTRÉE */
-  .reservation-popup-card {
-    position: fixed !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important;
-    width: 90% !important;
-    max-width: 320px !important;
-    z-index: 20000 !important;
-    margin: 0 !important;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.5) !important;
+  .salle-capacity-mobile { 
+    display: block !important; 
+    color: rgba(255,255,255,0.8) !important; 
+    font-size: 0.65rem !important; 
+    margin-top: 1px !important;
   }
 
+  .salle-detail-wrapper { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 10002; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+  .salle-detail-wrapper > div { background: white; border-radius: 16px; width: 90%; max-width: 350px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+  .reservation-popup-card { position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; width: 90% !important; max-width: 320px !important; z-index: 20000 !important; margin: 0 !important; box-shadow: 0 25px 50px rgba(0,0,0,0.5) !important; }
   .blocked-modal { width: 85%; padding: 0; }
   .warning-modal-header { padding: 1.2rem; }
   .blocked-modal-emoji { font-size: 2.5rem; }
@@ -254,55 +188,16 @@
 }
 
 /* MODAL ADMIN */
-.modal-overlay { 
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
-  background: rgba(0, 0, 0, 0.6); 
-  z-index: 99999; 
-  display: flex; align-items: center; justify-content: center; 
-}
-.modal-content { 
-  background: white; 
-  padding: 2rem; 
-  border-radius: 16px; 
-  max-width: 400px; 
-  width: 90%; 
-  box-shadow: 0 25px 50px rgba(0,0,0,0.25); 
-  text-align: center; 
-}
-.modal-content h3 { 
-  margin-top: 0; 
-  color: #1e293b; 
-  font-size: 1.25rem; 
-  margin-bottom: 1.5rem; 
-}
-.modal-content .form-input { 
-  width: 100%; 
-  padding: 0.8rem; 
-  border: 1px solid #cbd5e1; 
-  border-radius: 8px; 
-  font-size: 1rem; 
-  margin-bottom: 0.2rem; 
-  box-sizing: border-box; 
-  text-align: center; 
-}
-.form-actions { 
-  display: flex; 
-  gap: 1rem; 
-  justify-content: space-between; 
-}
-.btn-cancel, .btn-submit { 
-  flex: 1; 
-  padding: 0.8rem; 
-  border-radius: 8px; 
-  font-weight: 700; 
-  font-size: 0.95rem; 
-  cursor: pointer; 
-  border: none; 
-}
+.modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 99999; display: flex; align-items: center; justify-content: center; }
+.modal-content { background: white; padding: 2rem; border-radius: 16px; max-width: 400px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.25); text-align: center; }
+.modal-content h3 { margin-top: 0; color: #1e293b; font-size: 1.25rem; margin-bottom: 1.5rem; }
+.modal-content .form-input { width: 100%; padding: 0.8rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; margin-bottom: 0.2rem; box-sizing: border-box; text-align: center; }
+.form-actions { display: flex; gap: 1rem; justify-content: space-between; }
+.btn-cancel, .btn-submit { flex: 1; padding: 0.8rem; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; border: none; }
 .btn-cancel { background: #94a3b8; color: white; }
 .btn-submit { background: #22c55e; color: white; }
 
-/* ✅ NOUVEAU STYLE MODALE SUCCÈS (Structure identique Par Salle) */
+/* ✅ NOUVEAU STYLE MODALE SUCCÈS */
 .success-modal { background: white; padding: 0; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); overflow: hidden; text-align: center; }
 .success-modal-header { background: #4caf50; padding: 1.5rem; color: white; }
 .success-modal-header h2 { margin: 0; color: white; font-size: 1.5rem; }

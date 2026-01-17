@@ -33,32 +33,20 @@ git push origin main
 
 echo "🚀 Terminé ! Votre application a été compilée et envoyée."
 
-///////////////////////////////////
+///////////////////////////////////////////////////////////
 
+
+
+Mise à jour forcée !
+
+# 1. Se déplacer dans le dossier du projet
 cd /c/dev/reservation-salles
-npm run build
-rm -rf docs/*
-cp -rf build/* docs/
+
+# 2. Ajouter tous les fichiers (modifiés et la nouvelle image) à l'index
 git add .
-git commit -m "Votre message ici"
-git push origin main
 
-///////////////////////////
+# 3. Créer le commit (enregistrement des modifications)
+git commit -m "Mise à jour forcée et ajout image dans docs"
 
-cd /c/dev/reservation-salles
-npm start
-
-///////////////////////////
-
-Rapatrier en local les fichiers du serveur distant
-
-cd /c/dev/reservation-salles && git pull origin main
-
-////////////////////////////
-
-cd /c/dev/reservation-salles && npm run build && rm -rf docs/* && cp -rf build/* docs/ && git add . && git commit -m "Fix: GoogleSheets robuste" && git push origin main
-
-////////////////////////////
-
-MàJ :
-cd /c/dev/Reservation-salles && rm -rf build && npm run build && rm -rf docs/* && cp -rf build/* docs/ && git add . && git commit -m "Fix: icalService + 7 corrections testees" && git push origin main
+# 4. Envoyer vers GitHub en forçant l'écrasement de la branche distante
+git push origin main --force
