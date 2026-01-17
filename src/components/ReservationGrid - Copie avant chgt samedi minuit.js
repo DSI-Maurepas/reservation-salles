@@ -194,8 +194,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
       .replace(/Salle Conseil/gi, 'Conseil')
       .replace(/Salle Mariages/gi, 'Mariages')
       .replace(/Salle N°/gi, 'N°')
-      .replace(/Salle CCAS/gi, 'CCAS')
-      .replace(/Salle 16e/gi, '16e'); // ✅ AJOUT : Raccourcissement pour les salles 16e
+      .replace(/Salle CCAS/gi, 'CCAS');
   };
 
   const renderGrid = () => {
