@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/reservation-salles/static/css/main.abc1da5f.css",
-    "main.js": "/reservation-salles/static/js/main.d424dce7.js",
+    "main.js": "/reservation-salles/static/js/main.b2e512c1.js",
     "index.html": "/reservation-salles/index.html",
     "main.abc1da5f.css.map": "/reservation-salles/static/css/main.abc1da5f.css.map",
-    "main.d424dce7.js.map": "/reservation-salles/static/js/main.d424dce7.js.map"
+    "main.b2e512c1.js.map": "/reservation-salles/static/js/main.b2e512c1.js.map"
   },
   "entrypoints": [
     "static/css/main.abc1da5f.css",
-    "static/js/main.d424dce7.js"
+    "static/js/main.b2e512c1.js"
   ]
 }

@@ -376,7 +376,7 @@ function VehicleGrid({ onBack }) {
                 <div className="form-row"><input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required style={{flex:1}} /><input className="form-input" placeholder="Prénom" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} style={{flex:1}} /></div>
                 <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
                 <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} />
-                <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service...</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service...*</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
                 
                 {/* ✅ UTILISATION DE LA LISTE SPÉCIFIQUE VÉHICULE DEPUIS CONFIG */}
                 <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required>
