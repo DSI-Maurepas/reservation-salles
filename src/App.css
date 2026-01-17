@@ -8,7 +8,7 @@
   flex-direction: column;
   /* CORRECTION MAJEURE : background-attachment: fixed */
   /* Cela fixe le dégradé à l'écran, peu importe la longueur du contenu */
-  background: linear-gradient(135deg, #0000FF 0%, #0575E6 100%);
+  background: linear-gradient(135deg, #0f6aba 0%, #0575E6 100%);
   background-attachment: fixed; 
   background-repeat: no-repeat;
   background-size: cover;
@@ -16,7 +16,7 @@
 
 .app-header {
   /* Le header garde son propre fond pour se fondre dans le haut */
-  background: linear-gradient(135deg, #0000FF 0%, #4169E1 100%);
+  background: linear-gradient(135deg, #0f6aba 0%, #0575E6 100%);
   color: white;
   padding: 0.5rem 2rem;
   box-shadow: 0 8px 12px rgba(0,0,0,0.2);

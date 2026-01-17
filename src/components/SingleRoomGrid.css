@@ -117,7 +117,7 @@
 .recurrence-box input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #2196f3; }
 .recurrence-options { background: #f8fafc; padding: 0.6rem; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 0.4rem; }
 .form-actions { display: flex; gap: 0.8rem; margin-top: 1rem; }
-.btn-submit { flex: 1; padding: 0.8rem; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-bottom: 0; }
+.btn-submit { flex: 1; padding: 0.8rem; background: #4caf50; color: white; border: none; border-radius: 8px; font-weight: 700; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); cursor: pointer; width: 100%; }
 .btn-cancel { flex: 1; padding: 0.8rem; background: #78909c; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; }
 .no-selection-message { text-align: center; padding: 2rem 1rem; color: #94a3b8; background: #f8fafc; border-radius: 12px; border: 2px dashed #e2e8f0; margin-top: 1.5rem;}
 .reservation-popup-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); width: 320px; pointer-events: auto; cursor: pointer; z-index: 10000; border: 1px solid #e2e8f0; opacity: 1; transition: opacity 0.4s ease-in-out; }
@@ -221,89 +221,4 @@
     margin: 0 !important;
     box-shadow: 0 25px 50px rgba(0,0,0,0.5) !important;
   }
-}
-
-/* ✅ NOUVEAU STYLE MODALE SUCCÈS */
-.success-modal {
-  background: white;
-  padding: 0;
-  border-radius: 20px;
-  max-width: 450px;
-  width: 90%;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-  overflow: hidden;
-  text-align: center;
-}
-
-.success-modal-header {
-  background: #4caf50;
-  padding: 1.5rem;
-  color: white;
-}
-
-.success-modal-header h2 {
-  margin: 0;
-  color: white;
-  font-size: 1.5rem;
-}
-
-.success-modal-body {
-  padding: 1.5rem;
-  text-align: left;
-}
-
-.reservations-list {
-  background: #f9f9f9;
-  padding: 1rem;
-  border-radius: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-  margin-bottom: 1rem;
-}
-
-.reservation-item-success {
-  border-bottom: 1px dashed #ddd;
-  padding: 0.5rem 0;
-  display: flex;
-  align-items: center;
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.ical-info-text {
-  font-size: 0.9rem;
-  color: #64748b;
-  margin-bottom: 0.5rem;
-  text-align: center;
-  font-style: italic;
-}
-
-.download-ical-button {
-  background: #2196f3;
-  color: white;
-  border: none;
-  padding: 0.8rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
-  width: 100%;
-  font-size: 1rem;
-  margin-top: 0.5rem;
-}
-
-.success-modal-footer {
-  padding: 1rem;
-  background: #f9f9f9;
-  text-align: center;
-}
-
-.close-modal-button {
-  padding: 0.8rem 2rem;
-  background: #1e293b;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  width: 100%;
-  font-weight: 600;
 }
