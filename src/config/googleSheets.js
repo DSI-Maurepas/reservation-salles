@@ -1,6 +1,7 @@
 // src/config/googleSheets.js
 // Configuration pour l'API Google Sheets
 // VERSION OPTIMISÉE - Centralisation Sécurité
+//TEMPLATE_ID_CONFIRMATION: 'template_awkvaoh', // Votre template de confirmation
 
 export const GOOGLE_CONFIG = {
   API_KEY: 'AIzaSyAfpo4O0YkzjG8AaRl9tz9JMcAdQW3b8nY',
@@ -20,7 +21,6 @@ export const GOOGLE_CONFIG = {
 export const EMAIL_CONFIG = {
   // ⚠️ Identifiants EmailJS
   SERVICE_ID: 'service_xoen8ug',            // Commun aux deux envois
-  TEMPLATE_ID_CONFIRMATION: 'template_awkvaoh', // Votre template de confirmation
   TEMPLATE_ID_ANNULATION: 'template_i9aqlt9',   // Votre template d'annulation
   USER_ID: 'QFnQAOzHCSEtZoeVe'      // Mettez ici votre "Public Key"
 };
