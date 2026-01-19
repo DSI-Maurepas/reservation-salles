@@ -175,7 +175,7 @@ function AdminAuto() {
         <div className="auth-card">
           <div className="admin-login-blue-block">
             <span className="login-icon-desktop">🚗</span>
-            <span className="login-text-desktop">Administration Véhicule (Clio)</span>
+            <span className="login-text-desktop">Administration de la Clio</span>
             <form onSubmit={handleAuthenticate} className="admin-login-form-inline">
               <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••" required className="admin-password-input-inline" />
               <button type="submit" className="auth-button-inline">Connexion</button>
