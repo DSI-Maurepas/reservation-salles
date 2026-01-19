@@ -1,10 +1,10 @@
-// src/components/Statistics.js
+// src/components/StatisticsAuto.js
 import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { getSalleData } from '../data/sallesData';
-import './Statistics.css';
+import './Statistics.css'; // On réutilise le CSS existant
 
-// --- SOUS-COMPOSANT PIECHART ---
+// --- SOUS-COMPOSANT PIECHART (Identique à Statistics.js) ---
 const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', onHover, activeLabel }) => {
   let entries = Object.entries(data);
   const jourOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -82,48 +82,60 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
   );
 };
 
-function Statistics({ reservations }) {
+function StatisticsAuto({ reservations }) {
   const stats = useMemo(() => {
     if (!reservations || reservations.length === 0) return null;
-
-    // ✅ FILTRE : Exclusion stricte de la CLIO pour les statistiques générales
-    const filteredReservations = reservations.filter(res => res.salle !== 'CLIO');
-
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-    const reservationsAVenir = filteredReservations.filter(res => { const d = new Date(res.dateDebut); return !Number.isNaN(d.getTime()) && d >= todayStart; }).length;
+    const reservationsAVenir = reservations.filter(res => { const d = new Date(res.dateDebut); return !Number.isNaN(d.getTime()) && d >= todayStart; }).length;
 
-    const parSalle = {}; filteredReservations.forEach(res => { parSalle[res.salle] = (parSalle[res.salle] || 0) + 1; });
-
+    // Par Jour
     const parJour = { 'Lundi': 0, 'Mardi': 0, 'Mercredi': 0, 'Jeudi': 0, 'Vendredi': 0, 'Samedi': 0, 'Dimanche': 0 };
     const joursNoms = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-    filteredReservations.forEach(res => { const date = new Date(res.dateDebut); if (!isNaN(date)) parJour[joursNoms[date.getDay()]]++; });
+    reservations.forEach(res => { const date = new Date(res.dateDebut); if (!isNaN(date)) parJour[joursNoms[date.getDay()]]++; });
 
-    const parUtilisateur = {}; filteredReservations.forEach(res => { const key = `${res.prenom} ${res.nom}`.trim(); parUtilisateur[key] = (parUtilisateur[key] || 0) + 1; });
-    const topUtilisateurs = Object.entries(parUtilisateur).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    // Top Utilisateurs - ✅ MODIFIÉ : Slice 0 à 6
+    const parUtilisateur = {}; reservations.forEach(res => { const key = `${res.prenom} ${res.nom}`.trim(); parUtilisateur[key] = (parUtilisateur[key] || 0) + 1; });
+    const topUtilisateurs = Object.entries(parUtilisateur).sort((a, b) => b[1] - a[1]).slice(0, 6);
 
-    const parObjet = {}; filteredReservations.forEach(res => { const objet = res.objet || 'Non spécifié'; parObjet[objet] = (parObjet[objet] || 0) + 1; });
+    // Par Objet
+    const parObjet = {}; reservations.forEach(res => { const objet = res.objet || 'Non spécifié'; parObjet[objet] = (parObjet[objet] || 0) + 1; });
 
+    // Par Service
     const formatServiceNomCourt = (service) => { const s = (service || '').trim(); if (!s) return 'Non spécifié'; if (!s.includes('/')) return s; const parts = s.split('/'); const shortName = (parts[parts.length - 1] || '').trim(); return shortName || s; };
-    const parService = {}; filteredReservations.forEach(res => { const serviceKey = formatServiceNomCourt(res.service); parService[serviceKey] = (parService[serviceKey] || 0) + 1; });
+    const parService = {}; reservations.forEach(res => { const serviceKey = formatServiceNomCourt(res.service); parService[serviceKey] = (parService[serviceKey] || 0) + 1; });
 
-    const parMois = { 'Janvier': 0, 'Février': 0, 'Mars': 0, 'Avril': 0, 'Mai': 0, 'Juin': 0, 'Juillet': 0, 'Août': 0, 'Septembre': 0, 'Octobre': 0, 'Novembre': 0, 'Décembre': 0 };
+    // Par Mois (Filtré : 2 derniers mois et 2 à venir)
+    const parMois = {};
     const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    filteredReservations.forEach(res => { const date = new Date(res.dateDebut); if (!isNaN(date)) parMois[moisNoms[date.getMonth()]]++; });
+    
+    // Calcul de la fenêtre de date
+    const today = new Date();
+    const startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1); // 2 mois avant
+    const endDate = new Date(today.getFullYear(), today.getMonth() + 3, 0); // 2 mois après (fin de mois)
 
+    reservations.forEach(res => { 
+      const date = new Date(res.dateDebut); 
+      if (!isNaN(date) && date >= startDate && date <= endDate) {
+        parMois[moisNoms[date.getMonth()]] = (parMois[moisNoms[date.getMonth()]] || 0) + 1;
+      }
+    });
+
+    // Par Horaire (Sera affiché en premier)
     const parHoraire = { '08h-10h': 0, '10h-12h': 0, '12h-14h': 0, '14h-16h': 0, '16h-18h': 0, '18h-19h': 0 };
-    filteredReservations.forEach(res => { const h = parseInt(res.heureDebut.split(':')[0]); if (h >= 8 && h < 10) parHoraire['08h-10h']++; else if (h >= 10 && h < 12) parHoraire['10h-12h']++; else if (h >= 12 && h < 14) parHoraire['12h-14h']++; else if (h >= 14 && h < 16) parHoraire['14h-16h']++; else if (h >= 16 && h < 18) parHoraire['16h-18h']++; else if (h >= 18) parHoraire['18h-19h']++; });
+    reservations.forEach(res => { const h = parseInt(res.heureDebut.split(':')[0]); if (h >= 8 && h < 10) parHoraire['08h-10h']++; else if (h >= 10 && h < 12) parHoraire['10h-12h']++; else if (h >= 12 && h < 14) parHoraire['12h-14h']++; else if (h >= 14 && h < 16) parHoraire['14h-16h']++; else if (h >= 16 && h < 18) parHoraire['16h-18h']++; else if (h >= 18) parHoraire['18h-19h']++; });
 
+    // Calculs de durée et occupation
     let totalMinutes = 0, countRes = 0; const salleStats = {};
-    filteredReservations.forEach(res => { if (!res.heureDebut || !res.heureFin) return; const [hS, mS] = res.heureDebut.split(':').map(Number); const [hE, mE] = res.heureFin.split(':').map(Number); const dur = (hE * 60 + mE) - (hS * 60 + mS); if (dur > 0) { totalMinutes += dur; countRes++; const salleKey = res.salle || 'Non spécifié'; if (!salleStats[salleKey]) salleStats[salleKey] = { totalMinutes: 0, count: 0 }; salleStats[salleKey].totalMinutes += dur; salleStats[salleKey].count += 1; } });
+    reservations.forEach(res => { if (!res.heureDebut || !res.heureFin) return; const [hS, mS] = res.heureDebut.split(':').map(Number); const [hE, mE] = res.heureFin.split(':').map(Number); const dur = (hE * 60 + mE) - (hS * 60 + mS); if (dur > 0) { totalMinutes += dur; countRes++; const salleKey = res.salle || 'Non spécifié'; if (!salleStats[salleKey]) salleStats[salleKey] = { totalMinutes: 0, count: 0 }; salleStats[salleKey].totalMinutes += dur; salleStats[salleKey].count += 1; } });
 
     let dureeMoyenne = "0h00m";
     if (countRes > 0) { let weightedSum = 0; let weightTotal = 0; Object.entries(salleStats).forEach(([salle, { totalMinutes: sTotal, count }]) => { const moyenneSalle = sTotal / count; const capacite = getSalleData(salle)?.capacite || 0; if (capacite > 0) { weightedSum += moyenneSalle * capacite; weightTotal += capacite; } }); const avg = (weightTotal > 0) ? (weightedSum / weightTotal) : (totalMinutes / countRes); dureeMoyenne = `${Math.floor(avg / 60)}h${Math.round(avg % 60).toString().padStart(2, '0')}m`; }
 
     const tauxOccupation = {}; const durationByRoom = {}; let minTime = Infinity, maxTime = -Infinity;
-    filteredReservations.forEach(res => { if (!res.heureDebut || !res.heureFin) return; const [hS, mS] = res.heureDebut.split(':').map(Number); const [hE, mE] = res.heureFin.split(':').map(Number); durationByRoom[res.salle] = (durationByRoom[res.salle] || 0) + Math.max(0, ((hE * 60 + mE) - (hS * 60 + mS)) / 60); const t = new Date(res.dateDebut).getTime(); if (t < minTime) minTime = t; if (t > maxTime) maxTime = t; });
+    reservations.forEach(res => { if (!res.heureDebut || !res.heureFin) return; const [hS, mS] = res.heureDebut.split(':').map(Number); const [hE, mE] = res.heureFin.split(':').map(Number); durationByRoom[res.salle] = (durationByRoom[res.salle] || 0) + Math.max(0, ((hE * 60 + mE) - (hS * 60 + mS)) / 60); const t = new Date(res.dateDebut).getTime(); if (t < minTime) minTime = t; if (t > maxTime) maxTime = t; });
     const weeks = Math.max(1, (maxTime !== -Infinity ? Math.floor((maxTime - minTime) / (24 * 60 * 60 * 1000)) + 1 : 1) / 7); Object.keys(durationByRoom).forEach(s => tauxOccupation[s] = Math.min(100, Math.round((durationByRoom[s] / (weeks * 55)) * 100)));
 
-    return { total: filteredReservations.length, futureTotal: reservationsAVenir, parSalle, parJour, topUtilisateurs, parObjet, parService, parMois, parHoraire, dureeMoyenne, tauxOccupation };
+    return { total: reservations.length, futureTotal: reservationsAVenir, parJour, topUtilisateurs, parObjet, parService, parMois, parHoraire, dureeMoyenne, tauxOccupation };
   }, [reservations]);
 
   const [hoveredSlice, setHoveredSlice] = useState(null);
@@ -160,33 +172,28 @@ function Statistics({ reservations }) {
     <div className="statistics-container" onClick={() => setHoveredSlice(null)}>
       {hoveredSlice && createPortal(popupContent, document.body)}
       
-      {/* ✅ TITRE SEUL, CENTRÉ */}
-      <h2>📊 Statistiques détaillées</h2>
+      <h2>📊 Statistiques CLIO</h2>
 
       <div className="stats-summary">
-        <div className="summary-card"><div className="summary-icon">📅</div><div className="summary-content"><div className="summary-value">{stats.futureTotal}</div><div className="summary-label">Réservations sont programmées</div></div></div>
-        <div className="summary-card"><div className="summary-icon">⏱️</div><div className="summary-content"><div className="summary-value">{stats.dureeMoyenne}</div><div className="summary-label">Réservation moyenne (pondérée par la capacité des salles)</div></div></div>
-        <div className="summary-card"><div className="summary-icon">🏆</div><div className="summary-content"><div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div><div className="summary-label">Est l'agent qui réserve le plus !</div></div></div>
-        <div className="summary-card"><div className="summary-icon">🏢</div><div className="summary-content"><div className="summary-value">{Object.keys(stats.parSalle).length}</div><div className="summary-label">Salles sont utilisées</div></div></div>
+        <div className="summary-card"><div className="summary-icon">📅</div><div className="summary-content"><div className="summary-value">{stats.futureTotal}</div><div className="summary-label">Réservations à venir de la Clio</div></div></div>
+        <div className="summary-card"><div className="summary-icon">⏱️</div><div className="summary-content"><div className="summary-value">{stats.dureeMoyenne}</div><div className="summary-label">Durée moyenne d'une réservation</div></div></div>
+        <div className="summary-card"><div className="summary-icon">🏆</div><div className="summary-content"><div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div><div className="summary-label">Top pilote !</div></div></div>
+        <div className="summary-card"><div className="summary-icon">📉</div><div className="summary-content"><div className="summary-value">{stats.tauxOccupation['CLIO'] ? stats.tauxOccupation['CLIO'] + '%' : '0%'}</div><div className="summary-label">Taux de réservation de la Clio</div></div></div>
       </div>
 
       <div className="charts-grid">
-        <PieChart data={stats.parSalle} title="📍 Par salle" colors={c1} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parJour} title="📆 Par jour" colors={c2} sortOrder="jours" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parService} title="🏛️ Par service" colors={c3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parObjet} title="📝 Par objet" colors={c1} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parHoraire} title="🕐 Réservation par horaire" colors={c2} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        
+        <PieChart data={stats.parJour} title="📆 Réservation par jour" colors={c2} sortOrder="jours" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parService} title="🏛️ Réservation par service" colors={c3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parObjet} title="📝 Réservation par motif" colors={c1} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        
+        {/* ✅ SUPPRESSION du bloc Chart 'Taux d'occupation' détaillé ICI */}
+
+        <PieChart data={stats.parMois} title="📅 Les 2 derniers mois et les 2 à venir" colors={c3} sortOrder="mois" className="month-chart-card" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        
         <div className="chart-card">
-          <h3>📊 Taux d'occupation</h3>
-          <div className="occupation-bars">
-            {Object.entries(stats.tauxOccupation).sort((a, b) => b[1] - a[1]).map(([s, t], i) => (
-              <div key={i} className="occupation-item"><div className="occupation-label">{s}</div><div className="occupation-bar-container"><div className="occupation-bar" style={{ width: `${t}%`, backgroundColor: t > 80 ? '#f44336' : t > 50 ? '#ff9800' : '#4caf50' }}></div></div><div className="occupation-value">{t}%</div></div>
-            ))}
-          </div>
-        </div>
-        <PieChart data={stats.parHoraire} title="🕐 Par horaire" colors={c2} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parMois} title="📅 Par mois" colors={c3} sortOrder="mois" className="month-chart-card" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <div className="chart-card">
-          <h3>👥 Top 10</h3>
+          <h3>🚗 Top 6 Pilote !</h3> {/* ✅ TITRE MODIFIÉ */}
           <div className="top-users-list">{stats.topUtilisateurs.map(([n, c], i) => (<div key={i} className="top-user-item"><span className="user-rank">{i + 1}</span><span className="user-name">{n}</span><span className="user-count">{c}</span></div>))}</div>
         </div>
       </div>
@@ -194,4 +201,4 @@ function Statistics({ reservations }) {
   );
 }
 
-export default Statistics;
+export default StatisticsAuto;
