@@ -390,8 +390,8 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                 </div>
                 <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
                 <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} />
-                <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service...*</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
-                <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez l'objet...*</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
+                <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service *</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez le motif *</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
                 
                 {/* ✅ CORRECTION : Affichage dynamique des dispositions */}
                 {specialRoomSelection && (

@@ -176,13 +176,13 @@ function StatisticsAuto({ reservations }) {
 
       <div className="stats-summary">
         <div className="summary-card"><div className="summary-icon">📅</div><div className="summary-content"><div className="summary-value">{stats.futureTotal}</div><div className="summary-label">Réservations à venir de la Clio</div></div></div>
-        <div className="summary-card"><div className="summary-icon">⏱️</div><div className="summary-content"><div className="summary-value">{stats.dureeMoyenne}</div><div className="summary-label">Durée moyenne d'une réservation</div></div></div>
-        <div className="summary-card"><div className="summary-icon">🏆</div><div className="summary-content"><div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div><div className="summary-label">Top pilote !</div></div></div>
-        <div className="summary-card"><div className="summary-icon">📉</div><div className="summary-content"><div className="summary-value">{stats.tauxOccupation['CLIO'] ? stats.tauxOccupation['CLIO'] + '%' : '0%'}</div><div className="summary-label">Taux de réservation de la Clio</div></div></div>
+        <div className="summary-card"><div className="summary-icon">⏱️</div><div className="summary-content"><div className="summary-label">Durée moyenne d'une réservation</div><div className="summary-value">{stats.dureeMoyenne}</div></div></div>
+        <div className="summary-card"><div className="summary-icon">🥇</div><div className="summary-content"><div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div><div className="summary-label">est Pilote n°1</div></div></div>
+        <div className="summary-card"><div className="summary-icon">📉</div><div className="summary-content"><div className="summary-label">Le taux de réservation de la Clio est de :</div><div className="summary-value">{stats.tauxOccupation['CLIO'] ? stats.tauxOccupation['CLIO'] + '%' : '0%'}</div></div></div>
       </div>
 
       <div className="charts-grid">
-        <PieChart data={stats.parHoraire} title="🕐 Réservation par horaire" colors={c2} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parHoraire} title="🕒 Réservation par horaire" colors={c2} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         
         <PieChart data={stats.parJour} title="📆 Réservation par jour" colors={c2} sortOrder="jours" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         <PieChart data={stats.parService} title="🏛️ Réservation par service" colors={c3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
@@ -193,7 +193,7 @@ function StatisticsAuto({ reservations }) {
         <PieChart data={stats.parMois} title="📅 Les 2 derniers mois et les 2 à venir" colors={c3} sortOrder="mois" className="month-chart-card" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         
         <div className="chart-card">
-          <h3>🚗 Top 6 Pilote !</h3> {/* ✅ TITRE MODIFIÉ */}
+          <h3>🛞 Top 6 des pilotes !</h3> {/* ✅ TITRE MODIFIÉ */}
           <div className="top-users-list">{stats.topUtilisateurs.map(([n, c], i) => (<div key={i} className="top-user-item"><span className="user-rank">{i + 1}</span><span className="user-name">{n}</span><span className="user-count">{c}</span></div>))}</div>
         </div>
       </div>
