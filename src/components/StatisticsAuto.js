@@ -4,17 +4,19 @@ import { createPortal } from 'react-dom';
 import { getSalleData } from '../data/sallesData';
 import './Statistics.css'; // On réutilise le CSS existant
 
-// --- SOUS-COMPOSANT PIECHART (Identique à Statistics.js) ---
-const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', onHover, activeLabel }) => {
+// --- SOUS-COMPOSANT PIECHART (Adapté pour gérer les données pondérées) ---
+// Ajout de la prop 'realData' pour afficher les vraies valeurs dans l'infobulle
+const PieChart = ({ data, realData, title, colors, sortOrder = 'alpha', className = '', onHover, activeLabel }) => {
   let entries = Object.entries(data);
   const jourOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-  const moisOrder = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  // Mise à jour de l'ordre chronologique selon les nouveaux libellés
+  const momentOrder = ['Le matin', 'La pause méridienne', "L'après-midi", 'Le soir'];
 
   if (sortOrder === 'alpha') entries.sort(([a], [b]) => a.localeCompare(b));
   else if (sortOrder === 'asc') entries.sort(([, a], [, b]) => a - b);
   else if (sortOrder === 'desc') entries.sort(([, a], [, b]) => b - a);
   else if (sortOrder === 'jours') entries.sort(([a], [b]) => jourOrder.indexOf(a) - jourOrder.indexOf(b));
-  else if (sortOrder === 'mois') entries.sort(([a], [b]) => moisOrder.indexOf(a) - moisOrder.indexOf(b));
+  else if (sortOrder === 'moments') entries.sort(([a], [b]) => momentOrder.indexOf(a) - momentOrder.indexOf(b));
 
   const total = entries.reduce((sum, [, value]) => sum + value, 0);
   if (total === 0) return null;
@@ -44,15 +46,19 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
     const transY = explodeDist * Math.sin(midRad);
     const color = colors[index % colors.length];
 
+    // ✅ RECUPERATION DE LA VALEUR RÉELLE (SI DISPONIBLE) POUR L'AFFICHAGE
+    const displayValue = realData && realData[label] !== undefined ? realData[label] : value;
+
     const handleInteraction = (e) => {
       if (e.type === 'click') e.stopPropagation();
       const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
       const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
-      onHover({ label, value, percentage: percentage.toFixed(1), color, x: clientX, y: clientY });
+      // On affiche la valeur réelle dans l'infobulle
+      onHover({ label, value: Math.round(displayValue) + " min", percentage: percentage.toFixed(1), color, x: clientX, y: clientY });
     };
 
     return {
-      label, value, percentage: percentage.toFixed(1), color,
+      label, value: Math.round(value), percentage: percentage.toFixed(1), color,
       path: `M ${cx} ${cy} L ${startX} ${startY} A ${r} ${r} 0 ${largeArc} 1 ${endX} ${endY} Z`,
       transform: `translate(${transX}, ${transY})`,
       handleInteraction, isActive
@@ -73,7 +79,7 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
             <div key={i} className={`legend-item ${segment.isActive ? 'active' : ''}`} onClick={segment.handleInteraction} style={{ cursor: 'pointer' }}>
               <span className="legend-color" style={{ backgroundColor: segment.color }}></span>
               <span className="legend-label">{segment.label}</span>
-              <span className="legend-value">{segment.value} ({segment.percentage}%)</span>
+              <span className="legend-value">{segment.percentage}%</span>
             </div>
           ))}
         </div>
@@ -93,7 +99,7 @@ function StatisticsAuto({ reservations }) {
     const joursNoms = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
     reservations.forEach(res => { const date = new Date(res.dateDebut); if (!isNaN(date)) parJour[joursNoms[date.getDay()]]++; });
 
-    // Top Utilisateurs - ✅ MODIFIÉ : Slice 0 à 6
+    // Top Utilisateurs - Slice 0 à 6
     const parUtilisateur = {}; reservations.forEach(res => { const key = `${res.prenom} ${res.nom}`.trim(); parUtilisateur[key] = (parUtilisateur[key] || 0) + 1; });
     const topUtilisateurs = Object.entries(parUtilisateur).sort((a, b) => b[1] - a[1]).slice(0, 6);
 
@@ -104,23 +110,42 @@ function StatisticsAuto({ reservations }) {
     const formatServiceNomCourt = (service) => { const s = (service || '').trim(); if (!s) return 'Non spécifié'; if (!s.includes('/')) return s; const parts = s.split('/'); const shortName = (parts[parts.length - 1] || '').trim(); return shortName || s; };
     const parService = {}; reservations.forEach(res => { const serviceKey = formatServiceNomCourt(res.service); parService[serviceKey] = (parService[serviceKey] || 0) + 1; });
 
-    // Par Mois (Filtré : 2 derniers mois et 2 à venir)
-    const parMois = {};
-    const moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    // ✅ NOUVEAU : Par Moments de la Journée (Pondéré vs Réel)
+    const parMomentJournee = { 'Le matin': 0, 'La pause méridienne': 0, "L'après-midi": 0, 'Le soir': 0 }; // Données pondérées pour le graphique
+    const parMomentJourneeReel = { 'Le matin': 0, 'La pause méridienne': 0, "L'après-midi": 0, 'Le soir': 0 }; // Données réelles pour l'affichage
     
-    // Calcul de la fenêtre de date
-    const today = new Date();
-    const startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1); // 2 mois avant
-    const endDate = new Date(today.getFullYear(), today.getMonth() + 3, 0); // 2 mois après (fin de mois)
+    const periods = [
+        { label: 'Le matin', start: 8 * 60, end: 12 * 60 },
+        { label: 'La pause méridienne', start: 12 * 60, end: 14 * 60 },
+        { label: "L'après-midi", start: 14 * 60, end: 18 * 60 },
+        { label: 'Le soir', start: 18 * 60, end: 22 * 60 }
+    ];
 
-    reservations.forEach(res => { 
-      const date = new Date(res.dateDebut); 
-      if (!isNaN(date) && date >= startDate && date <= endDate) {
-        parMois[moisNoms[date.getMonth()]] = (parMois[moisNoms[date.getMonth()]] || 0) + 1;
-      }
+    reservations.forEach(res => {
+        if (!res.heureDebut || !res.heureFin) return;
+        const [hS, mS] = res.heureDebut.split(':').map(Number);
+        const [hE, mE] = res.heureFin.split(':').map(Number);
+        
+        const startTotal = hS * 60 + mS;
+        const endTotal = hE * 60 + mE;
+
+        periods.forEach(p => {
+            const overlapStart = Math.max(startTotal, p.start);
+            const overlapEnd = Math.min(endTotal, p.end);
+            const duration = Math.max(0, overlapEnd - overlapStart);
+            
+            if (duration > 0) {
+                // Stockage de la durée réelle
+                parMomentJourneeReel[p.label] += duration;
+                
+                // ✅ PONDÉRATION : La pause méridienne (2h) compte double pour égaler les autres périodes (4h)
+                const weight = p.label === 'La pause méridienne' ? 2 : 1;
+                parMomentJournee[p.label] += duration * weight;
+            }
+        });
     });
 
-    // Par Horaire (Sera affiché en premier)
+    // Par Horaire
     const parHoraire = { '08h-10h': 0, '10h-12h': 0, '12h-14h': 0, '14h-16h': 0, '16h-18h': 0, '18h-19h': 0 };
     reservations.forEach(res => { const h = parseInt(res.heureDebut.split(':')[0]); if (h >= 8 && h < 10) parHoraire['08h-10h']++; else if (h >= 10 && h < 12) parHoraire['10h-12h']++; else if (h >= 12 && h < 14) parHoraire['12h-14h']++; else if (h >= 14 && h < 16) parHoraire['14h-16h']++; else if (h >= 16 && h < 18) parHoraire['16h-18h']++; else if (h >= 18) parHoraire['18h-19h']++; });
 
@@ -135,7 +160,13 @@ function StatisticsAuto({ reservations }) {
     reservations.forEach(res => { if (!res.heureDebut || !res.heureFin) return; const [hS, mS] = res.heureDebut.split(':').map(Number); const [hE, mE] = res.heureFin.split(':').map(Number); durationByRoom[res.salle] = (durationByRoom[res.salle] || 0) + Math.max(0, ((hE * 60 + mE) - (hS * 60 + mS)) / 60); const t = new Date(res.dateDebut).getTime(); if (t < minTime) minTime = t; if (t > maxTime) maxTime = t; });
     const weeks = Math.max(1, (maxTime !== -Infinity ? Math.floor((maxTime - minTime) / (24 * 60 * 60 * 1000)) + 1 : 1) / 7); Object.keys(durationByRoom).forEach(s => tauxOccupation[s] = Math.min(100, Math.round((durationByRoom[s] / (weeks * 55)) * 100)));
 
-    return { total: reservations.length, futureTotal: reservationsAVenir, parJour, topUtilisateurs, parObjet, parService, parMois, parHoraire, dureeMoyenne, tauxOccupation };
+    return { 
+        total: reservations.length, 
+        futureTotal: reservationsAVenir, 
+        parJour, topUtilisateurs, parObjet, parService, 
+        parMomentJournee, parMomentJourneeReel, // Export des deux jeux de données pour les moments
+        parHoraire, dureeMoyenne, tauxOccupation 
+    };
   }, [reservations]);
 
   const [hoveredSlice, setHoveredSlice] = useState(null);
@@ -182,18 +213,26 @@ function StatisticsAuto({ reservations }) {
       </div>
 
       <div className="charts-grid">
-        <PieChart data={stats.parHoraire} title="🕒 Réservation par horaire" colors={c2} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parHoraire} title="🕒 Réservations par horaire" colors={c2} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         
-        <PieChart data={stats.parJour} title="📆 Réservation par jour" colors={c2} sortOrder="jours" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parService} title="🏛️ Réservation par service" colors={c3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parObjet} title="📝 Réservation par motif" colors={c1} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parJour} title="📆 Réservations par jour" colors={c2} sortOrder="jours" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parService} title="🏛️ Réservations par service" colors={c3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parObjet} title="📝 Réservations par motif" colors={c1} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         
-        {/* ✅ SUPPRESSION du bloc Chart 'Taux d'occupation' détaillé ICI */}
-
-        <PieChart data={stats.parMois} title="📅 Les 2 derniers mois et les 2 à venir" colors={c3} sortOrder="mois" className="month-chart-card" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        {/* ✅ GRAPHIQUE MOMENTS DE LA JOURNÉE : Données pondérées pour les parts, Données réelles pour le texte */}
+        <PieChart 
+            data={stats.parMomentJournee} 
+            realData={stats.parMomentJourneeReel}
+            title="Les réservations par moments de la journée" 
+            colors={c3} 
+            sortOrder="moments" 
+            className="month-chart-card" 
+            onHover={handleSliceHover} 
+            activeLabel={hoveredSlice?.label} 
+        />
         
         <div className="chart-card">
-          <h3>🛞 Top 6 des pilotes !</h3> {/* ✅ TITRE MODIFIÉ */}
+          <h3>🛞 Top 6 des pilotes !</h3>
           <div className="top-users-list">{stats.topUtilisateurs.map(([n, c], i) => (<div key={i} className="top-user-item"><span className="user-rank">{i + 1}</span><span className="user-name">{n}</span><span className="user-count">{c}</span></div>))}</div>
         </div>
       </div>
