@@ -184,7 +184,7 @@ function AdminPanel() {
         <div className="auth-card">
           <div className="admin-login-blue-block">
             <span className="login-icon-desktop">🔒</span>
-            <span className="login-text-desktop">Cette section est réservée aux administrateurs.</span>
+            <span className="login-text-desktop">Administration des salles</span>
             <form onSubmit={handleAuthenticate} className="admin-login-form-inline">
               <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••" required className="admin-password-input-inline" />
               <button type="submit" className="auth-button-inline">Se connecter</button>
