@@ -171,10 +171,10 @@ function Statistics({ reservations }) {
       </div>
 
       <div className="charts-grid">
-        <PieChart data={stats.parSalle} title="📍 Réservation par salle" colors={c1} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parJour} title="📆 Réservation par jour" colors={c2} sortOrder="jours" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parService} title="🏛️ Réservation par service" colors={c3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parObjet} title="📝 Réservation par motif" colors={c1} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parSalle} title="📍 Réservations par salle" colors={c1} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parJour} title="📆 Réservations par jour" colors={c2} sortOrder="jours" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parService} title="🏛️ Réservations par service" colors={c3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parObjet} title="📝 Réservations par motif" colors={c1} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         <div className="chart-card">
           <h3>📊 Taux d'occupation</h3>
           <div className="occupation-bars">
@@ -183,10 +183,10 @@ function Statistics({ reservations }) {
             ))}
           </div>
         </div>
-        <PieChart data={stats.parHoraire} title="🕐 Réservation par horaire" colors={c2} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
-        <PieChart data={stats.parMois} title="📅 Réservation par mois" colors={c3} sortOrder="mois" className="month-chart-card" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parHoraire} title="🕐 Réservations par horaire" colors={c2} onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
+        <PieChart data={stats.parMois} title="📅 Réservations par mois" colors={c3} sortOrder="mois" className="month-chart-card" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         <div className="chart-card">
-          <h3>👥 Top 10 des agents qui réservent</h3>
+          <h3>👥 Top 10 des agents qui réservent le plus</h3>
           <div className="top-users-list">{stats.topUtilisateurs.map(([n, c], i) => (<div key={i} className="top-user-item"><span className="user-rank">{i + 1}</span><span className="user-name">{n}</span><span className="user-count">{c}</span></div>))}</div>
         </div>
       </div>
