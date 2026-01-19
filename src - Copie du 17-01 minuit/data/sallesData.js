@@ -2,7 +2,6 @@
 // Données détaillées pour chaque salle
 
 // Export OBJET pour les composants existants
-// ✅ CLIO DOIT RESTER ICI pour que VehicleGrid fonctionne (infos + photo)
 export const SALLES_DATA = {
   'Salle Conseil': {
     nom: 'Salle Conseil',
@@ -65,6 +64,7 @@ export const SALLES_DATA = {
     equipements: ['Paperboard', 'Prise réseau', 'WiFi', 'Prises électriques', 'WiFi public', 'Prises réseau'],
     dispositions: null
   },
+  // ✅ MISE A JOUR VÉHICULE CLIO (Image locale)
   'CLIO': {
     nom: 'CLIO',
     capacite: 5,
@@ -75,7 +75,6 @@ export const SALLES_DATA = {
 };
 
 // Export TABLEAU pour RoomSelector
-// ✅ CORRECTION : CLIO RETIRÉE ICI (Elle n'apparaîtra plus dans la liste "Par Salle")
 export const sallesData = [
   {
     id: 1,
@@ -138,6 +137,14 @@ export const sallesData = [
     nom: 'Salle CCAS',
     image: 'Salle_CCAS.jpg',
     capacite: 12,
+    dispositions: null
+  },
+  // ✅ MISE A JOUR VÉHICULE CLIO DANS LA LISTE
+  {
+    id: 10,
+    nom: 'CLIO',
+    image: 'Clio_A.jpg',
+    capacite: 5,
     dispositions: null
   }
 ];

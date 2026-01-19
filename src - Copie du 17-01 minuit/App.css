@@ -19,7 +19,7 @@
   background: linear-gradient(135deg, #0f6aba 0%, #0575E6 100%);
   color: white;
   padding: 0.5rem 2rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.6);
+  box-shadow: 0 8px 12px rgba(0,0,0,0.2);
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
@@ -36,13 +36,13 @@
 .header-title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.8rem;
 }
 
 .blason-maurepas {
   height: 45px;
   width: auto;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
 }
 
 /* NAVIGATION */
@@ -57,7 +57,7 @@
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -67,13 +67,13 @@
 
 .main-nav button:hover {
   background: rgba(255,255,255,0.25);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .main-nav button.active {
   background: white;
   color: #021B79; /* Texte bleu foncé pour le contraste sur bouton blanc */
-  box-shadow: 0 3px 10px rgba(0,0,0,0.6);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   font-weight: 700;
   border-color: white;
 }
@@ -155,11 +155,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-  }
-
-  /* ✅ MASQUER ADMINAUTO SUR MOBILE */
-  .admin-auto-btn {
-    display: none !important;
   }
 
   .app-main {

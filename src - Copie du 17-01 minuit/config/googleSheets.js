@@ -1,6 +1,7 @@
 // src/config/googleSheets.js
 // Configuration pour l'API Google Sheets
 // VERSION OPTIMISÉE - Centralisation Sécurité
+//TEMPLATE_ID_CONFIRMATION: 'template_awkvaoh', // Votre template de confirmation
 
 export const GOOGLE_CONFIG = {
   API_KEY: 'AIzaSyAfpo4O0YkzjG8AaRl9tz9JMcAdQW3b8nY',
@@ -17,8 +18,6 @@ export const GOOGLE_CONFIG = {
   SCOPES: 'https://www.googleapis.com/auth/spreadsheets'
 };
 
-// => Le TEMPLATE_ID_CONFIRMATION: 'template_awkvaoh', // Votre template de confirmation
-
 export const EMAIL_CONFIG = {
   // ⚠️ Identifiants EmailJS
   SERVICE_ID: 'service_xoen8ug',            // Commun aux deux envois
@@ -28,8 +27,7 @@ export const EMAIL_CONFIG = {
 
 // CONFIGURATION APPLICATIVE
 export const APP_CONFIG = {
-  ADMIN_PASSWORD: 'R3sa@M0rep@s78', // Mot de passe Admin Général
-  ADMIN_AUTO_PASSWORD: 'Cl!0@maurepas', // ✅ NOUVEAU : Mot de passe Admin Auto
+  ADMIN_PASSWORD: 'R3sa@M0rep@s78', // Mot de passe centralisé
   CACHE_DURATION: 60000, // Durée du cache en ms (1 minute) pour éviter surcharge API
 };
 
@@ -71,10 +69,18 @@ export const OBJETS_RESERVATION = [
 ];
 
 export const OBJETS_VEHICULE = [
-  'Déplacement dans Maurepas',
-  'Déplacement hors de Maurepas',
+  'Astreinte', 
+  'Déplacement Professionnel',
+  'Formation',
+  'Hors département',
+  'Mission Technique',
+  'Réunion Extérieure',
+  'Transport de Matériel',
+  'Usage logistique / technique',
+  'Autre'
 ];
 
+// ✅ MISE À JOUR : Ajout des couleurs pour les objets Véhicule
 export const COULEURS_OBJETS = {
   // Objets Salles
   'Réunion de service': '#64B5F6', // Bleu clair
@@ -85,12 +91,19 @@ export const COULEURS_OBJETS = {
   'Événement municipal / public': '#FFA726', // Orange
   'Entretien RH': '#FF7043', // Corail
   'Permanence (élus ou services)': '#880E4F', // Bordeaux
-  'Usage logistique / technique': '#AB47BC', // Violet/Mauve
-  'Autre': '#BDBDBD', // Gris
   
   // Objets Véhicule (Nouveaux)
-  'Déplacement dans Maurepas': '#0f6aba', // Bleu
-  'Déplacement hors de Maurepas': '#f9ce34' // Jaune
+  'Astreinte': '#E57373', // Rouge clair
+  'Déplacement Professionnel': '#BA68C8', // Violet
+  'Formation': '#81C784', // Vert (Cohérent avec salles)
+  'Hors département': '#F06292', // Rose soutenu
+  'Mission Technique': '#4DB6AC', // Sarcelle (Teal)
+  'Réunion Extérieure': '#7986CB', // Indigo clair
+  'Transport de Matériel': '#A1887F', // Marron clair
+  
+  // Communs
+  'Usage logistique / technique': '#AB47BC', // Violet/Mauve
+  'Autre': '#BDBDBD' // Gris
 };
 
 export const HORAIRES = {
@@ -111,7 +124,7 @@ export const JOURS_FERIES = [
 
 export const ADMINISTRATEURS = [
   'j.matrat@maurepas.fr', 'admin@maurepas.fr', 'sevindi.munure@gmail.com',
-  'cabinet@maurepas.fr', 'mchaumeron@gmail.com', 'test.maurepas@maurepas.fr',
+  'cabinet@maurepas.fr', 'mchaumeron@gmail.com'
 ];
 
 export const SALLES_ADMIN_ONLY = ['Salle Conseil', 'Salle Mariages'];

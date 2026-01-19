@@ -264,6 +264,7 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
           <div className="calendar-instructions">
             <h3>📋 Instructions</h3>
             <ul>
+              <li>Cliquez sur une date pour accéder aux réservations</li>
               <li>Les couleurs indiquent la disponibilité des salles</li>
               <li>Les dimanches et jours fériés sont fermés</li>
               <li>8h - 22h du lundi au samedi - Créneau = 30 min</li>

@@ -49,8 +49,7 @@ function VehicleGrid({ onBack }) {
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
   const [successModal, setSuccessModal] = useState({ show: false, reservations: [], message: '' });
   const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [] });
-  // ✅ AJOUT permisAttestation dans le state initial
-  const [formData, setFormData] = useState({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
+  const [formData, setFormData] = useState({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
   
   const vehicleData = getSalleData(selectedRoom);
   const vehicleImage = vehicleData ? vehicleData.photo : null;
@@ -195,8 +194,7 @@ function VehicleGrid({ onBack }) {
     setIsDragging(false); setDragStart(null); setMouseDownPos(null); 
   };
 
-  // ✅ MISE A JOUR : Reset de permisAttestation
-  const handleCancelSelection = () => { setSelections([]); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
+  const handleCancelSelection = () => { setSelections([]); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
   
   const removeSelection = (index) => {
     const toRemove = mergedForDisplay[index];
@@ -280,11 +278,6 @@ function VehicleGrid({ onBack }) {
     e.preventDefault(); 
     if (selections.length === 0) {
       return alert('Veuillez sélectionner au moins un créneau dans la grille.');
-    }
-
-    // ✅ VERIFICATION ATTESTATION PERMIS
-    if (!formData.permisAttestation) {
-      return alert('Vous devez attester être titulaire du permis B pour valider la réservation.');
     }
 
     setIsSubmitting(true); 
@@ -382,26 +375,15 @@ function VehicleGrid({ onBack }) {
               <form onSubmit={handleFormSubmit} className="room-form">
                 <div className="form-row"><input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required style={{flex:1}} /><input className="form-input" placeholder="Prénom" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} style={{flex:1}} /></div>
                 <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
-					{/* <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} /> */}
-                <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service *</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} />
+                <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service...*</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
                 
+                {/* ✅ UTILISATION DE LA LISTE SPÉCIFIQUE VÉHICULE DEPUIS CONFIG */}
                 <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required>
-                  <option value="">Motif de la réservation *</option>
+                  <option value="">Choisissez l'objet...*</option>
                   {OBJETS_VEHICULE.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
                 
-                {/* ✅ NOUVELLE CASE A COCHER ATTESTATION PERMIS */}
-                <div className="attestation-box">
-                  <input 
-                    type="checkbox" 
-                    id="permisAttestation"
-                    checked={formData.permisAttestation} 
-                    onChange={e => setFormData({...formData, permisAttestation: e.target.checked})} 
-                    required 
-                  />
-                  <label htmlFor="permisAttestation">J'atteste être titulaire du permis B et avoir les points nécessaires</label>
-                </div>
-
                 <textarea className="form-textarea" placeholder="Description (facultative)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                 <div className="recurrence-section-styled"><div className="recurrence-box"><input type="checkbox" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} /><label>Réservation récurrente</label></div>
                 {formData.recurrence && (<div className="recurrence-options slide-down"><div className="form-group"><select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}><option value="weekly">Chaque semaine</option><option value="biweekly">Une semaine sur 2</option><option value="monthly">Chaque mois</option></select></div><div className="form-group" style={{marginBottom:0}}>
@@ -425,6 +407,7 @@ function VehicleGrid({ onBack }) {
                 </tr>
               </thead>
               <tbody>{timeSlots.map(slot => {
+                // ✅ VARIABLE isFullHour DEFINIE AU BON NIVEAU (Scope de la boucle timeSlots)
                 const isFullHour = slot % 1 === 0;
                 
                 return (
@@ -459,6 +442,7 @@ function VehicleGrid({ onBack }) {
         {/* ✅ POPUP FICHE RÉSERVATION */}
         {hoveredReservation && (
           <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{ position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: 'translate(-50%, -50%)', zIndex: 10001 }} onClick={() => setHoveredReservation(null)}>
+            {/* ✅ CORRECTION : Affichage Prénom Nom dans le bandeau bleu */}
             <div className="popup-card-header">
               <span className="popup-icon">👤</span> 
               {hoveredReservation.prenom} {hoveredReservation.nom}
@@ -466,7 +450,7 @@ function VehicleGrid({ onBack }) {
             <div className="popup-card-body">
               <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
               <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
-              <div className="popup-info-line"><span className="popup-info-icon">📝</span> {hoveredReservation.objet}</div>
+              <div className="popup-info-line"><span className="popup-info-icon">🌍</span> {hoveredReservation.objet}</div>
               <div className="popup-info-line"><span className="popup-info-icon">📅</span> {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} - {hoveredReservation.heureDebut} à {hoveredReservation.heureFin}</div>
             </div>
           </div>

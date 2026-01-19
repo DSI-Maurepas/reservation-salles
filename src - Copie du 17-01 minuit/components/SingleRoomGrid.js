@@ -1,17 +1,16 @@
-// src/components/VehicleGrid.js
+// src/components/SingleRoomGrid.js
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
 import emailService from '../services/emailService';
-// Import de OBJETS_VEHICULE depuis la config centralisée
-import { HORAIRES, SERVICES, OBJETS_RESERVATION, OBJETS_VEHICULE, JOURS_FERIES, COULEURS_OBJETS, APP_CONFIG } from '../config/googleSheets';
-import { getSalleData } from '../data/sallesData';
-import './VehicleGrid.css';
+import { HORAIRES, SERVICES, OBJETS_RESERVATION, JOURS_FERIES, COULEURS_OBJETS, SALLES_ADMIN_ONLY, APP_CONFIG } from '../config/googleSheets';
+import { getSalleData, sallesData } from '../data/sallesData';
+import SalleCard from './SalleCard';
+import './SingleRoomGrid.css';
 
-function VehicleGrid({ onBack }) {
-  const selectedRoom = "CLIO"; 
-
+function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess }) {
+  
   const getMondayOfWeek = (d) => { 
     const date = new Date(d); 
     const day = date.getDay(); 
@@ -23,6 +22,7 @@ function VehicleGrid({ onBack }) {
 
   const getInitialStartDate = () => {
     const today = new Date();
+    if (editingReservation) return getMondayOfWeek(new Date(editingReservation.dateDebut));
     if (today.getDay() === 0) { 
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
@@ -38,22 +38,32 @@ function VehicleGrid({ onBack }) {
   const [dragStart, setDragStart] = useState(null);
   const [mouseDownPos, setMouseDownPos] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   
+  const [hasClearedEditingSelection, setHasClearedEditingSelection] = useState(false);
+
   const [hoveredReservation, setHoveredReservation] = useState(null);
   const [isFading, setIsFading] = useState(false);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
 
   const sidebarRef = useRef(null);
   const [blockedDayModal, setBlockedDayModal] = useState(false);
+  const [adminPasswordModal, setAdminPasswordModal] = useState({ show: false, password: '' });
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
   const [successModal, setSuccessModal] = useState({ show: false, reservations: [], message: '' });
   const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [] });
-  // ✅ AJOUT permisAttestation dans le state initial
-  const [formData, setFormData] = useState({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
+  const [formData, setFormData] = useState({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
   
-  const vehicleData = getSalleData(selectedRoom);
-  const vehicleImage = vehicleData ? vehicleData.photo : null;
+  const salleData = getSalleData(selectedRoom);
+  const salleInfo = sallesData.find(s => s.nom === salleData?.nom);
+  const dispositions = salleInfo?.dispositions || null;
+
+  const isAdminOnlyRoom = (room) => {
+    if (!room) return false;
+    return SALLES_ADMIN_ONLY.some(adminRoom => room.includes(adminRoom) || adminRoom.includes(room));
+  };
 
   useEffect(() => {
     let timerOut, timerRemove;
@@ -70,7 +80,15 @@ function VehicleGrid({ onBack }) {
     return () => { clearTimeout(timerOut); clearTimeout(timerRemove); };
   }, [hoveredReservation]);
 
-  useEffect(() => { loadWeekReservations(); }, [currentWeekStart]);
+  useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom, editingReservation]);
+
+  // ✅ Vérification de la session Admin au chargement
+  useEffect(() => {
+    const sessionAuth = sessionStorage.getItem('isAdminAuthenticated');
+    if (sessionAuth === 'true') {
+      setIsAdminUnlocked(true);
+    }
+  }, []);
 
   const loadWeekReservations = async () => { 
     setLoading(true); 
@@ -80,8 +98,10 @@ function VehicleGrid({ onBack }) {
       weekEnd.setDate(currentWeekStart.getDate() + 6); 
       
       const filtered = allReservations.filter(res => { 
-        if (res.salle !== selectedRoom) return false; 
+        const resSalleName = res.salle.split(' - ')[0]; 
+        if (resSalleName !== selectedRoom && res.salle !== selectedRoom) return false; 
         if (res.statut === 'cancelled') return false; 
+        if (editingReservation && res.id === editingReservation.id) return false;
         const resDate = new Date(res.dateDebut); 
         return resDate >= currentWeekStart && resDate <= weekEnd; 
       }); 
@@ -90,6 +110,18 @@ function VehicleGrid({ onBack }) {
     setLoading(false); 
   };
   
+  const handleAdminPasswordSubmit = () => { 
+    if (adminPasswordModal.password === APP_CONFIG.ADMIN_PASSWORD) { 
+      setIsAdminUnlocked(true);
+      // ✅ Enregistrement dans la session
+      sessionStorage.setItem('isAdminAuthenticated', 'true');
+      setAdminPasswordModal({ show: false, password: '' }); 
+    } else { 
+      alert('❌ Mot de passe incorrect'); 
+      setAdminPasswordModal({ ...adminPasswordModal, password: '' }); 
+    } 
+  };
+
   const getDates = () => { const dates = []; for (let i = 0; i < 7; i++) { const date = new Date(currentWeekStart); date.setDate(currentWeekStart.getDate() + i); dates.push(date); } return dates; };
   const dates = getDates();
   const weekDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
@@ -132,7 +164,7 @@ function VehicleGrid({ onBack }) {
     
     const dateStr = googleSheetsService.formatDate(date);
     const reservation = reservations.find(r => 
-      r.salle === selectedRoom && 
+      r.salle.includes(selectedRoom.split(' - ')[0]) && 
       r.dateDebut === dateStr &&
       hour >= googleSheetsService.timeToFloat(r.heureDebut) && 
       hour < googleSheetsService.timeToFloat(r.heureFin)
@@ -144,8 +176,14 @@ function VehicleGrid({ onBack }) {
       return;
     }
     
+    if (isAdminOnlyRoom(selectedRoom) && !isAdminUnlocked) { setAdminPasswordModal({ show: true, password: '' }); return; }
     if (isDateInPast(date)) return;
     
+    if (editingReservation && !hasClearedEditingSelection) {
+      setSelections([]);
+      setHasClearedEditingSelection(true); 
+    }
+
     setDragStart({ dayIndex, hour });
     setMouseDownPos({ dayIndex, hour, date });
   };
@@ -188,21 +226,25 @@ function VehicleGrid({ onBack }) {
       if (alreadySelected) { 
         const newSelections = selections.filter(sel => !(sel.dayIndex === dayIndex && sel.hour === hour)); 
         setSelections(newSelections); 
+        if (newSelections.length === 0) setShowForm(false); 
       } else { 
         setSelections([...selections, { dayIndex, hour, date }]); 
+        setShowForm(true);
       } 
+    } else if (isDragging && selections.length > 0) {
+      setShowForm(true);
     }
     setIsDragging(false); setDragStart(null); setMouseDownPos(null); 
   };
 
-  // ✅ MISE A JOUR : Reset de permisAttestation
-  const handleCancelSelection = () => { setSelections([]); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
+  const handleCancelSelection = () => { setSelections([]); setShowForm(false); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
   
   const removeSelection = (index) => {
     const toRemove = mergedForDisplay[index];
     const selectionsToRemove = selections.filter(sel => sel.date && toRemove.date && sel.date.getTime() === toRemove.date.getTime() && sel.hour >= toRemove.hour && sel.hour < toRemove.endHour);
     const newSelections = selections.filter(sel => !selectionsToRemove.some(remove => sel.date && remove.date && sel.date.getTime() === remove.date.getTime() && Math.abs(sel.hour - remove.hour) < 0.01));
     setSelections(newSelections);
+    if (newSelections.length === 0) setShowForm(false);
   };
 
   const preMergeSelections = (selections) => {
@@ -260,8 +302,13 @@ function VehicleGrid({ onBack }) {
   };
 
   const finalizeReservation = async (reservationsToSave) => { 
+    // Fermeture immédiate de la modale d'avertissement
     setWarningModal({ show: false, conflicts: [], validReservations: [] });
+
     setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); 
+    
+    await new Promise(r => setTimeout(r, 10));
+
     try { 
         const createdReservations = []; 
         for (const res of reservationsToSave) { 
@@ -271,22 +318,18 @@ function VehicleGrid({ onBack }) {
             try { await emailService.sendConfirmation(res); } catch(e) { console.error("Mail error", e); }
         } 
         setSuccessModal({ show: true, reservations: createdReservations, message: '✅ Réservation confirmée !' }); 
-        setSelections([]); loadWeekReservations(); 
+        setSelections([]); setShowForm(false); loadWeekReservations(); 
     } catch (error) { alert('Erreur: ' + error.message); } 
     finally { setIsSubmitting(false); } 
   };
 
   const handleFormSubmit = async (e) => { 
     e.preventDefault(); 
-    if (selections.length === 0) {
-      return alert('Veuillez sélectionner au moins un créneau dans la grille.');
+    if (editingReservation) {
+      try { await googleSheetsService.deleteReservation(editingReservation.id); } 
+      catch (err) { alert('Erreur lors de la modification'); return; }
     }
-
-    // ✅ VERIFICATION ATTESTATION PERMIS
-    if (!formData.permisAttestation) {
-      return alert('Vous devez attester être titulaire du permis B pour valider la réservation.');
-    }
-
+    if (dispositions && !formData.agencement) return alert('⚠️ Veuillez choisir une disposition.'); 
     setIsSubmitting(true); 
     try { 
         const mergedSelections = preMergeSelections(selections); 
@@ -303,13 +346,40 @@ function VehicleGrid({ onBack }) {
         }); 
         const allExisting = await googleSheetsService.getAllReservations(true); 
         const { conflicts, valid } = checkConflicts(allCandidates, allExisting); 
+        
         setIsSubmitting(false); 
+        
         if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } 
         else { await finalizeReservation(valid); } 
     } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } 
   };
 
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
+
+  useEffect(() => {
+    if (editingReservation) {
+      setFormData({
+        nom: editingReservation.nom || '', prenom: editingReservation.prenom || '',
+        email: editingReservation.email || '', telephone: editingReservation.telephone || '',
+        service: editingReservation.service || '', objet: editingReservation.objet || '',
+        description: editingReservation.description || '', recurrence: false,
+        recurrenceType: 'weekly', recurrenceJusquau: '',
+        agencement: editingReservation.agencement || '', nbPersonnes: editingReservation.nbPersonnes || ''
+      });
+      const resDate = new Date(editingReservation.dateDebut);
+      const dayOfWeek = resDate.getDay();
+      const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const startHour = googleSheetsService.timeToFloat(editingReservation.heureDebut);
+      const endHour = googleSheetsService.timeToFloat(editingReservation.heureFin);
+      const newSelections = [];
+      for (let h = startHour; h < endHour; h += 0.5) {
+        newSelections.push({ dayIndex: dayIndex, hour: h, date: resDate });
+      }
+      setSelections(newSelections);
+      setShowForm(true);
+      setHasClearedEditingSelection(false); 
+    }
+  }, [editingReservation]);
 
   return (
     <>
@@ -324,13 +394,16 @@ function VehicleGrid({ onBack }) {
               <div className="reservations-list">
                 {successModal.reservations.map((res, i) => ( <div key={i} className="reservation-item-success"><span className="calendar-icon">📅</span> {res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin}</div> ))}
               </div>
+              
               <div className="ical-info-text" style={{fontSize: '0.9rem', color: '#64748b', marginBottom: '0.5rem', textAlign: 'center', fontStyle: 'italic'}}>
                 {successModal.reservations.length > 1 
                   ? "Intégration dans un agenda parallèle à transférer ensuite dans le votre" 
                   : "Intégration dans votre agenda"}
               </div>
+
               <div className="ical-download-section"><button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Calendrier iCal</button></div>
             </div>
+            
             <div className="success-modal-footer">
                 <button className="close-modal-button" onClick={() => setSuccessModal({ ...successModal, show: false })}>Fermer</button>
             </div>
@@ -338,18 +411,11 @@ function VehicleGrid({ onBack }) {
         </div>, document.body
       )}
 
-      <div className="vehicle-grid-container">
+      <div className="single-room-container">
         <div className="week-navigation">
           <div className="nav-group-left">
             <button onClick={onBack} className="back-button-inline">← Retour</button>
-            <h2 className="room-title-inline" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <img 
-                src={`${process.env.PUBLIC_URL}/images/32x32.png`} 
-                alt="Auto" 
-                style={{ height: '28px', width: 'auto' }} 
-              />
-              {selectedRoom}
-            </h2>
+            <h2 className="room-title-inline">🏛️ {salleData?.nom || selectedRoom}</h2>
           </div>
           <div className="nav-group-center">
             <button className="week-nav-btn" onClick={handlePreviousMonth}>◀◀</button>
@@ -363,53 +429,33 @@ function VehicleGrid({ onBack }) {
 
         <div className="single-room-layout">
           <div className="room-sidebar" ref={sidebarRef}>
-            <div className="room-form-container">
-              <div className="vehicle-form-header-image">
-                <img src={vehicleImage || "https://images.caradisiac.com/logos-ref/modele/modele--renault-clio-5/S0-modele--renault-clio-5.jpg"} alt="Clio" />
-              </div>
-
-              <h3 className="form-title">
-                {selections.length === 0 ? "Sélectionnez un créneau" : 
-                 selections.length === 1 ? "Confirmer la réservation" : 
-                 `Réservation de ${selections.length} créneaux`}
-              </h3>
-              
-              <div className="selections-summary">
-                {selections.length === 0 && <p style={{color: '#64748b', fontSize: '0.9rem', fontStyle: 'italic'}}>Aucun créneau sélectionné.</p>}
-                {mergedForDisplay.map((sel, idx) => (<div key={idx} className="selection-item">{googleSheetsService.formatDate(sel.date)} : {googleSheetsService.formatTime(sel.hour)} - {googleSheetsService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => removeSelection(idx)}>✕</button></div>))}
-              </div>
-              
-              <form onSubmit={handleFormSubmit} className="room-form">
-                <div className="form-row"><input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required style={{flex:1}} /><input className="form-input" placeholder="Prénom" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} style={{flex:1}} /></div>
-                <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
-					{/* <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} /> */}
-                <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service *</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
-                
-                <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required>
-                  <option value="">Motif de la réservation *</option>
-                  {OBJETS_VEHICULE.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-                
-                {/* ✅ NOUVELLE CASE A COCHER ATTESTATION PERMIS */}
-                <div className="attestation-box">
-                  <input 
-                    type="checkbox" 
-                    id="permisAttestation"
-                    checked={formData.permisAttestation} 
-                    onChange={e => setFormData({...formData, permisAttestation: e.target.checked})} 
-                    required 
-                  />
-                  <label htmlFor="permisAttestation">J'atteste être titulaire du permis B et avoir les points nécessaires</label>
+            {!showForm && (<><SalleCard salle={selectedRoom} /><div className="no-selection-message desktop-legend"><p>Sélectionnez un ou plusieurs créneaux pour commencer votre réservation 👆</p></div></>)}
+            {showForm && selections.length > 0 && (
+              <div className="room-form-container">
+                <h3 className="form-title">{selections.length > 1 ? `Réservation de ${selections.length} créneaux` : 'Confirmer la réservation'}</h3>
+                <div className="selections-summary">
+                  {mergedForDisplay.map((sel, idx) => (<div key={idx} className="selection-item">{googleSheetsService.formatDate(sel.date)} : {googleSheetsService.formatTime(sel.hour)} - {googleSheetsService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => removeSelection(idx)}>✕</button></div>))}
                 </div>
-
-                <textarea className="form-textarea" placeholder="Description (facultative)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
-                <div className="recurrence-section-styled"><div className="recurrence-box"><input type="checkbox" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} /><label>Réservation récurrente</label></div>
-                {formData.recurrence && (<div className="recurrence-options slide-down"><div className="form-group"><select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}><option value="weekly">Chaque semaine</option><option value="biweekly">Une semaine sur 2</option><option value="monthly">Chaque mois</option></select></div><div className="form-group" style={{marginBottom:0}}>
-                  <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(mergedForDisplay[0]?.date || new Date())} required={formData.recurrence} />
-                </div></div>)}</div>
-                <div className="form-actions"><button type="button" className="btn-cancel" onClick={handleCancelSelection}>Annuler</button><button type="submit" className="btn-submit" disabled={isSubmitting}>Valider</button></div>
-              </form>
-            </div>
+                <form onSubmit={handleFormSubmit} className="room-form">
+                  <div className="form-row"><input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required style={{flex:1}} /><input className="form-input" placeholder="Prénom" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} style={{flex:1}} /></div>
+                  <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
+                  <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} />
+                  <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service...</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
+                  <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required><option value="">Choisissez l'objet...</option>{OBJETS_RESERVATION.map(o => <option key={o} value={o}>{o}</option>)}</select>
+                  {dispositions && (
+                    <><select className="form-select disposition-select" value={formData.agencement} onChange={e => setFormData({...formData, agencement: e.target.value})} required><option value="">Disposition souhaitée *</option>{dispositions.map(d => <option key={d} value={d}>{d}</option>)}</select>
+                    {(selectedRoom.includes('Conseil') || selectedRoom.includes('Mariages')) && <input type="number" className="form-input" placeholder={`Nombre de personnes prévues (max ${selectedRoom.includes('Mariages') ? 30 : 100}) *`} value={formData.nbPersonnes} onChange={e => setFormData({...formData, nbPersonnes: e.target.value})} required min="1" max={selectedRoom.includes('Mariages') ? 30 : 100} />}</>
+                  )}
+                  <textarea className="form-textarea" placeholder="Description (facultative)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                  <div className="recurrence-section-styled"><div className="recurrence-box"><input type="checkbox" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} /><label>Réservation récurrente</label></div>
+                  {formData.recurrence && (<div className="recurrence-options slide-down"><div className="form-group"><select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}><option value="weekly">Chaque semaine</option><option value="biweekly">Une semaine sur 2</option><option value="monthly">Chaque mois</option></select></div><div className="form-group" style={{marginBottom:0}}>
+                    {/* ✅ CORRECTION : Date min = date de la première sélection */}
+                    <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(mergedForDisplay[0]?.date || new Date())} required={formData.recurrence} />
+                  </div></div>)}</div>
+                  <div className="form-actions"><button type="button" className="btn-cancel" onClick={handleCancelSelection}>Annuler</button><button type="submit" className="btn-submit" disabled={isSubmitting}>Valider</button></div>
+                </form>
+              </div>
+            )}
           </div>
           <div className="week-grid-container">
             <table className="week-grid" onMouseLeave={() => setIsDragging(false)} onMouseUp={handleMouseUp}>
@@ -424,56 +470,71 @@ function VehicleGrid({ onBack }) {
                   ))}
                 </tr>
               </thead>
-              <tbody>{timeSlots.map(slot => {
-                const isFullHour = slot % 1 === 0;
-                
-                return (
-                  <tr key={slot}>
-                    <td className={isFullHour ? 'hour-cell-full' : 'hour-cell-half'}>{isFullHour ? `${slot}h` : ''}</td>
-                    {dates.map((date, dayIndex) => { 
-                      const reserved = isSlotReserved(dayIndex, slot); 
-                      const selected = isSlotSelected(dayIndex, slot); 
-                      const blocked = isDimanche(date) || isJourFerie(date); 
-                      const past = isDateInPast(date); 
-                      const reservation = getReservation(dayIndex, slot); 
-                      
-                      let bgStyle = {}; 
-                      if (reserved && reservation) bgStyle.backgroundColor = COULEURS_OBJETS[reservation.objet] || '#ccc'; 
-                      
-                      let cellClass = `time-slot ${isFullHour ? ' full-hour-border' : ' half-hour-border'}`;
-                      if (reserved) cellClass += ' occupied';
-                      if (selected) cellClass += ' selected';
-                      if (blocked && !reserved) cellClass += ' blocked';
-                      if (past && !reserved) cellClass += ' past-date';
-                      if (slot >= 12 && slot < 14) cellClass += ' lunch-break';
+              <tbody>{timeSlots.map(slot => (
+                <tr key={slot}>
+                  <td className={slot % 1 === 0 ? 'hour-cell-full' : 'hour-cell-half'}>{slot % 1 === 0 ? `${slot}h` : ''}</td>
+                  {dates.map((date, dayIndex) => { 
+                    const reserved = isSlotReserved(dayIndex, slot); 
+                    const selected = isSlotSelected(dayIndex, slot); 
+                    const blocked = isDimanche(date) || isJourFerie(date); 
+                    const past = isDateInPast(date); 
+                    const reservation = getReservation(dayIndex, slot); 
+                    const isFullHour = slot % 1 === 0;
+                    const isAdmin = isAdminOnlyRoom(selectedRoom);
+                    
+                    let bgStyle = {}; 
+                    if (reserved && reservation) bgStyle.backgroundColor = COULEURS_OBJETS[reservation.objet] || '#ccc'; 
+                    
+                    let cellClass = `time-slot ${isFullHour ? ' full-hour-border' : ' half-hour-border'}`;
+                    if (reserved) cellClass += ' occupied';
+                    if (selected) cellClass += ' selected';
+                    if (blocked && !reserved) cellClass += ' blocked';
+                    if (past && !reserved) cellClass += ' past-date';
+                    if (isAdmin && !isAdminUnlocked && !reserved) cellClass += ' admin-only-locked';
+                    if (slot >= 12 && slot < 14) cellClass += ' lunch-break';
 
-                      return (<td key={`${dayIndex}-${slot}`} className={cellClass} style={bgStyle} onMouseDown={(e) => handleMouseDown(dayIndex, slot, date, e)} onMouseEnter={() => handleMouseEnter(dayIndex, slot, date)}></td>); 
-                    })}
-                  </tr>
-                );
-              })}</tbody>
+                    return (<td key={`${dayIndex}-${slot}`} className={cellClass} style={bgStyle} onMouseDown={(e) => handleMouseDown(dayIndex, slot, date, e)} onMouseEnter={() => handleMouseEnter(dayIndex, slot, date)}></td>); 
+                  })}
+                </tr>
+              ))}</tbody>
             </table>
           </div>
         </div>
         
-        {/* ✅ POPUP FICHE RÉSERVATION */}
+        {/* ✅ CORRECTION : FICHE CENTRÉE SUR LE POINTEUR (translate -50% -50%) */}
         {hoveredReservation && (
-          <div className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} style={{ position: 'fixed', left: popupPosition.x, top: popupPosition.y, transform: 'translate(-50%, -50%)', zIndex: 10001 }} onClick={() => setHoveredReservation(null)}>
-            <div className="popup-card-header">
-              <span className="popup-icon">👤</span> 
-              {hoveredReservation.prenom} {hoveredReservation.nom}
-            </div>
+          <div 
+            className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} 
+            style={{ 
+              position: 'fixed', 
+              left: popupPosition.x, 
+              top: popupPosition.y, 
+              transform: 'translate(-50%, -50%)', 
+              zIndex: 10001 
+            }} 
+            onClick={() => setHoveredReservation(null)}
+          >
+            <div className="popup-card-header"><span className="popup-icon">👤</span> {hoveredReservation.prenom} {hoveredReservation.nom}</div>
             <div className="popup-card-body">
               <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
               <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
               <div className="popup-info-line"><span className="popup-info-icon">📝</span> {hoveredReservation.objet}</div>
               <div className="popup-info-line"><span className="popup-info-icon">📅</span> {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} - {hoveredReservation.heureDebut} à {hoveredReservation.heureFin}</div>
+              {(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (
+                <>
+                  <div className="popup-info-line"><span className="popup-info-icon">🪑</span> {hoveredReservation.agencement || 'N/A'}</div>
+                  <div className="popup-info-line"><span className="popup-info-icon">👥</span> {hoveredReservation.nbPersonnes || 'N/A'} personnes</div>
+                </>
+              )}
             </div>
           </div>
         )}
         
         {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><div className="warning-modal-header"><span className="blocked-modal-emoji">🚫</span><h2 className="blocked-modal-title">Fermé</h2></div><p className="blocked-modal-message">Dimanche/Férié fermé.</p><button onClick={() => setBlockedDayModal(false)} className="blocked-close-button">Fermer</button></div></div>}
         
+        {adminPasswordModal.show && <div className="modal-overlay"><div className="modal-content"><h3>🔑 Accès Administrateur</h3><input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" autoFocus /><div className="form-actions"><button className="btn-cancel" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button><button className="btn-submit" onClick={handleAdminPasswordSubmit}>Débloquer</button></div></div></div>}
+        
+        {/* ✅ CORRECTION : MODALE PROGRESSION AVEC COMPTEUR */}
         {isSubmitting && <div className="modal-overlay"><div className="modal-content"><h3>Enregistrement... ({submissionProgress.current} / {submissionProgress.total})</h3><div style={{width:'100%',background:'#eee',height:'10px',borderRadius:'5px'}}><div style={{width:`${(submissionProgress.current/submissionProgress.total)*100}%`,background:'#4caf50',height:'100%'}}></div></div></div></div>}
         
         {warningModal.show && <div className="modal-overlay"><div className="warning-modal"><div className="warning-modal-header"><h2>⚠️ Conflit</h2></div><div className="warning-modal-body"><p>{warningModal.conflicts.length} conflits détectés.</p></div><div className="warning-modal-footer"><button className="cancel-button" onClick={() => setWarningModal({show:false, conflicts:[], validReservations:[]})}>Annuler</button></div></div></div>}
@@ -482,4 +543,4 @@ function VehicleGrid({ onBack }) {
   );
 }
 
-export default VehicleGrid;
+export default SingleRoomGrid;
