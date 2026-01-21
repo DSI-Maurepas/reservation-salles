@@ -1,0 +1,28 @@
+à débuguer :
+
+
+
+
+
+Dans grille par salle, bloquer la possibilité de réserver une date passée pour toutes les salles
+
+
+
+Dans la correction 4 => "CORRECTION 4 : Légende capacités page d'accueil" affiche moi des légendes plus modernes !
+
+
+
+Dans la correction 8 => "CORRECTION 8 : Bloc vert créneaux SingleRoom (avec ❌)" dans par salle, deux ou plusieurs réservations verticales à la suite (dans l'ordre 1/2/3/4 ou non 2/4/3/1) doivent être considérées comme un seul créneau, à corriger
+
+
+
+dans "Administration", applique le même style dans la grille des réservations que dans celle de "Mes réservations". je ne veux pas que la colonne "objet" soit différente du reste de la ligne
+
+
+
+Dans la correction 11 => "CORRECTION 11 : Export XLSX MyReservations" Je veux un export .xlsx. Ajoute le moi ! Que faut-il que j'installe sur le serveur d'hébergement pour que cela fonctionne ?
+
+
+
+Dans la correction 12 => "CORRECTION 12 : Headers tableau Admin avec icônes tri", les icônes tri déstructure la colonne "Horaire" et ne sont pas les mêmes que ceux utilisés dans la grille "Mes Réservations". Corrige moi cela en appliquant le même style !
+

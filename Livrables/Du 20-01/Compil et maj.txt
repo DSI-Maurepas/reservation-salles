@@ -1,0 +1,96 @@
+# 1. Navigation vers le dossier du projet
+# (Note : sur Git Bash, C: devient /c/)
+cd /c/dev/reservation-salles
+
+# 2. Compilation de l'application
+# Cela va créer un dossier 'build' optimisé pour la production
+echo "🔨 Démarrage de la compilation..."
+npm run build
+
+# 3. Préparation du dossier 'docs'
+# On supprime l'ancien dossier docs s'il existe pour éviter les conflits
+if [ -d "docs" ]; then
+  rm -rf docs
+fi
+
+# On renomme le dossier 'build' (ou 'dist') fraîchement créé en 'docs'
+if [ -d "build" ]; then
+  mv build docs
+  echo "✅ Dossier 'build' renommé en 'docs'"
+elif [ -d "dist" ]; then
+  mv dist docs
+  echo "✅ Dossier 'dist' renommé en 'docs'"
+else
+  echo "❌ Erreur : La compilation semble avoir échoué (pas de dossier build/dist)."
+  exit 1
+fi
+
+# 4. Envoi sur GitHub (Git)
+echo "📦 Envoi vers GitHub..."
+git add .
+git commit -m "Mise à jour : Compilation et déploiement vers /docs"
+git push origin main
+
+echo "🚀 Terminé ! Votre application a été compilée et envoyée."
+
+///////////////////////////////////////////////////////////
+
+
+
+# 1. Se placer dans le dossier du projet
+cd "C:/dev/reservation-salles"
+
+# 2. Récupérer les dernières informations de GitHub sans fusionner
+git fetch --all
+
+# 3. FORCER la version locale à devenir identique à la version GitHub
+# (Ceci écrase toutes les modifications locales non enregistrées)
+git reset --hard origin/main
+
+# 4. Mettre à jour les dépendances (au cas où j'aurais ajouté des librairies)
+npm install
+
+# 5. Relancer l'application pour vérifier
+npm start
+
+/////////////////////////////////////////////////////////////
+
+
+
+
+
+Mise à jour forcée du distant !
+
+# 1. Se déplacer dans le dossier du projet
+cd /c/dev/reservation-salles
+
+# 2. Ajouter tous les fichiers (modifiés et la nouvelle image) à l'index
+git add .
+
+# 3. Créer le commit (enregistrement des modifications)
+git commit -m "Mise à jour forcée et ajout image dans docs"
+
+# 4. Envoyer vers GitHub en forçant l'écrasement de la branche distante
+git push origin main --force
+
+/////////////////////////////////////////////////////////////
+
+
+
+Mise à jour forcée du local !
+
+# 1. Se placer dans le dossier racine de votre projet
+cd "/c/dev/reservation-salles"
+
+# 2. Télécharger les dernières versions de toutes les branches du dépôt distant
+git fetch --all
+
+# 3. Réinitialiser la branche locale pour qu'elle soit exactement identique à origin/main
+# (Cela supprimera les fichiers locaux qui ne sont pas sur le serveur et annulera vos modifs locales)
+git reset --hard origin/main
+
+# 4. Réinstaller les dépendances (au cas où package.json a changé)
+npm install
+
+# 5. Relancer l'application
+npm start

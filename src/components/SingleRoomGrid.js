@@ -414,8 +414,12 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
       <div className="single-room-container">
         <div className="week-navigation">
           <div className="nav-group-left">
-            <button onClick={onBack} className="back-button-inline">← Retour</button>
-            <h2 className="room-title-inline">🏛️ {salleData?.nom || selectedRoom}</h2>
+            <button onClick={onBack} className="back-button-inline">← Autres Salles</button>
+            <h2 className="room-title-inline">
+              🏛️ {salleData?.nom || selectedRoom}
+              {/* ✅ MODIFICATION ICI : Affichage "Modification" en rouge */}
+              {editingReservation && <span style={{fontSize:'0.8em', color:'#ef5350', marginLeft:'8px'}}>(Modification)</span>}
+            </h2>
           </div>
           <div className="nav-group-center">
             <button className="week-nav-btn" onClick={handlePreviousMonth}>◀◀</button>
@@ -501,7 +505,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
           </div>
         </div>
         
-        {/* ✅ CORRECTION : FICHE CENTRÉE SUR LE POINTEUR (translate -50% -50%) */}
+        {/* ✅ POPUP FICHE RÉSERVATION */}
         {hoveredReservation && (
           <div 
             className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} 
@@ -534,7 +538,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
         
         {adminPasswordModal.show && <div className="modal-overlay"><div className="modal-content"><h3>🔑 Accès Administrateur</h3><input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" autoFocus /><div className="form-actions"><button className="btn-cancel" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button><button className="btn-submit" onClick={handleAdminPasswordSubmit}>Débloquer</button></div></div></div>}
         
-        {/* ✅ CORRECTION : MODALE PROGRESSION AVEC COMPTEUR */}
+        {/* ✅ MODALE PROGRESSION */}
         {isSubmitting && <div className="modal-overlay"><div className="modal-content"><h3>Enregistrement... ({submissionProgress.current} / {submissionProgress.total})</h3><div style={{width:'100%',background:'#eee',height:'10px',borderRadius:'5px'}}><div style={{width:`${(submissionProgress.current/submissionProgress.total)*100}%`,background:'#4caf50',height:'100%'}}></div></div></div></div>}
         
         {warningModal.show && <div className="modal-overlay"><div className="warning-modal"><div className="warning-modal-header"><h2>⚠️ Conflit</h2></div><div className="warning-modal-body"><p>{warningModal.conflicts.length} conflits détectés.</p></div><div className="warning-modal-footer"><button className="cancel-button" onClick={() => setWarningModal({show:false, conflicts:[], validReservations:[]})}>Annuler</button></div></div></div>}

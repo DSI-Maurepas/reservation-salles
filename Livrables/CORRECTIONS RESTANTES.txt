@@ -1,0 +1,62 @@
+Performance et Données (Statistics.js & AdminPanel.js)
+L'application télécharge toutes les réservations (getAllReservations) à chaque montage de composant majeur.
+Pour une mairie de 20k habitants, si le fichier Sheets atteint 2000-3000 lignes, l'application ralentira.
+Optimisation prévue : Je proposerai un système de cache simple ou une vérification pour ne pas rappeler l'API Google si les données ont été chargées il y a moins de x secondes.
+
+Faille de Sécurité & Maintenance : Le mot de passe administrateur (R3sa@M0rep@s78) est codé en dur dans 3 fichiers différents. Si vous voulez le changer, vous devez recompiler l'application.
+
+Surcharge API : Chaque composant recharge toutes les réservations à chaque montage. Avec plusieurs utilisateurs simultanés, vous allez atteindre les quotas de l'API Google Sheets (Read Quota).
+
+Logique "Dimanche" fragile : Le patch dans SingleRoomGrid pour sauter le dimanche provoque un "clignotement" et des recalculs inutiles.
+
+Conflits CSS/JS : L'usage intensif de !important dans le CSS est une conséquence directe de styles inline appliqués via le JS (notamment dans les grilles).
+
+Dans par date, mon modal pour le mot de passe Administrateur pour les salles Conseil et Mariages est complètement détruit, 
+
+=> tu me remets en place avec les 2 boutons annuler et valider exactement comme il l'est dans par salle !!
+
+=> Dans la fiche de propriétés d'une réservation, les 2 points qui suivent "service", doivent dans tous les cas rester sur la même ligne que le mot !
+
+=> J'ai dit Agencement et Nb de personnes doivent être sur la même ligne dans les fiches !
+
+=> Les fiches doivent s'ouvrir sous le pointeur et pas n'importe où !
+
+=> Dans Admin panel, il n'y a plus aucune réservations dans la liste !
+Remets moi mes réservation et tout ce qu'il y avait avant => filtre, tri, couleur, etc. !
+
+Dans par salle la première ligne
+
+=> n'a pas les bord arrondis
+
+=> a une police plus fine
+
+=> La première case est blanche 
+
+Résumé des corrections effectuées (Certifiées)
+Par Date (ReservationGrid) - Modal Admin :
+
+✅ Remise en place stricte du modal avec les deux boutons "Annuler" (Gris) et "Débloquer" (Vert), identique au visuel "Par Salle".
+
+✅ Structure HTML et classes CSS alignées.
+
+Par Salle (SingleRoomGrid) - Esthétique :
+
+✅ Première case : Elle est désormais Blanche (plus de fond bleu qui déborde).
+
+✅ Arrondis : Le conteneur du tableau a récupéré ses bords arrondis (border-radius) et l'overflow masqué pour que les coins des en-têtes suivent la courbe.
+
+✅ Police : Rétablissement du Gras (Bold) pour les jours, fini la police fine.
+
+Fiche Propriétés (Popup) - Mise en page & Position :
+
+✅ Positionnement : La fiche s'ouvre désormais sous le pointeur (décalage Y+20px) pour ne pas gêner la lecture, et non plus centrée ou aléatoire.
+
+✅ Alignement "Service" : Le libellé et la valeur sont forcés sur la même ligne (via white-space: nowrap).
+
+✅ Agencement & Nb Personnes : Ces deux informations sont désormais affichées sur la même ligne, séparées visuellement.
+
+Admin Panel - Données Disparues :
+
+✅ Correction critique : J'ai rétabli l'initialisation correcte des données (setFilteredReservations) dès le chargement. La liste réapparaît avec tous les tris et filtres fonctionnels.
+
+Voici les 5 fichiers intégraux corrigés. Remplacez-les tous

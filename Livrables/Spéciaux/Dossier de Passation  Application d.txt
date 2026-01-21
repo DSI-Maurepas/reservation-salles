@@ -1,0 +1,56 @@
+Dossier de Passation : Application de Réservation de Salles
+Auteur : Claude
+
+Projet : Système de gestion des réservations (Mairie de Maurepas)
+
+Date : 12 janvier 2026
+
+1. Contexte et Objectifs
+L'application est un outil de réservation de salles destiné aux agents d'une collectivité de 20 000 habitants. Elle permet de gérer 9 salles avec des équipements spécifiques, incluant des salles soumises à une restriction administrateur (Conseil et Mariages). L'accent est mis sur l'efficience, la clarté visuelle et la compatibilité multi-supports (Desktop 1920x1080 et Mobile).
+
+2. Architecture Technique
+Frontend : React 18 (Hooks).
+
+Backend (Base de données) : Google Sheets (API v4).
+
+Services :
+
+googleSheetsService.js : Gère l'authentification OAuth 2.0 et les opérations CRUD.
+
+emailService.js : Utilise EmailJS pour les confirmations et annulations.
+
+icalService.js : Génère des fichiers .ics pour l'intégration aux calendriers Outlook/Google.
+
+Stockage Local : localStorage pour l'email de l'utilisateur et l'état d'authentification admin.
+
+3. Subtilités et Logiques Métier
+Gestion du Temps
+Format décimal : Les créneaux sont gérés par pas de 30 minutes. Dans le code, une heure est représentée par un nombre flottant (ex: 8.5 pour 08:30).
+
+Plage horaire : Définit de 08:00 à 22:00.
+
+Fusion des créneaux : Dans la vue SingleRoomGrid, les créneaux contigus sélectionnés par l'utilisateur sont fusionnés visuellement dans le résumé (ex: 4 créneaux de 30 min deviennent une ligne "08:00 - 10:00").
+
+Sécurité Admin
+Un mot de passe unique (R3sa@M0rep@s78) est requis pour réserver les salles "Conseil" et "Mariages". Ce statut est persistant durant la session via l'état isAdminUnlocked.
+
+Mode Édition
+Le système de modification passe par un "hash routing" (#calendar?edit=ID). L'application extrait l'ID de réservation de l'URL pour pré-remplir les formulaires et isoler la réservation en cours afin d'éviter les faux conflits lors de la mise à jour.
+
+4. Travaux Récents et Optimisations UI
+Navigation (ReservationGrid)
+Desktop : La série de boutons de navigation est centrée horizontalement dans la barre grâce à un wrapper en position absolue (nav-center-wrapper). Le bouton "◀ Calendrier" reste ancré à gauche dans le flux original.
+
+Responsive : La navigation bascule sur 3 lignes distinctes sous 1280px (Ligne 1: Bouton Calendrier, Ligne 2: Date, Ligne 3: Boutons ◀/▶). Une duplication de la date avec des classes CSS conditionnelles (.desktop-date / .responsive-date) assure ce comportement.
+
+Alignement et Visuels
+Fiches de propriétés : Les popups de détails des réservations sont désormais alignées à gauche (text-align: left) pour une lecture plus naturelle des informations (Nom, Service, Email).
+
+Héritage CSS : Le fichier App.css impose un text-align: center global sur la classe .App. Il est crucial d'utiliser des IDs spécifiques ou des sélecteurs très précis dans les composants enfants pour outrepasser ce centrage sans casser le reste de l'interface.
+
+5. Conseils pour le prochain assistant
+Rigueur CSS : Toujours vérifier les media queries à 1280px. L'interface utilise beaucoup Flexbox et Grid ; une modification de structure HTML dans ReservationGrid.js demande une mise à jour immédiate des sélecteurs dans ReservationGrid.css.
+
+Synchronisation Google Sheets : Les changements de colonnes dans la feuille de calcul doivent impérativement être répercutés dans les index de googleSheetsService.js.
+
+Tests : Toujours tester les deux vues (Par Date et Par Salle) après une modification CSS, car elles partagent certains styles de popup mais ont des structures de navigation différentes.

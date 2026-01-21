@@ -268,7 +268,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
         </div>
       )}
     </div>
-    {cancelModal.show && (<div className="cancel-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}><div className="cancel-modal" onClick={(e) => e.stopPropagation()}><h3>⚠️ Confirmer l'annulation</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {cancelModal.reservation.salle}</p><p><strong>📝 Objet :</strong> {cancelModal.reservation.objet}</p></div><div className="motif-selection"><label><strong>💬 Motif :</strong></label><select value={selectedMotif} onChange={(e) => setSelectedMotif(e.target.value)} className="motif-select"><option value="">-- Motif --</option>{MOTIFS_ANNULATION.map((m, i) => <option key={i} value={m}>{m}</option>)}</select></div><div className="modal-actions"><button onClick={() => setCancelModal({ show: false, reservation: null })} className="cancel-action-btn">Annuler</button><button onClick={handleDeleteConfirm} className="confirm-action-btn" disabled={!selectedMotif}>Confirmer</button></div></div></div>)}
+    {cancelModal.show && (<div className="cancel-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}><div className="cancel-modal" onClick={(e) => e.stopPropagation()}><h3>⚠️ Confirmer l'annulation</h3><div className="reservation-details"><p><strong>📅 </strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 </strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p><p><strong>🏢 </strong> {cancelModal.reservation.salle}</p><p><strong>📝 </strong> {cancelModal.reservation.objet}</p></div><div className="motif-selection"><label><strong>💬 </strong></label><select value={selectedMotif} onChange={(e) => setSelectedMotif(e.target.value)} className="motif-select"><option value="">-- Motif --</option>{MOTIFS_ANNULATION.map((m, i) => <option key={i} value={m}>{m}</option>)}</select></div><div className="modal-actions"><button onClick={() => setCancelModal({ show: false, reservation: null })} className="cancel-action-btn">Annuler</button><button onClick={handleDeleteConfirm} className="confirm-action-btn" disabled={!selectedMotif}>Confirmer</button></div></div></div>)}
     {confirmModal.show && (<div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}><div className="confirmation-modal" onClick={(e) => e.stopPropagation()}><h3>{confirmModal.type === 'cancel' ? '✅ Annulation confirmée' : '✅ Modification confirmée'}</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>{confirmModal.motif && <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>}</div><button onClick={() => setConfirmModal({ ...confirmModal, show: false })}>Fermer</button></div></div>)}
     
     {/* ✅ Popup détails flottante pour responsive */}
@@ -283,42 +283,42 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
         <div className="popup-card-body">
           <div className="popup-info-line">
             <span className="popup-info-icon">🏢</span>
-            <span><strong>Salle :</strong> {detailsModal.reservation.salle}</span>
+            <span><strong></strong> {detailsModal.reservation.salle}</span>
           </div>
           <div className="popup-info-line">
             <span className="popup-info-icon">📅</span>
-            <span><strong>Date :</strong> {new Date(detailsModal.reservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
+            <span><strong></strong> {new Date(detailsModal.reservation.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
           </div>
           <div className="popup-info-line">
             <span className="popup-info-icon">🕐</span>
-            <span><strong>Horaire :</strong> {detailsModal.reservation.heureDebut} - {detailsModal.reservation.heureFin}</span>
+            <span><strong></strong> {detailsModal.reservation.heureDebut} - {detailsModal.reservation.heureFin}</span>
           </div>
           <div className="popup-info-line">
             <span className="popup-info-icon">👤</span>
-            <span><strong>Nom :</strong> {detailsModal.reservation.prenom} {detailsModal.reservation.nom}</span>
+            <span><strong></strong> {detailsModal.reservation.prenom} {detailsModal.reservation.nom}</span>
           </div>
           <div className="popup-info-line">
             <span className="popup-info-icon">📧</span>
-            <span><strong>Email :</strong> {detailsModal.reservation.email}</span>
+            <span><strong></strong> {detailsModal.reservation.email}</span>
           </div>
           {detailsModal.reservation.telephone && (
             <div className="popup-info-line">
               <span className="popup-info-icon">📞</span>
-              <span><strong>Téléphone :</strong> {detailsModal.reservation.telephone}</span>
+              <span><strong></strong> {detailsModal.reservation.telephone}</span>
             </div>
           )}
           <div className="popup-info-line">
             <span className="popup-info-icon">🏛️</span>
-            <span><strong>Service :</strong> {detailsModal.reservation.service}</span>
+            <span><strong></strong> {detailsModal.reservation.service}</span>
           </div>
           <div className="popup-info-line">
             <span className="popup-info-icon">📝</span>
-            <span><strong>Objet :</strong> {detailsModal.reservation.objet}</span>
+            <span><strong></strong> {detailsModal.reservation.objet}</span>
           </div>
           {detailsModal.reservation.description && (
             <div className="popup-info-line">
               <span className="popup-info-icon">💬</span>
-              <span><strong>Description :</strong> {detailsModal.reservation.description}</span>
+              <span><strong></strong> {detailsModal.reservation.description}</span>
             </div>
           )}
           {(detailsModal.reservation.salle.toLowerCase().includes('conseil') || detailsModal.reservation.salle.toLowerCase().includes('mariages')) && (
@@ -326,13 +326,13 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
               {detailsModal.reservation.agencement && (
                 <div className="popup-info-line">
                   <span className="popup-info-icon">🪑</span>
-                  <span><strong>Disposition :</strong> {detailsModal.reservation.agencement}</span>
+                  <span><strong></strong> {detailsModal.reservation.agencement}</span>
                 </div>
               )}
               {detailsModal.reservation.nbPersonnes && (
                 <div className="popup-info-line">
                   <span className="popup-info-icon">👥</span>
-                  <span><strong>Nombre de personnes :</strong> {detailsModal.reservation.nbPersonnes}</span>
+                  <span><strong></strong> {detailsModal.reservation.nbPersonnes}</span>
                 </div>
               )}
             </>

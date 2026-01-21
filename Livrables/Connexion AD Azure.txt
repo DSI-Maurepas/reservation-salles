@@ -1,0 +1,88 @@
+Le principe :
+
+Vous installez un petit logiciel officiel Microsoft sur votre serveur local.
+
+Il "photocopie" (synchronise) vos utilisateurs locaux vers un espace sécurisé Microsoft dans le cloud (Entra ID Free).
+
+L'application React interroge cette copie cloud sécurisée.
+
+Résultat : Vos utilisateurs utilisent leur mot de passe habituel de session Windows. Si vous désactivez quelqu'un en local, il est désactivé sur l'appli.
+
+Voici la procédure pas à pas pour réaliser ce "Pont".
+
+ÉTAPE 1 : Préparer le terrain (Sur le Cloud)
+Même si votre AD est local, nous avons besoin d'un point de chute sécurisé dans le cloud pour que l'application React puisse vérifier les identités.
+
+Allez sur portal.azure.com.
+
+Créez un compte (si votre collectivité a déjà Office 365, vous l'avez déjà. Sinon, créez un compte "Entra ID Free", c'est gratuit).
+
+Une fois connecté, notez l'identifiant de votre "Locataire" (Tenant ID) comme vu dans le tuto précédent.
+
+ÉTAPE 2 : Installer le "Pont" (Sur votre Serveur Local)
+C'est ici que l'on relie votre serveur physique au monde extérieur de manière sécurisée.
+
+Sur votre contrôleur de domaine (ou un serveur membre du domaine) :
+
+Téléchargez l'outil officiel : Microsoft Azure AD Connect.
+
+Lancez l'installation (AzureADConnect.msi).
+
+Écran de bienvenue : Cochez "J'accepte" et cliquez sur Continuer.
+
+Configuration rapide : Cliquez sur "Utiliser la configuration rapide" (Use express settings). C'est le plus simple et suffisant pour 99% des cas.
+
+Connexion à Azure AD :
+
+Il va vous demander un compte "Administrateur Global" d'Azure (celui de l'étape 1). Entrez-le.
+
+Connexion à AD Local :
+
+Il va vous demander un compte "Administrateur de l'entreprise" (votre compte admin local de la collectivité). Entrez-le.
+
+Configuration de la connexion :
+
+Cochez la case "Continuer sans faire correspondre tous les suffixes UPN..." (sauf si vous avez déjà configuré vos noms de domaine proprement, mais pour une première fois, cochez pour avancer).
+
+Installation : Cliquez sur Installer.
+
+Laissez coché : "Démarrer le processus de synchronisation..."
+
+⏳ Attendez quelques minutes. Le logiciel va scanner vos utilisateurs locaux et créer leur "jumeau numérique" dans le cloud Microsoft.
+
+ÉTAPE 3 : Vérifier que le pont fonctionne
+Retournez sur portal.azure.com.
+
+Allez dans Microsoft Entra ID > Utilisateurs.
+
+Miracle ! Vous devriez voir apparaître la liste de vos agents de la mairie.
+
+Dans la colonne "Source", vous verrez indiqué "Windows Server AD". Cela prouve qu'ils viennent bien de chez vous.
+
+ÉTAPE 4 : Appliquer le tutoriel précédent
+Maintenant que vos utilisateurs locaux existent "aussi" dans le cloud Microsoft (de manière synchronisée), vous pouvez appliquer exactement le même tutoriel React que je vous ai donné juste avant.
+
+Pourquoi ? Parce que pour l'application React, peu importe que l'utilisateur vienne d'un serveur local ou du cloud. Pour elle, c'est un compte Microsoft valide.
+
+Ce qui va se passer pour l'utilisateur (Expérience finale) :
+
+L'agent lance l'application Réservation.
+
+Il clique sur "Se connecter".
+
+Une fenêtre Microsoft s'ouvre.
+
+Il rentre son email (prenom.nom@ville.fr) et son mot de passe de session Windows habituel.
+
+Microsoft vérifie avec votre serveur local (via le pont).
+
+C'est validé -> Il accède à l'application.
+
+Résumé pour le DSI
+Infrastructure : Pas de code complexe à maintenir. On utilise l'outil standard du marché (Azure AD Connect).
+
+Sécurité : Les mots de passe ne sortent pas en clair. C'est du hash synchronisé.
+
+Coût : La version "Entra ID Free" (suffisante pour ça) est gratuite jusqu'à 50 000 objets.
+
+Maintenance : Si vous changez un mot de passe en local, il est mis à jour pour l'appli web dans les 2 minutes. Si vous supprimez un agent de l'AD en partant, il perd l'accès à l'appli automatiquement.

@@ -1,0 +1,62 @@
+Tu vas me rajouter une branche à l'application.
+
+Cette branche servira à réserver des outils IA
+
+La structure de cette page sera quasiment identique dans son agencement et son style que celle de singleroomgrid, 
+
+Je veux néanmoins que tu fasse un fichier css dédié.
+
+Je te donne le fichier singleroomgrid.css afin que tu le recopies car il y aura quelques modification notamment au niveau de la couleur d'ambiance pour bien identifier la page IA.
+
+Je te laisse me proposer des couleurs et un style pour mettre en avant l'IA
+
+Elle sera faite d'une grille de réservation quasiment identique à "Par salle" avec en "X" en haut: les jours de la semaine.
+
+En "Y", à la place des créneaux d'heure, la grille proposera les différentes IA
+
+La colonne d'à côté "Y+1" sera divisée en deux lignes 8h - 12h30 et 12h30 - 17h30 car les réservations ne se feront pas sur un créneau d'heure mais les 2 périodes 8h - 12h30 et 12h30 - 17h30
+
+Puis de "Y+2" à "Y+9" seront les colonnes des jours de la semaine.
+
+Dans le bloc de gauche, 8 photos de l'IA (deux colonnes de 4 lignes)
+
+Cliquer sur une photo fera apparaître un texte de la surface de la photo qui expliquera l'IA sélectionnée et un résumé de ce qu'elle fait
+
+
+
+Attention, il n'y aura pas de petit bloc bas de gauche (celui qui invite à sélectionner des créneaux dans les deux autres grilles) !
+
+
+
+Quand un créneau sera sélectionné, le formulaire remplacera immédiatement par un fader de 0.8 seconde le bloc des 8 photos
+
+Le formulaire se comportera exactement comme les formulaires de par salle ou par date !
+
+
+
+Je te donnerai ensuite les étapes suivantes afin d'intégrer cette nouvelle branche dans l'arborescence de l'application 
+
+
+
+Tu prends ton temps pour tout intégrer et tout digérer.
+
+Pour voir si tu as bien tout compris afin de ne pas faire de multiples échanges pour arriver au travail final
+
+Tu reformules pour voir si tu as bien compris 
+
+tu me poses les questions qui te sont nécessaire à la création de cette nouvelle page
+
+
+
+
+
+quelques détails à corriger s'il y en a.
+
+les étapes suivantes seront :
+- l'intégration de cette page par un bouton dans le menu haut juste après Clio
+- la construction d'un page de statistiques IA 
+- le déplacement du bouton "Mes Réservations" dans le menu déroulant "Admin" en première ligne
+
+
+Elle sera visible dans le menu déroulant "Admin". Elle apparaitra en 3ème ligne
+elle sera structurée comme la page de statistiques d'AdminPanel" avec des statistiques sur la première moitié de la page et la liste de toutes les réservations sur la seconde partie de la page, avec les filtres identiques à par date en remplaçant "Salle" par "Outil IA"

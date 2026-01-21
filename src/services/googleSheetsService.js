@@ -10,7 +10,9 @@ class GoogleSheetsService {
     
     // Système de cache simple
     this.reservationsCache = null;
+    this.reservationsIACache = null; // Cache pour les IA
     this.lastFetchTime = 0;
+    this.lastFetchTimeIA = 0;
   }
 
   async initialize() {
@@ -95,11 +97,10 @@ class GoogleSheetsService {
     return this.accessToken !== null;
   }
 
-  // OPTIMISATION : Cache
+  // --- GESTION SALLES CLASSIQUES ---
   async getAllReservations(forceRefresh = false) {
     try {
       const now = Date.now();
-      // Si cache valide (< 1 min) et pas de forçage, on retourne le cache
       if (!forceRefresh && this.reservationsCache && (now - this.lastFetchTime < APP_CONFIG.CACHE_DURATION)) {
         return this.reservationsCache;
       }
@@ -140,10 +141,8 @@ class GoogleSheetsService {
           dateCreation: row[18] || ''
         }));
 
-      // Mise à jour cache
       this.reservationsCache = formatted;
       this.lastFetchTime = now;
-      
       return formatted;
     } catch (error) {
       console.error('Erreur getAllReservations:', error);
@@ -175,9 +174,7 @@ class GoogleSheetsService {
         resource: { values }
       });
       
-      // Invalider le cache pour forcer le rechargement au prochain appel
       this.reservationsCache = null;
-      
       return { success: true, id };
     } catch (error) {
       console.error('Erreur addReservation:', error);
@@ -188,33 +185,109 @@ class GoogleSheetsService {
   async deleteReservation(reservationId) {
     try {
       if (!this.isAuthenticated()) await this.requestAccessToken();
-      
-      // On force le chargement frais pour être sûr de l'index
       const response = await window.gapi.client.sheets.spreadsheets.values.get({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
         range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS}!A:A`,
       });
-      
       const rows = response.result.values || [];
       const rowIndex = rows.findIndex(row => row[0] === reservationId);
-      
       if (rowIndex === -1) throw new Error("Réservation introuvable");
 
       await window.gapi.client.sheets.spreadsheets.batchUpdate({
         spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
         resource: {
-          requests: [{
-            deleteDimension: {
-              range: { sheetId: 0, dimension: 'ROWS', startIndex: rowIndex, endIndex: rowIndex + 1 }
-            }
-          }]
+          requests: [{ deleteDimension: { range: { sheetId: 0, dimension: 'ROWS', startIndex: rowIndex, endIndex: rowIndex + 1 } } }]
         }
       });
-      
-      this.reservationsCache = null; // Invalider le cache
+      this.reservationsCache = null;
       return { success: true };
     } catch (error) {
       console.error('Erreur deleteReservation:', error);
+      throw error;
+    }
+  }
+
+  // --- GESTION IA ---
+
+  async getAllIAReservations(forceRefresh = false) {
+    try {
+      const now = Date.now();
+      if (!forceRefresh && this.reservationsIACache && (now - this.lastFetchTimeIA < APP_CONFIG.CACHE_DURATION)) {
+        return this.reservationsIACache;
+      }
+
+      if (!window.gapi || !window.gapi.client || !window.gapi.client.sheets) {
+        await this.initialize();
+      }
+
+      const response = await window.gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
+        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS_IA}!A2:S`,
+        valueRenderOption: 'UNFORMATTED_VALUE',
+        dateTimeRenderOption: 'FORMATTED_STRING'
+      });
+
+      const rows = response.result.values || [];
+      const formatted = rows
+        .filter(row => row && row[0] && row[1])
+        .map((row, index) => ({
+          id: row[0] || `ia_${index}`,
+          toolId: row[1] || '',
+          dateDebut: row[2] || '',
+          heureDebut: row[3] || '',
+          dateFin: row[4] || '',
+          heureFin: row[5] || '',
+          nom: row[6] || '',
+          prenom: row[7] || '',
+          email: row[8] || '',
+          telephone: row[9] || '',
+          service: row[10] || '',
+          objet: row[11] || '',
+          recurrence: (row[12] || '').toUpperCase() === 'OUI',
+          recurrenceJusquau: row[13] || null,
+          description: row[14] || '',
+          statut: row[15] || 'active',
+          dateCreation: row[18] || ''
+        }));
+
+      this.reservationsIACache = formatted;
+      this.lastFetchTimeIA = now;
+      return formatted;
+    } catch (error) {
+      console.error('Erreur getAllIAReservations:', error);
+      return [];
+    }
+  }
+
+  async addIAReservation(reservation) {
+    try {
+      if (!this.isAuthenticated()) await this.requestAccessToken();
+
+      const id = `IA_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const dateFin = reservation.dateFin || reservation.dateDebut;
+
+      const values = [[
+        id, reservation.toolId, reservation.dateDebut, reservation.heureDebut,
+        dateFin, reservation.heureFin, reservation.nom, reservation.prenom,
+        reservation.email || '', reservation.telephone || '', reservation.service,
+        reservation.objet, reservation.recurrence ? 'OUI' : 'NON',
+        reservation.recurrenceJusquau || '', reservation.description || '',
+        'active', '', '', // Champs vides pour s'aligner
+        new Date().toISOString()
+      ]];
+
+      await window.gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: GOOGLE_CONFIG.SPREADSHEET_ID,
+        // ✅ CORRECTION : Forcer l'ancrage sur la colonne A pour éviter le décalage vers S
+        range: `${GOOGLE_CONFIG.SHEETS.RESERVATIONS_IA}!A:A`,
+        valueInputOption: 'USER_ENTERED',
+        resource: { values }
+      });
+      
+      this.reservationsIACache = null;
+      return { success: true, id };
+    } catch (error) {
+      console.error('Erreur addIAReservation:', error);
       throw error;
     }
   }

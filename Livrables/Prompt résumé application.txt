@@ -36,7 +36,7 @@ src/
 ├── components/ (10 fichiers .js + 10 fichiers .css)
 ├── config/ (googleSheets.js)
 ├── data/ (sallesData.js)
-├── services/ (icalService.js, googleSheetsService.js, googleSheets.js, emailService.js)
+├── services/ (icalService.js, googleSheetsService.js, emailService.js)
 └── fichiers racine (App.js, App.css, index.js, index.css)
 public/
 └── images/ (9 photos de salles + blason Maurepas)

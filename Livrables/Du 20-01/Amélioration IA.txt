@@ -1,0 +1,31 @@
+dans la grille IA je veux :
+
+Que l'on puisse réserver par drag and drop tant en verticale, qu'en horizontale ou diagonale.
+
+que le bloc réservation affiche le nombre de jour si une réservation cours sur plusieurs jours.
+
+Qu'il soit possible de réserver au plus 2 IA différentes mais pas plus.
+
+Qu'un message dans un modal apparaisse si la personne souhaite réserver 3 IA ou plus
+
+Que le délais maximum ne puisse courir que sur 7 jours maximum, si plus un message apparait également dans un modal stylisé
+
+Que tous les modal d'avertissement soient clairs et définis sous le même style
+
+Que tous les créneaux soit affichés en haut du formulaire avant validation
+
+Qu'a l'enregistrement des créneaux il y ait une barre de progression identique à celle qui sont sur les autres formulaires
+
+Que le modal d'avertissement s'il y a conflit soit identique à celui charté dans les autres formulaires
+
+Que le modal de confirmation d'enregistrement des créneaux choisis soit identique à celui charté dans les autres formulaires
+
+Que les deux boutons "semaine précédente" et "semaine suivante" soit de chaque côté de la date de la semaine de la grille
+
+que deux autres boutons puissent permettre comme dans par salle d'afficher "mois précédent" et "mois suivant". Il seront positionnés comme dans par salle de part et d'autre de "semaine précédente" et "semaine suivante".
+
+Qu'il soit possible de réserver les dimanche et jours fériés
+
+Que dans le bloc formulaire il y ait le champ non obligatoire de "commentaire"
+
+Que dans le formulaire il y ait le bloc "réservation récurrente" avec les mêmes propriétés que les autres formulaires
