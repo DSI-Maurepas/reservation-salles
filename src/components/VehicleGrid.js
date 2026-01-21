@@ -5,11 +5,12 @@ import googleSheetsService from '../services/googleSheetsService';
 import icalService from '../services/icalService';
 import emailService from '../services/emailService';
 // Import de OBJETS_VEHICULE depuis la config centralisée
-import { HORAIRES, SERVICES, OBJETS_RESERVATION, OBJETS_VEHICULE, JOURS_FERIES, COULEURS_OBJETS, APP_CONFIG } from '../config/googleSheets';
+import { HORAIRES, SERVICES, OBJETS_VEHICULE, JOURS_FERIES, COULEURS_OBJETS } from '../config/googleSheets';
 import { getSalleData } from '../data/sallesData';
 import './VehicleGrid.css';
 
-function VehicleGrid({ onBack }) {
+// ✅ AJOUT PROP editingReservation
+function VehicleGrid({ onBack, editingReservation }) {
   const selectedRoom = "CLIO"; 
 
   const getMondayOfWeek = (d) => { 
@@ -49,11 +50,60 @@ function VehicleGrid({ onBack }) {
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
   const [successModal, setSuccessModal] = useState({ show: false, reservations: [], message: '' });
   const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [] });
-  // ✅ AJOUT permisAttestation dans le state initial
+  // PermisAttestation dans state
   const [formData, setFormData] = useState({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
   
   const vehicleData = getSalleData(selectedRoom);
   const vehicleImage = vehicleData ? vehicleData.photo : null;
+
+  // ✅ EFFET POUR CHARGER L'ÉDITION
+  useEffect(() => {
+    if (editingReservation) {
+      // 1. Pré-remplir le formulaire
+      setFormData({
+        nom: editingReservation.nom,
+        prenom: editingReservation.prenom,
+        email: editingReservation.email,
+        telephone: editingReservation.telephone || '',
+        service: editingReservation.service,
+        objet: editingReservation.objet,
+        description: editingReservation.description || '',
+        permisAttestation: true, // Suppose vrai si déjà réservé
+        recurrence: false,
+        recurrenceType: 'weekly',
+        recurrenceJusquau: '',
+        agencement: '',
+        nbPersonnes: ''
+      });
+
+      // 2. Positionner le calendrier sur la bonne semaine
+      const dateRes = new Date(editingReservation.dateDebut);
+      setCurrentWeekStart(getMondayOfWeek(dateRes));
+
+      // 3. Mettre en surbrillance (Sélection)
+      // Conversion heure "08:00" -> 8
+      const timeToFloat = (str) => {
+        const [h, m] = str.split(':').map(Number);
+        return h + (m === 30 ? 0.5 : 0);
+      };
+      const startSlot = timeToFloat(editingReservation.heureDebut);
+      const endSlot = timeToFloat(editingReservation.heureFin);
+      
+      // Trouver l'index du jour (0-6)
+      const diffTime = dateRes.getTime() - getMondayOfWeek(dateRes).getTime();
+      const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
+      
+      const newSelections = [];
+      for (let h = startSlot; h < endSlot; h += 0.5) {
+        newSelections.push({
+          dayIndex: diffDays,
+          hour: h,
+          date: dateRes
+        });
+      }
+      setSelections(newSelections);
+    }
+  }, [editingReservation]);
 
   useEffect(() => {
     let timerOut, timerRemove;
@@ -81,7 +131,10 @@ function VehicleGrid({ onBack }) {
       
       const filtered = allReservations.filter(res => { 
         if (res.salle !== selectedRoom) return false; 
-        if (res.statut === 'cancelled') return false; 
+        if (res.statut === 'cancelled') return false;
+        // EXCLURE LA RÉSERVATION EN COURS D'ÉDITION pour qu'elle n'apparaisse pas comme "occupée" (rouge) mais "sélectionnée" (bleue)
+        if (editingReservation && res.id === editingReservation.id) return false;
+
         const resDate = new Date(res.dateDebut); 
         return resDate >= currentWeekStart && resDate <= weekEnd; 
       }); 
@@ -146,6 +199,11 @@ function VehicleGrid({ onBack }) {
     
     if (isDateInPast(date)) return;
     
+    // ✅ SI ON COMMENCE UNE NOUVELLE SÉLECTION ALORS QU'ON ÉTAIT EN ÉDITION, ON VIDE L'ANCIENNE
+    if (editingReservation && selections.length > 0) {
+      setSelections([]);
+    }
+
     setDragStart({ dayIndex, hour });
     setMouseDownPos({ dayIndex, hour, date });
   };
@@ -195,8 +253,11 @@ function VehicleGrid({ onBack }) {
     setIsDragging(false); setDragStart(null); setMouseDownPos(null); 
   };
 
-  // ✅ MISE A JOUR : Reset de permisAttestation
-  const handleCancelSelection = () => { setSelections([]); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
+  const handleCancelSelection = () => { 
+    setSelections([]); 
+    setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
+    if (onBack && editingReservation) onBack(); // Si annulation en édition, on retourne
+  };
   
   const removeSelection = (index) => {
     const toRemove = mergedForDisplay[index];
@@ -248,7 +309,10 @@ function VehicleGrid({ onBack }) {
         const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); 
         const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); 
         const hasConflict = allExistingReservations.some(existing => { 
-            if (existing.statut === 'cancelled') return false; 
+            if (existing.statut === 'cancelled') return false;
+            // SI EDITION, ON IGNORE L'ANCIENNE RESERVATION DANS LA DETECION DE CONFLIT
+            if (editingReservation && existing.id === editingReservation.id) return false;
+
             if (existing.salle !== candidate.salle && existing.salle.split(' - ')[0] !== candidate.salle) return false; 
             const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); 
             const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); 
@@ -263,6 +327,11 @@ function VehicleGrid({ onBack }) {
     setWarningModal({ show: false, conflicts: [], validReservations: [] });
     setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); 
     try { 
+        // ✅ SI EDITION : On supprime d'abord l'ancienne réservation
+        if (editingReservation) {
+          await googleSheetsService.deleteReservation(editingReservation.id);
+        }
+
         const createdReservations = []; 
         for (const res of reservationsToSave) { 
             const result = await googleSheetsService.addReservation(res); 
@@ -282,7 +351,6 @@ function VehicleGrid({ onBack }) {
       return alert('Veuillez sélectionner au moins un créneau dans la grille.');
     }
 
-    // ✅ VERIFICATION ATTESTATION PERMIS
     if (!formData.permisAttestation) {
       return alert('Vous devez attester être titulaire du permis B pour valider la réservation.');
     }
@@ -348,7 +416,7 @@ function VehicleGrid({ onBack }) {
                 alt="Auto" 
                 style={{ height: '28px', width: 'auto' }} 
               />
-              {selectedRoom}
+              {selectedRoom} {editingReservation && <span style={{fontSize:'0.8em', color:'#ef5350'}}>(Modification)</span>}
             </h2>
           </div>
           <div className="nav-group-center">
@@ -382,7 +450,6 @@ function VehicleGrid({ onBack }) {
               <form onSubmit={handleFormSubmit} className="room-form">
                 <div className="form-row"><input className="form-input" placeholder="Nom *" value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} required style={{flex:1}} /><input className="form-input" placeholder="Prénom" value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} style={{flex:1}} /></div>
                 <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
-					{/* <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} /> */}
                 <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service *</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
                 
                 <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required>
@@ -390,7 +457,6 @@ function VehicleGrid({ onBack }) {
                   {OBJETS_VEHICULE.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
                 
-                {/* ✅ NOUVELLE CASE A COCHER ATTESTATION PERMIS */}
                 <div className="attestation-box">
                   <input 
                     type="checkbox" 

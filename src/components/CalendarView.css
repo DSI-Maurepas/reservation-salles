@@ -49,7 +49,7 @@
   display: flex;
   justify-content: center;
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0.7rem;
 }
 
 .tab-btn {
@@ -125,33 +125,52 @@
 }
 .nav-button:hover { background: #1976d2; transform: scale(1.05); }
 
-/* INSTRUCTIONS & LÉGENDE */
+/* ✅ INSTRUCTIONS & LÉGENDE FUSIONNÉES (Sur 1 ligne) */
 .capacity-instructions {
   background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
   padding: 0.5rem 0.8rem; border-radius: 8px;
   border-left: 4px solid #2196f3; margin-bottom: 0.6rem;
   text-align: center; color: #1976d2; font-size: 0.8rem;
   box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15); line-height: 1.3;
+  
+  /* Flexbox pour alignement sur une ligne */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap; /* Permet le retour à la ligne si écran trop petit */
 }
 .capacity-instructions strong { font-weight: 600; }
 
-.calendar-legend {
-  display: flex; gap: 1rem; align-items: center; margin: 0.6rem 0; flex-wrap: wrap;
-  padding: 0.6rem; background: rgba(255, 255, 255, 0.9); border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.legend-buttons-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .legend-item {
   display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem;
   cursor: pointer; 
-  transition: all 0.3s ease; padding: 0.25rem 0.4rem; border-radius: 6px;
+  transition: all 0.3s ease; padding: 0.3rem 0.6rem; border-radius: 6px;
+  
+  /* Style adapté pour être dans le bloc bleu (fond semi-transparent) */
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
-.legend-item:hover { background: rgba(33, 150, 243, 0.1); transform: translateY(-2px); }
+
+.legend-item:hover { 
+  background: white; 
+  transform: translateY(-2px); 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+}
 
 .legend-item.active-legend {
-  background-color: #e3f2fd;
+  background-color: white;
   border: 1px solid #2196f3;
+  color: #1565c0;
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(33, 150, 243, 0.2);
 }
 
 .legend-color { width: 18px; height: 18px; border-radius: 4px; border: 2px solid rgba(0, 0, 0, 0.1); flex-shrink: 0; }
@@ -285,13 +304,8 @@
   .calendar-grid { gap: 3px; }
   .calendar-day { padding: 0.2rem; min-height: 35px; }
 
-  /* Masquer bloc bleu instructions */
+  /* Masquer bloc bleu instructions et la légende désormais intégrée dedans */
   .capacity-instructions {
-    display: none !important;
-  }
-
-  /* Masquer légende statuts */
-  .calendar-legend {
     display: none !important;
   }
 }

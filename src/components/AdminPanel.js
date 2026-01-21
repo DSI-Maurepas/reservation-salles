@@ -7,9 +7,11 @@ import { SALLES, MOTIFS_ANNULATION, COULEURS_OBJETS, APP_CONFIG } from '../confi
 import Statistics from './Statistics';
 import './AdminPanel.css';
 
-function AdminPanel() {
+// ✅ AJOUT DE LA PROP onEditReservation
+function AdminPanel({ onEditReservation }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
+  const [authError, setAuthError] = useState('');
   
   const [reservations, setReservations] = useState([]);
   const [filteredReservations, setFilteredReservations] = useState([]);
@@ -28,7 +30,6 @@ function AdminPanel() {
   const [selectedMotif, setSelectedMotif] = useState('');
 
   useEffect(() => {
-    // ✅ CORRECTION : Utilisation de sessionStorage pour la session active
     const sessionAuth = sessionStorage.getItem('isAdminAuthenticated');
     if (sessionAuth === 'true') setIsAuthenticated(true);
   }, []);
@@ -42,10 +43,10 @@ function AdminPanel() {
     e.preventDefault();
     if (adminPassword === APP_CONFIG.ADMIN_PASSWORD) {
       setIsAuthenticated(true);
-      // ✅ CORRECTION : Stockage dans la session
+      setAuthError(''); // Reset erreur
       sessionStorage.setItem('isAdminAuthenticated', 'true');
     } else {
-      alert('❌ Mot de passe incorrect.');
+      setAuthError('Mot de passe incorrect');
       setAdminPassword('');
     }
   };
@@ -53,7 +54,6 @@ function AdminPanel() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     setAdminPassword('');
-    // ✅ CORRECTION : Nettoyage de la session
     sessionStorage.removeItem('isAdminAuthenticated');
   };
 
@@ -176,20 +176,34 @@ function AdminPanel() {
     } catch (error) { alert('Erreur suppression: ' + error.message); }
   };
 
-  const handleEdit = (reservation) => { window.location.hash = `#calendar?salle=${encodeURIComponent(reservation.salle)}&date=${reservation.dateDebut}&edit=${reservation.id}`; };
+  // ✅ CORRECTION DU BUG : Utilisation de la prop onEditReservation
+  const handleEdit = (reservation) => { 
+    if (onEditReservation) {
+      onEditReservation(reservation);
+    } else {
+      console.error("Fonction d'édition non fournie à AdminPanel");
+    }
+  };
 
   if (!isAuthenticated) {
     return (
-      <div className="admin-auth">
-        <div className="auth-card">
-          <div className="admin-login-blue-block">
-            <span className="login-icon-desktop">🔒</span>
-            <span className="login-text-desktop">Administration des salles</span>
-            <form onSubmit={handleAuthenticate} className="admin-login-form-inline">
-              <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••" required className="admin-password-input-inline" />
-              <button type="submit" className="auth-button-inline">Se connecter</button>
-            </form>
-          </div>
+      <div className="admin-panel" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', textAlign: 'center', maxWidth: '400px', width: '100%' }}>
+          <h3 style={{ color: '#0f6aba', marginTop: 0, marginBottom: '1.5rem' }}>🔒 Administration des Salles</h3>
+          <form onSubmit={handleAuthenticate}>
+            <input 
+              type="password" 
+              placeholder="Mot de passe" 
+              value={adminPassword} 
+              onChange={(e) => setAdminPassword(e.target.value)} 
+              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', marginBottom: '1rem', boxSizing: 'border-box' }}
+              autoFocus
+            />
+            {authError && <p style={{ color: '#ef5350', fontSize: '0.9rem', marginBottom: '1rem' }}>{authError}</p>}
+            <button type="submit" style={{ width: '100%', background: '#0f6aba', color: 'white', padding: '10px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>
+              Valider
+            </button>
+          </form>
         </div>
       </div>
     );

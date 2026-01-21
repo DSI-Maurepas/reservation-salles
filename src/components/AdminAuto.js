@@ -4,13 +4,15 @@ import * as XLSX from 'xlsx';
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
 import { MOTIFS_ANNULATION, COULEURS_OBJETS, APP_CONFIG } from '../config/googleSheets';
-// ✅ IMPORT DU NOUVEAU COMPOSANT STATISTIQUES SPÉCIFIQUE
+// IMPORT DU NOUVEAU COMPOSANT STATISTIQUES SPÉCIFIQUE
 import StatisticsAuto from './StatisticsAuto';
 import './AdminAuto.css';
 
-function AdminAuto() {
+// ✅ AJOUT PROP onEditReservation
+function AdminAuto({ onEditReservation }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
+  const [authError, setAuthError] = useState('');
   
   const [reservations, setReservations] = useState([]);
   const [filteredReservations, setFilteredReservations] = useState([]);
@@ -40,9 +42,10 @@ function AdminAuto() {
     e.preventDefault();
     if (adminPassword === APP_CONFIG.ADMIN_AUTO_PASSWORD) { 
       setIsAuthenticated(true);
+      setAuthError(''); // Reset erreur
       sessionStorage.setItem('isAdminAutoAuthenticated', 'true');
     } else {
-      alert('❌ Mot de passe incorrect.');
+      setAuthError('Mot de passe incorrect');
       setAdminPassword('');
     }
   };
@@ -167,20 +170,33 @@ function AdminAuto() {
     } catch (error) { alert('Erreur suppression: ' + error.message); }
   };
 
-  const handleEdit = (reservation) => { window.location.hash = `#calendar?salle=${encodeURIComponent(reservation.salle)}&date=${reservation.dateDebut}&edit=${reservation.id}`; };
+  // ✅ MISE A JOUR : Appel de la prop onEditReservation
+  const handleEdit = (reservation) => { 
+    if (onEditReservation) {
+      onEditReservation(reservation);
+    }
+  };
 
+  // Modal de connexion
   if (!isAuthenticated) {
     return (
-      <div className="admin-auth">
-        <div className="auth-card">
-          <div className="admin-login-blue-block">
-            <span className="login-icon-desktop">🚗</span>
-            <span className="login-text-desktop">Administration de la Clio</span>
-            <form onSubmit={handleAuthenticate} className="admin-login-form-inline">
-              <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••" required className="admin-password-input-inline" />
-              <button type="submit" className="auth-button-inline">Connexion</button>
-            </form>
-          </div>
+      <div className="admin-auto-panel" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <div style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', textAlign: 'center', maxWidth: '400px', width: '100%' }}>
+          <h3 style={{ color: '#0f6aba', marginTop: 0, marginBottom: '1.5rem' }}>🔒 Administration de la Clio</h3>
+          <form onSubmit={handleAuthenticate}>
+            <input 
+              type="password" 
+              placeholder="Mot de passe" 
+              value={adminPassword} 
+              onChange={(e) => setAdminPassword(e.target.value)} 
+              style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', marginBottom: '1rem', boxSizing: 'border-box' }}
+              autoFocus
+            />
+            {authError && <p style={{ color: '#ef5350', fontSize: '0.9rem', marginBottom: '1rem' }}>{authError}</p>}
+            <button type="submit" style={{ width: '100%', background: '#0f6aba', color: 'white', padding: '10px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem' }}>
+              Valider
+            </button>
+          </form>
         </div>
       </div>
     );
@@ -196,7 +212,6 @@ function AdminAuto() {
           </div>
         </div>
         
-        {/* ✅ UTILISATION DE STATISTICS AUTO */}
         <StatisticsAuto reservations={reservations} />
         
         <div className="filters-section">
@@ -207,7 +222,7 @@ function AdminAuto() {
         </div>
 
         <div className="reservations-section">
-            <h3>📋 Réservations CLIO ({filteredReservations.length})</h3>
+            <h3>📋 Réservations de la CLIO ({filteredReservations.length})</h3>
             {loading ? <div className="loading-container"><div className="spinner"></div><p>Chargement...</p></div> : filteredReservations.length === 0 ? <div className="no-data"><p>Aucune réservation trouvée</p></div> : (
               <div className="admin-table-container">
                 <table className="admin-table">
@@ -238,6 +253,7 @@ function AdminAuto() {
             )}
         </div>
       </div>
+      {/* ✅ MODAL SUPPRESSION IDENTIQUE A ADMINPANEL */}
       {cancelModal.show && <div className="cancel-modal-overlay"><div className="cancel-modal"><h3>Suppression</h3><p>Voulez-vous supprimer la réservation de <strong>{cancelModal.reservation.nom}</strong> ?</p><div className="motif-selection"><select value={selectedMotif} onChange={(e) => setSelectedMotif(e.target.value)}><option value="">-- Choisir un motif --</option>{MOTIFS_ANNULATION.map(m => <option key={m} value={m}>{m}</option>)}</select></div><div className="modal-actions"><button onClick={() => setCancelModal({show:false, reservation:null})} className="btn-cancel">Annuler</button><button onClick={handleDeleteConfirm} className="btn-submit" disabled={!selectedMotif}>Confirmer</button></div></div></div>}
     </>
   );

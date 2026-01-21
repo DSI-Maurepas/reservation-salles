@@ -1,0 +1,56 @@
+Objectif : Créer un nouveau module complet IAGrid pour la réservation de 8 outils d'Intelligence Artificielle.
+
+Structure & Style :
+Architecture : Basée sur SingleRoomGrid.js (layout écran divisé : Sidebar gauche / Grille droite), mais adaptée.
+Fichiers : Création de IAGrid.js et IAGrid.css (copié et modifié depuis SingleRoomGrid.css).
+Ambiance : Doit se distinguer visuellement de la partie "Salles" (actuellement bleue/institutionnelle) pour évoquer la technologie/IA.
+La Grille (Bloc Droit) :
+Axe X (Colonnes) : Les 7 jours de la semaine (comme actuellement).
+Axe Y (Lignes) : Liste des 8 Outils IA.
+Cellules (Créneaux) : Pour chaque outil, la ligne est divisée en 2 sous-lignes fixes (ou blocs) :
+Matin : 08h00 - 12h30.
+Après-midi : 12h30 - 17h30.
+Il n'y a plus de sélection fine à la demi-heure. On réserve soit le matin, soit l'après-midi (soit les deux).
+La Sidebar (Bloc Gauche) :
+État par défaut : Une grille de 8 photos (2 colonnes x 4 lignes) représentant les IA.
+Interaction Photos : Au clic sur une photo, une superposition (overlay) affiche le nom de l'IA et un résumé explicatif directement sur la surface de l'image.
+Suppression : Le petit bloc d'instruction en bas ("Sélectionnez un créneau...") est supprimé.
+Transition Formulaire : Dès qu'un créneau (Matin ou Après-midi) est cliqué dans la grille de droite, le bloc "Photos" disparaît via un fade (fondu) de 0.8 secondes pour laisser place immédiatement au formulaire de réservation.
+Formulaire : Strictement identique fonctionnellement à ceux existants (Nom, Service, Motif, Récurrence...).
+
+
+Pour coder cela avec rigueur ("testé et validé"), j'ai besoin de ces informations :
+
+Pouvez-vous me fournir la liste des Noms des 8 IA
+- ChatGPT Plus
+- Mistral Pro L1
+- Mistral Pro L2
+- Gamma Pro
+- Claude Pro
+- Gimini Pro
+- Plaud Pro L1
+- Plaud Pro L2
+
+Avez-vous les noms des fichiers images associés (ex: chatgpt.jpg) ou dois-je mettre des placeholders ?
+Crée moi des placehoders à la bonne dimension avec par exemple le nom des IA ci-dessus
+
+Avez-vous les descriptions courtes pour l'overlay au clic ?
+Non, je n'ai pas le texte mais met moi de texte latin avec le titre de l'IA et le texte en dessous en quelques lignes (voir la place qu'il y aura !)
+
+Stockage des Données (Google Sheets) :
+
+Est-ce que ces réservations vont dans le même onglet "Réservations" que les salles ?
+ces réservations vont dans autre onglet (4eme onglet) dont tu me donneras le nom et les champs pour que je les crée.
+
+Règles Métier :
+
+Est-ce qu'un outil IA a une capacité (ex: 1 seule personne à la fois ou plusieurs licences) ? Je suppose 1 seule réservation par créneau (Matin ou AM) pour l'instant.
+1 seule réservation par créneau (Matin ou AM) pour l'instant.
+
+Est-ce que les jours fériés/dimanches s'appliquent aussi aux IA ?
+Oui ! les jours fériés/dimanches s'appliquent aussi 
+
+Fichiers :
+
+Je crée un fichier dédié src/data/iaData.js ? (Je préconise un fichier dédié pour séparer les logiques).
+Oui!

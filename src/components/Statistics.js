@@ -161,7 +161,7 @@ function Statistics({ reservations }) {
       {hoveredSlice && createPortal(popupContent, document.body)}
       
       {/* ✅ TITRE SEUL, CENTRÉ */}
-      <h2>📊 Statistiques détaillées</h2>
+      <h2>📊 Statistiques & Administration des salles</h2>
 
       <div className="stats-summary">
         <div className="summary-card"><div className="summary-icon">📅</div><div className="summary-content"><div className="summary-value">{stats.futureTotal}</div><div className="summary-label">Réservations sont programmées</div></div></div>

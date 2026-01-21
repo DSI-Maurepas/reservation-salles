@@ -13,13 +13,24 @@
 .back-button-original { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
 
 /* NAVIGATION */
-.date-navigation-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; padding: 0.8rem 1.5rem; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+.date-navigation-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; padding: 0.8rem 1.5rem; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
 .nav-group-left { min-width: 120px; }
 .nav-group-center { display: flex; align-items: center; gap: 10px; }
 .nav-spacer { min-width: 120px; visibility: hidden; }
 
-.central-date-block { display: flex; align-items: center; gap: 15px; background: #f8fafc; padding: 6px 18px; border-radius: 10px; border: 1px solid #e2e8f0; height: 36px; }
-.central-date-block .date-display h2 { margin: 0; font-size: 0.9rem; color: #1565c0; font-weight: 700; white-space: nowrap; line-height: 1; }
+/* ✅ MODIFICATION ICI : Style identique à Par Salle (Bordure bleue) */
+.central-date-block { 
+  display: flex; 
+  align-items: center; 
+  gap: 15px; 
+  background: #f8fafc; 
+  padding: 6px 18px; 
+  border-radius: 10px; 
+  border: 1px solid #3b82f6; /* Bleu charte */
+  height: 36px; 
+}
+
+.central-date-block .date-display h2 { margin: 0; font-size: 1.1rem; color: #1565c0; font-weight: 700; white-space: nowrap; line-height: 1; }
 
 .nav-today-button { background: #3b82f6; color: white !important; border: none; padding: 0.4rem 1rem; border-radius: 6px; font-weight: 700; cursor: pointer; height: 36px; }
 .nav-nav-btn { background: #3b82f6; color: white !important; border: none; width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-weight: bold; }
@@ -135,8 +146,24 @@
   .nav-group-left { order: 1 !important; width: 100% !important; display: flex !important; justify-content: center !important; min-width: auto !important; }
   .nav-spacer { display: none !important; }
   .nav-group-center { order: 2 !important; width: 100% !important; display: flex !important; flex-wrap: wrap !important; justify-content: center !important; align-items: center !important; gap: 10px !important; }
-  .nav-group-center .central-date-block { order: -1 !important; width: 100% !important; background: transparent !important; border: none !important; padding: 0 !important; display: flex !important; justify-content: center !important; height: auto !important; margin-bottom: 12px !important; }
-  .nav-group-center .central-date-block .date-display h2 { font-size: 0.95rem !important; color: #1e40af !important; white-space: nowrap !important; }
+  
+  /* ✅ MODIFICATION RESPONSIVE : On force le style "encadré bleu" sur mobile */
+  .nav-group-center .central-date-block { 
+    order: -1 !important; 
+    width: auto !important; 
+    
+    /* On restaure le fond et la bordure qui étaient supprimés */
+    background: #f8fafc !important; 
+    border: 1px solid #3b82f6 !important;
+    padding: 6px 18px !important;
+    border-radius: 10px !important;
+    
+    display: flex !important; 
+    justify-content: center !important; 
+    height: auto !important; 
+    margin-bottom: 4px !important; 
+  }
+  .nav-group-center .central-date-block .date-display h2 { font-size: 1.1rem !important; color: #1e40af !important; white-space: nowrap !important; }
   .nav-group-center .central-date-block { flex-basis: 100% !important; }
   .reservation-content { display: flex !important; flex-direction: column !important; width: 100% !important; }
   

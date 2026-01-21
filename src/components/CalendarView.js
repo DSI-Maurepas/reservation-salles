@@ -237,20 +237,22 @@ function CalendarView({ onDateSelect, onRoomSelect, isDateInPast, defaultView = 
             <button onClick={handleNextMonth} className="nav-button" title="Mois suivant">▶</button>
           </div>
 
-          <div className="capacity-instructions"><strong>💡 Cliquez sur les statuts ci-dessous pour voir les détails</strong></div>
-
-          <div className="calendar-legend">
-            {LEGEND_DATA.map((item, index) => (
-              <div 
-                key={index} 
-                className={`legend-item ${activeLegend === item.description ? 'active-legend' : ''}`}
-                onClick={() => handleLegendClick(item.description)}
-                title={item.description}
-              >
-                <span className={`legend-color ${item.status}`}></span>
-                <span>{item.label}</span>
-              </div>
-            ))}
+          {/* ✅ CORRECTION : Fusion de l'instruction et de la légende en une seule ligne */}
+          <div className="capacity-instructions">
+            <strong>💡 Cliquez sur les statuts pour voir les détails :</strong>
+            <div className="legend-buttons-wrapper">
+              {LEGEND_DATA.map((item, index) => (
+                <div 
+                  key={index} 
+                  className={`legend-item ${activeLegend === item.description ? 'active-legend' : ''}`}
+                  onClick={() => handleLegendClick(item.description)}
+                  title={item.description}
+                >
+                  <span className={`legend-color ${item.status}`}></span>
+                  <span>{item.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {activeLegend && (

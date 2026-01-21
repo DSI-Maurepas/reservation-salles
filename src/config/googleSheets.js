@@ -10,43 +10,36 @@ export const GOOGLE_CONFIG = {
   SHEETS: {
     RESERVATIONS: 'Réservations',
     SALLES: 'Salles',
-    CONFIG: 'Configuration'
+    CONFIG: 'Configuration',
+    RESERVATIONS_IA: 'Reservations_IA' // ✅ NOUVEL ONGLET POUR L'IA
   },
   
   DISCOVERY_DOCS: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
   SCOPES: 'https://www.googleapis.com/auth/spreadsheets'
 };
 
-// => Le TEMPLATE_ID_CONFIRMATION: 'template_awkvaoh', // Votre template de confirmation
-
 export const EMAIL_CONFIG = {
-  // ⚠️ Identifiants EmailJS
-  SERVICE_ID: 'service_xoen8ug',            // Commun aux deux envois
-  TEMPLATE_ID_ANNULATION: 'template_i9aqlt9',   // Votre template d'annulation
-  USER_ID: 'QFnQAOzHCSEtZoeVe'      // Mettez ici votre "Public Key"
+  SERVICE_ID: 'service_xoen8ug',
+  TEMPLATE_ID_CONFIRMATION: 'XXXXXXXXXX',
+  TEMPLATE_ID_ANNULATION: 'template_i9aqlt9', // Annulation Salles (Générique)
+  // ✅ AJOUT DES TEMPLATES SPÉCIFIQUES
+  TEMPLATE_ID_ANNULATION_CLIO: 'template_80xv1t9', 
+  TEMPLATE_ID_ANNULATION_IA: 'template_TO_BE_DEFINED', // Placeholder en attendant l'ID
+  USER_ID: 'QFnQAOzHCSEtZoeVe'
 };
 
-// CONFIGURATION APPLICATIVE
 export const APP_CONFIG = {
-  ADMIN_PASSWORD: 'R3sa@M0rep@s78', // Mot de passe Admin Général
-  ADMIN_AUTO_PASSWORD: 'Cl!0@maurepas', // ✅ NOUVEAU : Mot de passe Admin Auto
-  CACHE_DURATION: 60000, // Durée du cache en ms (1 minute) pour éviter surcharge API
+  ADMIN_PASSWORD: 'R3sa@M0rep@s78',
+  ADMIN_AUTO_PASSWORD: 'Cl!0@M0rep@s78', // ✅ NOUVEAU : Mot de passe Admin Auto
+  IA_ADMIN_PASSWORD: '!@@M0rep@s78', // ✅ MOT DE PASSE ADMIN IA
+  CACHE_DURATION: 60000,
 };
 
-// Liste des salles de la mairie (9 salles)
 export const SALLES = [
-  'Salle Conseil',
-  'Salle Mariages',
-  'Salle 16e A',
-  'Salle 16e B',
-  'Salle N°1',
-  'Salle N°2',
-  'Salle N°3',
-  'Salle N°4',
-  'Salle CCAS'
+  'Salle Conseil', 'Salle Mariages', 'Salle 16e A', 'Salle 16e B',
+  'Salle N°1', 'Salle N°2', 'Salle N°3', 'Salle N°4', 'Salle CCAS'
 ];
 
-// Liste des services
 export const SERVICES = [
   'Achats Publics', 'Administration Générale', 'Archives', 'Cabinet du Maire', 'CCAS',
   'Centres de Loisirs', 'Commande Publique', 'Direction des Systèmes d\'Information',
@@ -76,21 +69,18 @@ export const OBJETS_VEHICULE = [
 ];
 
 export const COULEURS_OBJETS = {
-  // Objets Salles
-  'Réunion de service': '#64B5F6', // Bleu clair
-  'Réunion Élus / Commissions': '#F06292', // Rose
-  'Réunion avec prestataire': '#0D47A1', // Bleu foncé
-  'Formation interne': '#81C784', // Vert clair
-  'Formation externe (prestataires)': '#1B5E20', // Vert foncé
-  'Événement municipal / public': '#FFA726', // Orange
-  'Entretien RH': '#FF7043', // Corail
-  'Permanence (élus ou services)': '#880E4F', // Bordeaux
-  'Usage logistique / technique': '#AB47BC', // Violet/Mauve
-  'Autre': '#BDBDBD', // Gris
-  
-  // Objets Véhicule (Nouveaux)
-  'Déplacement dans Maurepas': '#0f6aba', // Bleu
-  'Déplacement hors de Maurepas': '#f9ce34' // Jaune
+  'Réunion de service': '#64B5F6',
+  'Réunion Élus / Commissions': '#F06292',
+  'Réunion avec prestataire': '#0D47A1',
+  'Formation interne': '#81C784',
+  'Formation externe (prestataires)': '#1B5E20',
+  'Événement municipal / public': '#FFA726',
+  'Entretien RH': '#FF7043',
+  'Permanence (élus ou services)': '#880E4F',
+  'Usage logistique / technique': '#AB47BC',
+  'Autre': '#BDBDBD',
+  'Déplacement dans Maurepas': '#F06292',
+  'Déplacement hors de Maurepas': '#7986CB'
 };
 
 export const HORAIRES = {

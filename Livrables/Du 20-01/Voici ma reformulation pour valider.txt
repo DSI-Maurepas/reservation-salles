@@ -1,0 +1,31 @@
+Voici ma reformulation pour valider la bonne compréhension du périmètre avant production :
+
+1. Objectif & Ambiance Création d'un module complet IAGrid dédié à la réservation de 8 outils d'IA.
+
+Style : Une ambiance visuelle distincte "Tech/Cyber" (Dégradé Violet/Cyan) pour marquer la différence avec les salles communales.
+
+Structure : Basée sur SingleRoomGrid (Sidebar gauche / Grille droite) mais adaptée à la logique de ressources multiples.
+
+2. La Grille (Zone Droite)
+
+Axe X (Colonnes) : Les jours de la semaine.
+
+Axe Y (Lignes) : La liste des 8 IA (ChatGPT Plus, Mistral Pro, Gamma, Claude, Gemini, Plaud Pro).
+
+Découpage : Chaque ligne IA est divisée en 2 périodes fixes : Matin (08h00-12h30) et Après-midi (12h30-17h30). Plus de créneaux à la demi-heure.
+
+3. La Sidebar (Zone Gauche)
+
+Affichage : Une grille de 8 photos (placeholders aux dimensions adaptées).
+
+Interaction : Le clic sur une photo affiche un "overlay" (surcouche) avec le titre et une description (Lorem Ipsum).
+
+Transition : La sélection d'un créneau dans la grille déclenche un fondu (fade) de 0.8s qui remplace les photos par le formulaire de réservation.
+
+Nettoyage : Suppression du petit bloc d'instruction en bas de sidebar.
+
+4. Données & Stockage
+
+Création du fichier src/data/iaData.js.
+
+Configuration d'un 4ème onglet Google Sheets (que je nommerai Reservations_IA) pour stocker ces données spécifiques.

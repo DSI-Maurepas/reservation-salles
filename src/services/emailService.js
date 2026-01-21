@@ -3,6 +3,16 @@ import emailjs from 'emailjs-com';
 import { EMAIL_CONFIG } from '../config/googleSheets';
 
 class EmailService {
+  
+  // Méthode utilitaire pour générer l'URL absolue du blason
+  // Nécessaire pour que l'image s'affiche chez le destinataire
+  getBlasonUrl() {
+    // Récupère l'URL de base (ex: https://reservation.maurepas.fr)
+    const baseUrl = window.location.origin;
+    // Pointe vers l'image dans le dossier public/images/
+    return `${baseUrl}/images/Blason_ville_MAUREPAS.png`;
+  }
+
   // Envoyer un email de confirmation de réservation
   async sendConfirmation(reservation) {
     try {
@@ -16,7 +26,9 @@ class EmailService {
         heure_fin: reservation.heureFin,
         service: reservation.service,
         objet: reservation.objet,
-        reservation_id: reservation.id
+        reservation_id: reservation.id,
+        // ✅ AJOUT : URL du blason pour le template EmailJS
+        blason_url: this.getBlasonUrl()
       };
 
       await emailjs.send(
@@ -45,7 +57,9 @@ class EmailService {
         date_fin: reservation.dateFin,
         heure_fin: reservation.heureFin,
         raison_priorite: raisonPriorite || 'Priorité administrative',
-        admin_email: adminEmail || 'Administration'
+        admin_email: adminEmail || 'Administration',
+        // ✅ AJOUT : URL du blason pour le template EmailJS
+        blason_url: this.getBlasonUrl()
       };
 
       await emailjs.send(

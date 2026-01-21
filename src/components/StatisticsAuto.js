@@ -53,8 +53,20 @@ const PieChart = ({ data, realData, title, colors, sortOrder = 'alpha', classNam
       if (e.type === 'click') e.stopPropagation();
       const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
       const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
-      // On affiche la valeur réelle dans l'infobulle
-      onHover({ label, value: Math.round(displayValue) + " min", percentage: percentage.toFixed(1), color, x: clientX, y: clientY });
+      
+      // ✅ FORMATAGE CONDITIONNEL (Minutes -> Heures uniquement pour le bloc Moments)
+      let formattedValue;
+      if (realData) {
+        // Conversion minutes -> format "1h30"
+        const h = Math.floor(displayValue / 60);
+        const m = Math.round(displayValue % 60);
+        formattedValue = `${h}h${m.toString().padStart(2, '0')}`;
+      } else {
+        // Pour les autres graphiques (comptages), on affiche juste le nombre
+        formattedValue = Math.round(displayValue);
+      }
+
+      onHover({ label, value: formattedValue, percentage: percentage.toFixed(1), color, x: clientX, y: clientY });
     };
 
     return {
@@ -203,7 +215,7 @@ function StatisticsAuto({ reservations }) {
     <div className="statistics-container" onClick={() => setHoveredSlice(null)}>
       {hoveredSlice && createPortal(popupContent, document.body)}
       
-      <h2>📊 Statistiques CLIO</h2>
+      <h2>📊 Statistiques & Administration de la CLIO</h2>
 
       <div className="stats-summary">
         <div className="summary-card"><div className="summary-icon">📅</div><div className="summary-content"><div className="summary-value">{stats.futureTotal}</div><div className="summary-label">Réservations à venir de la Clio</div></div></div>
