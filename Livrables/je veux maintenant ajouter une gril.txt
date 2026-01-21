@@ -1,0 +1,47 @@
+je veux maintenant ajouter une grille pour la réservation d'un seul véhicule
+
+=> tu vas me rajouter un bouton "Véhicule" à côté de "par date" et "par salle" qui ouvre une page identique exactement dans son agencement et ses fonctions les plus profondes à par salle
+
+=> tu me crées une grille de type par salle avec les jours de la semaine et les mêmes heures, les mêmes attributs et styles que par salle
+
+=> en haut de cette grille tu y créeras comme dans par salle, un bloc blanc ou seront les mêmes boutons sur 3 lignes comme dans par salle
+
+=> le bouton retour ramènera sur la page qui affiche/affichera "par date, par salle et véhicule"
+
+=> à la place du nom de la salle, tu y mettras le nom du véhicule "CLIO"
+
+=> dessous ce sera la période de la semaine affichée (ex: "12 janvier - 18 janvier 2026")
+
+=> en 3e ligne tu mets les boutons ◀◀◀Cette semaine▶▶▶
+
+
+
+=> De plus, tu crées le même formulaire avec exactement les mêmes fonction, et les mêmes champs et avec la possibilité de cocher récurrence ! avec les boutons "annuler" et "valider".
+
+Les mêmes modal que dans par salle s'afficheront
+
+- modal de confirmation de la clio
+
+- modal d'alerte qui indique qu'une ou plusieurs récurrence sont déjà réservées ! Tu reprends les mêmes couleurs et les mêmes termes le même style !
+
+=> Seule la photo de la Clio sera affichée en haut du formulaire en format 16/9 au même format que les salles ! 
+
+=> Le formulaire sera également affiché à gauche comme dans par salle !
+
+
+
+Je te laisse travailler cette première partie
+
+Prends tons temps et rends moi un travail de professionnel d'expert, et d'une qualité irréprochable ! 
+
+ATTENTION tu vas toucher à des fichiers qui sont parfaitement propres => Je ne veux aucun changement, aucune modification, aucun suppression, aucun oubli !
+
+
+
+Tu testes tous tes ajouts avant de me rendre les fichiers !
+
+Aucune excuses tu as le temps que tu veux !
+
+
+
+Tu as les fichiers "singleroomgrid" pour exemple puisque quasiment tout va s'appuyer sur ces deux fichier
