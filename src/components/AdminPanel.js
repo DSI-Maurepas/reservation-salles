@@ -214,7 +214,7 @@ function AdminPanel({ onEditReservation }) {
       <div className="admin-panel">
         <div className="admin-header">
           <div className="admin-header-actions">
-            <button onClick={handleDownloadExcel} className="download-excel-btn">📥 Télécharger Excel</button>
+            <button onClick={handleDownloadExcel} className="download-excel-btn">📥 Export salles</button>
             <button onClick={handleLogout} className="logout-btn">❌ Déconnexion</button>
           </div>
         </div>
