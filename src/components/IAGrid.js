@@ -3,11 +3,12 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import googleSheetsService from '../services/googleSheetsService';
 import emailService from '../services/emailService';
-import { SERVICES, JOURS_FERIES } from '../config/googleSheets';
+import { SERVICES, JOURS_FERIES, OBJETS_VEHICULE } from '../config/googleSheets';
 import { IA_TOOLS } from '../data/iaData';
 import './IAGrid.css';
 
-function IAGrid({ onBack }) {
+// ✅ AJOUT PROP editingReservation
+function IAGrid({ onBack, editingReservation }) {
   // --- GESTION DATE & DONNÉES ---
   const getMonday = (d) => {
     const date = new Date(d);
@@ -27,36 +28,28 @@ function IAGrid({ onBack }) {
   const [sidebarMode, setSidebarMode] = useState('form'); 
   const [selectedInfoTool, setSelectedInfoTool] = useState(null); 
   
-  // ✅ NOUVEAU : État pour gérer la fermeture animée de la fiche Info
   const [isClosingInfo, setIsClosingInfo] = useState(false);
-
-  // Gestion de la Popover (Réservation existante)
   const [popoverInfo, setPopoverInfo] = useState(null); 
   const [isClosingPopover, setIsClosingPopover] = useState(false);
 
-  // Drag & Drop states
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragCurrent, setDragCurrent] = useState(null);
 
-  // --- FORMULAIRE ---
   const [formData, setFormData] = useState({ 
-    nom: '', prenom: '', email: '', service: '', description: '',
+    nom: '', prenom: '', email: '', service: '', objet: '', description: '',
     recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: ''
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
   
-  // Modals
   const [successModal, setSuccessModal] = useState({ show: false, count: 0 });
   const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [] });
   const [errorModal, setErrorModal] = useState({ show: false, message: '' });
 
-  // Chargement initial
   useEffect(() => { loadIAReservations(); }, [currentWeekStart]);
 
-  // Si on sélectionne des créneaux, on force l'affichage du formulaire et on ferme les popups
   useEffect(() => { 
     if (selections.length > 0) {
       setSidebarMode('form');
@@ -64,22 +57,57 @@ function IAGrid({ onBack }) {
     }
   }, [selections]);
 
-  // Timer pour fermer la popover réservation après 4 secondes
+  // ✅ EFFET POUR CHARGER L'ÉDITION
+  useEffect(() => {
+    if (editingReservation) {
+      // 1. Pré-remplir le formulaire
+      setFormData({
+        nom: editingReservation.nom,
+        prenom: editingReservation.prenom,
+        email: editingReservation.email,
+        service: editingReservation.service,
+        objet: editingReservation.objet, // Nouveau champ motif
+        description: editingReservation.description || '',
+        recurrence: false,
+        recurrenceType: 'weekly',
+        recurrenceJusquau: ''
+      });
+
+      // 2. Positionner le calendrier
+      const dateRes = new Date(editingReservation.dateDebut);
+      setCurrentWeekStart(getMonday(dateRes));
+
+      // 3. Sélectionner le créneau (Surbrillance)
+      const tool = IA_TOOLS.find(t => t.id === editingReservation.toolId);
+      if (tool) {
+        const periodName = editingReservation.heureDebut === '08:00' ? 'Matin' : 'Après-midi';
+        const toolIndex = IA_TOOLS.indexOf(tool);
+        
+        const newSelections = [{
+          toolIndex: toolIndex,
+          toolId: tool.id,
+          toolName: tool.nom,
+          date: dateRes,
+          dateStr: editingReservation.dateDebut,
+          period: periodName,
+          periodIndex: periodName === 'Matin' ? 0 : 1
+        }];
+        setSelections(newSelections);
+        setSidebarMode('form');
+      }
+    }
+  }, [editingReservation]);
+
   useEffect(() => {
     if (popoverInfo) {
-      const timer = setTimeout(() => {
-        closePopover();
-      }, 4000);
+      const timer = setTimeout(() => { closePopover(); }, 4000);
       return () => clearTimeout(timer);
     }
   }, [popoverInfo]);
 
-  // Timer pour fermer la Fiche Info (Photo) après 14 secondes
   useEffect(() => {
     if (selectedInfoTool) {
-      const timer = setTimeout(() => {
-        closeInfoPanel();
-      }, 14000); // 14 secondes
+      const timer = setTimeout(() => { closeInfoPanel(); }, 14000); 
       return () => clearTimeout(timer);
     }
   }, [selectedInfoTool]);
@@ -88,7 +116,12 @@ function IAGrid({ onBack }) {
     setLoading(true);
     try {
       const res = await googleSheetsService.getAllIAReservations();
-      setReservations(res);
+      // En mode édition, on filtre la réservation en cours pour ne pas la marquer comme occupée
+      if (editingReservation) {
+        setReservations(res.filter(r => r.id !== editingReservation.id));
+      } else {
+        setReservations(res);
+      }
     } catch (error) { console.error(error); }
     setLoading(false);
   };
@@ -116,7 +149,6 @@ function IAGrid({ onBack }) {
     closePopover();
   };
 
-  // --- INTERACTION GRILLE ---
   const handleToolHeaderClick = (tool) => {
     setSelectedInfoTool(tool);
     setSidebarMode('info');
@@ -130,7 +162,8 @@ function IAGrid({ onBack }) {
       setTimeout(() => {
         setSelectedInfoTool(null);
         setIsClosingInfo(false);
-      }, 800); // Fade out 0.8s
+        setSidebarMode('form'); 
+      }, 800); 
     }
   };
 
@@ -206,7 +239,6 @@ function IAGrid({ onBack }) {
     else return `Du ${d1} ${p1} au ${d2} ${p2}`;
   };
 
-  // --- DRAG & DROP LOGIC ---
   const handleMouseDown = (e, toolIndex, dayIndex, periodIndex) => {
     e.preventDefault(); 
     e.stopPropagation();
@@ -380,13 +412,18 @@ function IAGrid({ onBack }) {
     setIsSubmitting(true);
     setSubmissionProgress({ current: 0, total: selections.length });
     try {
+      // ✅ SI ÉDITION : Suppression préalable
+      if (editingReservation) {
+        await googleSheetsService.deleteIAReservation(editingReservation.id);
+      }
+
       let allCandidates = [];
       selections.forEach(sel => {
         const baseRes = {
           toolId: sel.toolId, salle: sel.toolName, dateDebut: sel.dateStr,
           heureDebut: sel.period === 'Matin' ? '08:00' : '12:30',
           heureFin: sel.period === 'Matin' ? '12:30' : '17:30',
-          ...formData, telephone: '', objet: 'Réservation IA'
+          ...formData, telephone: '', objet: formData.objet
         };
         allCandidates.push(baseRes);
         if (formData.recurrence && formData.recurrenceJusquau) {
@@ -410,7 +447,9 @@ function IAGrid({ onBack }) {
       allCandidates.forEach(cand => {
         const isConflict = allExisting.some(exist => 
           exist.statut !== 'cancelled' && exist.toolId === cand.toolId &&
-          exist.dateDebut === cand.dateDebut && exist.heureDebut === cand.heureDebut
+          exist.dateDebut === cand.dateDebut && exist.heureDebut === cand.heureDebut &&
+          // Ignore self if editing (redundant with previous delete but safer)
+          (!editingReservation || exist.id !== editingReservation.id)
         );
         if (isConflict) conflicts.push(cand); else valid.push(cand);
       });
@@ -437,7 +476,7 @@ function IAGrid({ onBack }) {
       setSuccessModal({ show: true, count: reservationsToSave.length });
       loadIAReservations();
       setSelections([]);
-      setFormData({ nom: '', prenom: '', email: '', service: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '' });
+      setFormData({ nom: '', prenom: '', email: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '' });
     } catch(e) { console.error(e); } finally { setIsSubmitting(false); }
   };
 
@@ -447,18 +486,26 @@ function IAGrid({ onBack }) {
     <div className="ia-grid-container" onMouseUp={handleMouseUp}>
       
       <div className="ia-nav-bar">
-        <div style={{display:'flex', gap:'10px'}}>
+        <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
           <button className="back-button-original" onClick={onBack}>← Retour</button>
+          <h2 className="ia-title-inline">
+            <span style={{fontSize:'1.5rem'}}>🤖</span> IA 
+            {/* ✅ INDICATEUR MODIFICATION */}
+            {editingReservation && <span style={{fontSize:'0.8em', color:'#ef5350', marginLeft:'8px'}}>(Modification)</span>}
+          </h2>
         </div>
+
         <div className="ia-nav-center">
-          <button className="ia-nav-btn secondary" onClick={() => changeMonth(-1)}>◀◀ <span className="ia-nav-label">Mois</span></button>
-          <button className="ia-nav-btn primary" onClick={() => changeWeek(-7)}>◀ <span className="ia-nav-label">Semaine</span></button>
-          <button className="ia-nav-btn secondary" onClick={resetToToday}>📅 <span className="ia-nav-label">Aujourd'hui</span></button>
+          <button className="ia-nav-btn secondary" onClick={() => changeMonth(-1)}>◀◀ <span className="ia-nav-label"></span></button>
+          <button className="ia-nav-btn primary" onClick={() => changeWeek(-7)}>◀ <span className="ia-nav-label"></span></button>
+          <button className="ia-nav-btn secondary" onClick={resetToToday}><span className="ia-nav-label">Cette semaine</span></button>
+          
           <div className="ia-central-date">
-            Semaine du {currentWeekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {currentWeekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} - {new Date(new Date(currentWeekStart).setDate(currentWeekStart.getDate()+6)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} {currentWeekStart.getFullYear()}
           </div>
-          <button className="ia-nav-btn primary" onClick={() => changeWeek(7)}><span className="ia-nav-label">Semaine</span> ▶</button>
-          <button className="ia-nav-btn secondary" onClick={() => changeMonth(1)}><span className="ia-nav-label">Mois</span> ▶▶</button>
+          
+          <button className="ia-nav-btn primary" onClick={() => changeWeek(7)}><span className="ia-nav-label"></span> ▶</button>
+          <button className="ia-nav-btn secondary" onClick={() => changeMonth(1)}><span className="ia-nav-label"></span> ▶▶</button>
         </div>
         <div style={{width:'100px'}}></div>
       </div>
@@ -516,6 +563,12 @@ function IAGrid({ onBack }) {
                     <option value="">Service *</option>
                     {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
+                  
+                  <select className="form-select" required value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})}>
+                    <option value="">Motif *</option>
+                    {['Déplacement dans Maurepas', 'Déplacement hors de Maurepas'].map(o => <option key={o} value={o}>{o}</option>)}
+                  </select>
+
                   <textarea className="form-textarea" placeholder="Commentaire (facultatif)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                   <div className="recurrence-section-styled">
                     <div className="recurrence-box">
@@ -541,7 +594,7 @@ function IAGrid({ onBack }) {
               </div>
               <div className="form-actions">
                 <button type="button" className="btn-cancel" onClick={() => { setSelections([]); }}>Effacer</button>
-                <button type="submit" form="ia-booking-form" className="btn-submit" disabled={isSubmitting || selections.length === 0}>Confirmer</button>
+                <button type="submit" form="ia-booking-form" className="btn-submit" disabled={isSubmitting || selections.length === 0}>Valider</button>
               </div>
             </div>
           </div>

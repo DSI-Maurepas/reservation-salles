@@ -32,6 +32,7 @@ export const APP_CONFIG = {
   ADMIN_PASSWORD: 'R3sa@M0rep@s78',
   ADMIN_AUTO_PASSWORD: 'Cl!0@M0rep@s78', // ✅ NOUVEAU : Mot de passe Admin Auto
   IA_ADMIN_PASSWORD: '!@@M0rep@s78', // ✅ MOT DE PASSE ADMIN IA
+  SUPER_ADMIN_PASSWORD: 'Dsi@M0rep@$', // ✅ SUPER ADMIN DSI
   CACHE_DURATION: 60000,
 };
 

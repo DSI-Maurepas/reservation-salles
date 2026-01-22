@@ -1,9 +1,11 @@
 // src/components/AdminIA.js
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import * as XLSX from 'xlsx';
 import googleSheetsService from '../services/googleSheetsService';
-import { IA_TOOLS } from '../data/iaData'; // Import des données IA pour fallback nom
-import { APP_CONFIG } from '../config/googleSheets'; // Import de la config mot de passe
+import emailService from '../services/emailService'; 
+import { IA_TOOLS } from '../data/iaData'; 
+import { APP_CONFIG, MOTIFS_ANNULATION } from '../config/googleSheets'; 
 import './Statistics.css';
 
 // --- SOUS-COMPOSANT PIECHART ---
@@ -83,11 +85,11 @@ const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', on
 };
 
 // --- COMPOSANT PRINCIPAL ---
-function AdminIA() {
+function AdminIA({ onEditReservation }) {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // GESTION DU MOT DE PASSE
+  // GESTION DU MOT DE PASSE ET SESSION
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
@@ -107,31 +109,52 @@ function AdminIA() {
   const [isFading, setIsFading] = useState(false);
   const [popupPos, setPopupPos] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    // On ne charge les données que si authentifié
-    if (!isAuthenticated) return;
+  // États pour l'annulation
+  const [cancelModal, setCancelModal] = useState({ show: false, reservation: null });
+  const [selectedMotif, setSelectedMotif] = useState('');
 
-    const fetchData = async () => {
-      try {
-        const data = await googleSheetsService.getAllIAReservations();
-        setReservations(data);
-      } catch (error) {
-        console.error("Erreur chargement IA:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  // VÉRIFICATION DE LA SESSION AU CHARGEMENT
+  useEffect(() => {
+    const sessionAuth = sessionStorage.getItem('isAdminIAAuthenticated');
+    if (sessionAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    loadAllReservations();
   }, [isAuthenticated]);
+
+  const loadAllReservations = async () => {
+    setLoading(true);
+    try {
+      const data = await googleSheetsService.getAllIAReservations();
+      setReservations(data);
+    } catch (error) {
+      console.error("Erreur chargement IA:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
     if (passwordInput === APP_CONFIG.IA_ADMIN_PASSWORD) {
       setIsAuthenticated(true);
       setAuthError('');
+      // ENREGISTREMENT DE LA SESSION
+      sessionStorage.setItem('isAdminIAAuthenticated', 'true');
     } else {
       setAuthError('Mot de passe incorrect');
     }
+  };
+
+  // GESTION DE LA DÉCONNEXION
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('isAdminIAAuthenticated');
+    setPasswordInput('');
   };
 
   // Helper pour récupérer le nom de l'IA
@@ -141,33 +164,57 @@ function AdminIA() {
     return tool ? tool.nom : 'Inconnue';
   };
 
+  // Gestion Actions
+  const handleEdit = (res) => {
+    if (onEditReservation) {
+      onEditReservation(res);
+    }
+  };
+
+  const handleDeleteClick = (res) => {
+    setCancelModal({ show: true, reservation: res });
+    setSelectedMotif('');
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedMotif) return alert('Veuillez sélectionner un motif');
+    try {
+      await googleSheetsService.deleteIAReservation(cancelModal.reservation.id);
+      
+      try {
+        await emailService.sendCancellation(cancelModal.reservation, selectedMotif, "La DSI");
+      } catch (e) { console.error("Erreur envoi mail annulation", e); }
+      
+      setCancelModal({ show: false, reservation: null });
+      loadAllReservations();
+      alert('Réservation supprimée.');
+    } catch (error) { 
+      alert('Erreur suppression: ' + error.message); 
+    }
+  };
+
   // --- STATISTIQUES ---
   const stats = useMemo(() => {
     if (!reservations || reservations.length === 0) return null;
     const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     const reservationsAVenir = reservations.filter(res => { const d = new Date(res.dateDebut); return !Number.isNaN(d.getTime()) && d >= todayStart; }).length;
 
-    // Par Jour
     const parJour = { 'Lundi': 0, 'Mardi': 0, 'Mercredi': 0, 'Jeudi': 0, 'Vendredi': 0, 'Samedi': 0, 'Dimanche': 0 };
     const joursNoms = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
     reservations.forEach(res => { const date = new Date(res.dateDebut); if (!isNaN(date)) parJour[joursNoms[date.getDay()]]++; });
 
-    // Top Utilisateurs (TOP 15)
     const parUtilisateur = {}; reservations.forEach(res => { const key = `${res.prenom} ${res.nom}`.trim(); parUtilisateur[key] = (parUtilisateur[key] || 0) + 1; });
     const topUtilisateurs = Object.entries(parUtilisateur).sort((a, b) => b[1] - a[1]).slice(0, 15);
 
-    // Par IA
     const parIA = {}; 
     reservations.forEach(res => { 
       const iaName = getIAName(res);
       parIA[iaName] = (parIA[iaName] || 0) + 1; 
     });
 
-    // Par Service
     const formatServiceNomCourt = (service) => { const s = (service || '').trim(); if (!s) return 'Non spécifié'; if (!s.includes('/')) return s; const parts = s.split('/'); const shortName = (parts[parts.length - 1] || '').trim(); return shortName || s; };
     const parService = {}; reservations.forEach(res => { const serviceKey = formatServiceNomCourt(res.service); parService[serviceKey] = (parService[serviceKey] || 0) + 1; });
 
-    // Moments (Matin / Après-midi)
     const parMomentJournee = { 'Matin': 0, 'Après-midi': 0 };
     reservations.forEach(res => {
         if (res.heureDebut && res.heureDebut.startsWith('08')) {
@@ -177,7 +224,6 @@ function AdminIA() {
         }
     });
 
-    // Durée Moyenne
     let totalMinutes = 0;
     reservations.forEach(res => { 
         if (res.heureDebut && res.heureDebut.startsWith('08')) totalMinutes += 270; 
@@ -186,7 +232,6 @@ function AdminIA() {
     const avg = reservations.length > 0 ? totalMinutes / reservations.length : 0;
     const dureeMoyenne = `${Math.floor(avg / 60)}h${Math.round(avg % 60).toString().padStart(2, '0')}m`;
 
-    // Nombre de jours d'activité unique
     const uniqueDays = new Set(reservations.map(res => res.dateDebut)).size;
 
     return { total: reservations.length, futureTotal: reservationsAVenir, parJour, topUtilisateurs, parIA, parService, parMomentJournee, dureeMoyenne, uniqueDays };
@@ -251,6 +296,24 @@ function AdminIA() {
     return sortConfig.direction === 'asc' ? '🔼' : '🔽';
   };
 
+  // FONCTION EXPORT EXCEL IA
+  const handleDownloadExcel = () => {
+    if (filteredAndSortedReservations.length === 0) return alert('Aucune donnée à exporter');
+    const dataToExport = filteredAndSortedReservations.map(r => ({
+      'Date': new Date(r.dateDebut).toLocaleDateString('fr-FR'),
+      'Créneau': r.heureDebut === '08:00' ? 'Matin' : 'Après-midi',
+      'Outil IA': getIAName(r),
+      'Utilisateur': `${r.prenom} ${r.nom}`,
+      'Email': r.email,
+      'Service': r.service
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Réservations IA");
+    XLSX.writeFile(wb, `Export_IA_${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`);
+  };
+
   const handleSliceHover = (data) => {
     setHoveredSlice(data);
     setPopupPos({ x: data.x, y: data.y - 130 });
@@ -265,7 +328,6 @@ function AdminIA() {
     return () => { clearTimeout(fadeTimer); clearTimeout(removeTimer); };
   }, [hoveredSlice]);
 
-  // MODAL DE CONNEXION SI NON AUTHENTIFIÉ
   if (!isAuthenticated) {
     return (
       <div className="statistics-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
@@ -313,21 +375,26 @@ function AdminIA() {
     <div className="statistics-container" onClick={() => setHoveredSlice(null)}>
       {hoveredSlice && createPortal(popupContent, document.body)}
       
-      <h2>📊 Statistiques & Administration IA</h2>
+      {/* HEADER : Titre + Groupe Boutons */}
+      <div className="admin-ia-header-wrapper">
+        <h2>📊 Statistiques & Administration IA</h2>
+        <div className="admin-ia-buttons">
+          <button onClick={handleDownloadExcel} className="btn-ia-export">📥 Export IA</button>
+          <button onClick={handleLogout} className="btn-ia-logout">❌ Déconnexion</button>
+        </div>
+      </div>
 
       <div className="stats-summary">
-        <div className="summary-card"><div className="summary-icon">🤖</div><div className="summary-content"><div className="summary-value">{stats.futureTotal}</div><div className="summary-label">Réservations IA à venir</div></div></div>
-        <div className="summary-card"><div className="summary-icon">⏱️</div><div className="summary-content"><div className="summary-label">Durée moyenne estimée</div><div className="summary-value">{stats.dureeMoyenne}</div></div></div>
-        <div className="summary-card"><div className="summary-icon">🏆</div><div className="summary-content"><div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div><div className="summary-label">est l'Utilisateur n°1</div></div></div>
+        <div className="summary-card"><div className="summary-icon">🤖</div><div className="summary-content"><div className="summary-value">{stats.futureTotal}</div><div className="summary-label">Réservations IA dans les prochains jours</div></div></div>
+        <div className="summary-card"><div className="summary-icon">⏱️</div><div className="summary-content"><div className="summary-label">Durée moyenne estimée d'une réservation</div><div className="summary-value">{stats.dureeMoyenne}</div></div></div>
+        <div className="summary-card"><div className="summary-icon">🏆</div><div className="summary-content"><div className="summary-value">{stats.topUtilisateurs[0]?.[0] || 'N/A'}</div><div className="summary-label">est IA dépendant/e</div></div></div>
         <div className="summary-card"><div className="summary-icon">📅</div><div className="summary-content"><div className="summary-label">Jours d'utilisation</div><div className="summary-value">{stats.uniqueDays}</div></div></div>
       </div>
 
-      {/* GRILLE RECONFIGURÉE */}
       <div className="charts-grid" style={{marginBottom:'3rem'}}>
         <PieChart data={stats.parIA} title="🤖 Répartition par Outil IA" colors={c1} sortOrder="desc" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         <PieChart data={stats.parJour} title="📆 Réservations par jour" colors={c2} sortOrder="jours" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
         
-        {/* Ligne 2 & 3 : Top 15 à Gauche (Span 2) | Moments et Service à Droite */}
         <div className="chart-card" style={{ gridRow: 'span 2', display:'flex', flexDirection:'column' }}>
           <h3>🏆 Top 15 Utilisateurs IA</h3>
           <div className="top-users-list" style={{flex:1, overflowY:'auto'}}>
@@ -345,10 +412,9 @@ function AdminIA() {
         <PieChart data={stats.parService} title="🏛️ Réservations par service" colors={c3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
       </div>
 
-      <div className="admin-list-section" style={{background:'white', padding:'1.5rem', borderRadius:'12px', boxShadow:'0 4px 15px rgba(0,0,0,0.1)'}}>
-        {/* ✅ AJOUT DU COMPTEUR ICI */}
+      <div className="admin-list-section admin-ia-list" style={{background:'white', padding:'1.5rem', borderRadius:'12px', boxShadow:'0 4px 15px rgba(0,0,0,0.1)'}}>
         <h3 style={{color:'#0f6aba', marginTop:0, borderBottom:'2px solid #e0e0e0', paddingBottom:'0.5rem'}}>
-          📋 Liste des réservations des outils de l'IA ({filteredAndSortedReservations.length})
+          📋 Liste des Réservations IA ({filteredAndSortedReservations.length})
         </h3>
         
         <div className="admin-filters" style={{display:'flex', flexWrap:'wrap', gap:'1rem', marginBottom:'1.5rem', padding:'1rem', background:'#f8fafc', borderRadius:'8px'}}>
@@ -399,8 +465,11 @@ function AdminIA() {
                 <th onClick={() => requestSort('utilisateur')} style={{padding:'12px', textAlign:'left', cursor:'pointer', userSelect:'none'}}>
                   Utilisateur {getSortIcon('utilisateur')}
                 </th>
-                <th onClick={() => requestSort('service')} style={{padding:'12px', textAlign:'left', borderRadius:'0 6px 6px 0', cursor:'pointer', userSelect:'none'}}>
+                <th onClick={() => requestSort('service')} style={{padding:'12px', textAlign:'left', cursor:'pointer', userSelect:'none'}}>
                   Service {getSortIcon('service')}
+                </th>
+                <th style={{padding:'12px', textAlign:'center', borderRadius:'0 6px 6px 0'}}>
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -415,11 +484,17 @@ function AdminIA() {
                     <div style={{fontSize:'0.8rem', color:'#64748b'}}>{res.email}</div>
                   </td>
                   <td style={{padding:'12px', textAlign:'left'}}>{res.service}</td>
+                  <td style={{padding:'12px', textAlign:'center'}}>
+                    <div className="actions-wrapper">
+                      <button onClick={() => handleEdit(res)} className="edit-button">Modifier</button>
+                      <button onClick={() => handleDeleteClick(res)} className="delete-button">Supprimer</button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filteredAndSortedReservations.length === 0 && (
                 <tr>
-                  <td colSpan="5" style={{padding:'2rem', textAlign:'center', color:'#64748b'}}>Aucune réservation trouvée.</td>
+                  <td colSpan="6" style={{padding:'2rem', textAlign:'center', color:'#64748b'}}>Aucune réservation trouvée.</td>
                 </tr>
               )}
             </tbody>
@@ -429,6 +504,25 @@ function AdminIA() {
           Total affiché : {filteredAndSortedReservations.length} réservation(s)
         </div>
       </div>
+
+      {cancelModal.show && (
+        <div className="cancel-modal-overlay">
+          <div className="cancel-modal">
+            <h3>Suppression</h3>
+            <p>Voulez-vous supprimer la réservation de <strong>{cancelModal.reservation.nom}</strong> ?</p>
+            <div className="motif-selection">
+              <select value={selectedMotif} onChange={(e) => setSelectedMotif(e.target.value)}>
+                <option value="">-- Choisir un motif --</option>
+                {MOTIFS_ANNULATION.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setCancelModal({show:false, reservation:null})} className="btn-cancel">Annuler</button>
+              <button onClick={handleDeleteConfirm} className="btn-submit" disabled={!selectedMotif}>Confirmer</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
