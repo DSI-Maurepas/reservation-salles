@@ -46,7 +46,7 @@
 }
 
 @media (max-width: 768px) {
-  .admin-auto-panel { padding: 1rem; }
+  .admin-auto-panel { padding: 0.1rem; }
   .filters-section { display: none; }
   .reservations-section { display: none; }
 }

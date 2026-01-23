@@ -194,20 +194,20 @@
   .admin-ia-header-wrapper {
     flex-direction: column; 
     gap: 15px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.3rem;
   }
 
   /* Titre en bas */
   .admin-ia-header-wrapper h2 {
-    font-size: 1.3rem; 
+    font-size: 1.0rem; 
     order: 2; /* <-- Changement ici */
   }
 
   /* ✅ CONTENEUR BOUTONS EN HAUT */
   .admin-ia-buttons {
     order: 1; /* <-- Changement ici */
-    width: auto;
-    justify-content: center;
+    width: 100%; /* ✅ CORRECTION : Largeur 100% pour permettre l'alignement */
+    justify-content: flex-end; /* ✅ Alignement à droite */
   }
 
   .statistics-container { padding: 0.5rem; width: 100%; max-width: 100vw; box-sizing: border-box; overflow-x: hidden; }
@@ -215,7 +215,7 @@
   .statistics-container h2 { 
     font-size: 1.1rem;
     text-align: center; 
-    margin-bottom: 1.5rem; 
+    margin-bottom: 1.0rem; 
     white-space: nowrap;
   }
 

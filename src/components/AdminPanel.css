@@ -39,7 +39,7 @@
 .admin-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 2rem;
+  margin-bottom: 0.2rem;
 }
 
 .admin-header-actions {
