@@ -412,17 +412,13 @@ function IAGrid({ onBack, editingReservation }) {
     setIsSubmitting(true);
     setSubmissionProgress({ current: 0, total: selections.length });
     try {
-      // ✅ SI ÉDITION : Suppression préalable
-      if (editingReservation) {
-        await googleSheetsService.deleteIAReservation(editingReservation.id);
-      }
-
       let allCandidates = [];
       selections.forEach(sel => {
         const baseRes = {
           toolId: sel.toolId, salle: sel.toolName, dateDebut: sel.dateStr,
           heureDebut: sel.period === 'Matin' ? '08:00' : '12:30',
           heureFin: sel.period === 'Matin' ? '12:30' : '17:30',
+          // ✅ ENVOI DU MOTIF CHOISI DANS 'objet'
           ...formData, telephone: '', objet: formData.objet
         };
         allCandidates.push(baseRes);
@@ -447,9 +443,7 @@ function IAGrid({ onBack, editingReservation }) {
       allCandidates.forEach(cand => {
         const isConflict = allExisting.some(exist => 
           exist.statut !== 'cancelled' && exist.toolId === cand.toolId &&
-          exist.dateDebut === cand.dateDebut && exist.heureDebut === cand.heureDebut &&
-          // Ignore self if editing (redundant with previous delete but safer)
-          (!editingReservation || exist.id !== editingReservation.id)
+          exist.dateDebut === cand.dateDebut && exist.heureDebut === cand.heureDebut
         );
         if (isConflict) conflicts.push(cand); else valid.push(cand);
       });
@@ -476,8 +470,18 @@ function IAGrid({ onBack, editingReservation }) {
       setSuccessModal({ show: true, count: reservationsToSave.length });
       loadIAReservations();
       setSelections([]);
+      // Reset form including objet
       setFormData({ nom: '', prenom: '', email: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '' });
     } catch(e) { console.error(e); } finally { setIsSubmitting(false); }
+  };
+
+  const handleCancelSelection = () => { 
+    setSelections([]); 
+    setFormData({ nom: '', prenom: '', email: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '' });
+    // ✅ RETOUR ARRIÈRE SÉCURISÉ
+    if (editingReservation && onBack) {
+      onBack();
+    }
   };
 
   const displaySelections = getDisplayList();
@@ -486,6 +490,7 @@ function IAGrid({ onBack, editingReservation }) {
     <div className="ia-grid-container" onMouseUp={handleMouseUp}>
       
       <div className="ia-nav-bar">
+        {/* ✅ MODIFICATION : Bouton Retour + Titre IA alignés */}
         <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
           <button className="back-button-original" onClick={onBack}>← Retour</button>
           <h2 className="ia-title-inline">
@@ -500,6 +505,7 @@ function IAGrid({ onBack, editingReservation }) {
           <button className="ia-nav-btn primary" onClick={() => changeWeek(-7)}>◀ <span className="ia-nav-label"></span></button>
           <button className="ia-nav-btn secondary" onClick={resetToToday}><span className="ia-nav-label">Cette semaine</span></button>
           
+          {/* ✅ MODIFICATION AFFICHAGE DATE : RANGE */}
           <div className="ia-central-date">
             {currentWeekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} - {new Date(new Date(currentWeekStart).setDate(currentWeekStart.getDate()+6)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} {currentWeekStart.getFullYear()}
           </div>
@@ -564,6 +570,7 @@ function IAGrid({ onBack, editingReservation }) {
                     {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                   
+                  {/* ✅ NOUVEAU CHAMP MOTIF OBLIGATOIRE */}
                   <select className="form-select" required value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})}>
                     <option value="">Motif *</option>
                     {['Déplacement dans Maurepas', 'Déplacement hors de Maurepas'].map(o => <option key={o} value={o}>{o}</option>)}
@@ -590,11 +597,11 @@ function IAGrid({ onBack, editingReservation }) {
                       </div>
                     )}
                   </div>
+                  <div className="form-actions">
+                    <button type="button" className="btn-cancel" onClick={handleCancelSelection}>Annuler</button>
+                    <button type="submit" form="ia-booking-form" className="btn-submit" disabled={isSubmitting || selections.length === 0}>Valider</button>
+                  </div>
                 </form>
-              </div>
-              <div className="form-actions">
-                <button type="button" className="btn-cancel" onClick={() => { setSelections([]); }}>Effacer</button>
-                <button type="submit" form="ia-booking-form" className="btn-submit" disabled={isSubmitting || selections.length === 0}>Valider</button>
               </div>
             </div>
           </div>
@@ -625,14 +632,21 @@ function IAGrid({ onBack, editingReservation }) {
                     const matinPast = checkIfPast(date, 'Matin');
                     const amPast = checkIfPast(date, 'Après-midi');
 
+                    // ✅ MODIFICATION : Vérification "isMatinSel" + "editingReservation" pour appliquer la classe
+                    let matinClass = `ia-slot ${matinOcc ? 'occupied' : matinPast ? 'past' : isMatinSel || isMatinDrag ? 'selected' : 'free'}`;
+                    if (isMatinSel && editingReservation) matinClass += ' editing-pulse';
+
+                    let amClass = `ia-slot ${amOcc ? 'occupied' : amPast ? 'past' : isAmSel || isAmDrag ? 'selected' : 'free'}`;
+                    if (isAmSel && editingReservation) amClass += ' editing-pulse';
+
                     return (
                       <td key={dIdx}>
                         <div className="ia-sub-row">
-                          <div className={`ia-slot ${matinOcc ? 'occupied' : matinPast ? 'past' : isMatinSel || isMatinDrag ? 'selected' : 'free'}`}
+                          <div className={matinClass}
                             onMouseDown={(e) => handleMouseDown(e, tIdx, dIdx, 0)} onMouseEnter={() => handleMouseEnter(tIdx, dIdx, 0)}>
                             <span className="ia-time-label">AM</span>{matinOcc ? 'Réservé' : ''}
                           </div>
-                          <div className={`ia-slot ${amOcc ? 'occupied' : amPast ? 'past' : isAmSel || isAmDrag ? 'selected' : 'free'}`}
+                          <div className={amClass}
                             onMouseDown={(e) => handleMouseDown(e, tIdx, dIdx, 1)} onMouseEnter={() => handleMouseEnter(tIdx, dIdx, 1)}>
                             <span className="ia-time-label">PM</span>{amOcc ? 'Réservé' : ''}
                           </div>

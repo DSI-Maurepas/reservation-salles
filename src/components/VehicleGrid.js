@@ -22,6 +22,14 @@ function VehicleGrid({ onBack, editingReservation }) {
     return monday; 
   };
 
+  // ✅ HELPER POUR DATE STRICTE
+  const toISODate = (d) => {
+    const date = d instanceof Date ? d : new Date(d);
+    return date.getFullYear() + '-' + 
+           String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+           String(date.getDate()).padStart(2, '0');
+  };
+
   const getInitialStartDate = () => {
     const today = new Date();
     if (today.getDay() === 0) { 
@@ -81,22 +89,13 @@ function VehicleGrid({ onBack, editingReservation }) {
       setCurrentWeekStart(getMondayOfWeek(dateRes));
 
       // 3. Mettre en surbrillance (Sélection)
-      // Conversion heure "08:00" -> 8
-      const timeToFloat = (str) => {
-        const [h, m] = str.split(':').map(Number);
-        return h + (m === 30 ? 0.5 : 0);
-      };
-      const startSlot = timeToFloat(editingReservation.heureDebut);
-      const endSlot = timeToFloat(editingReservation.heureFin);
-      
-      // Trouver l'index du jour (0-6)
-      const diffTime = dateRes.getTime() - getMondayOfWeek(dateRes).getTime();
-      const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
+      const startSlot = googleSheetsService.timeToFloat(editingReservation.heureDebut);
+      const endSlot = googleSheetsService.timeToFloat(editingReservation.heureFin);
       
       const newSelections = [];
       for (let h = startSlot; h < endSlot; h += 0.5) {
         newSelections.push({
-          dayIndex: diffDays,
+          dayIndex: -1,
           hour: h,
           date: dateRes
         });
@@ -178,7 +177,14 @@ function VehicleGrid({ onBack, editingReservation }) {
     }); 
   };
 
-  const isSlotSelected = (dayIndex, slot) => selections.some(sel => sel.dayIndex === dayIndex && sel.hour === slot);
+  // ✅ CORRECTION CRÉNEAUX FANTÔMES
+  const isSlotSelected = (dayIndex, slot) => {
+    const currentCellDateStr = toISODate(dates[dayIndex]);
+    return selections.some(sel => {
+      const selDateStr = toISODate(sel.date instanceof Date ? sel.date : new Date(sel.date));
+      return sel.hour === slot && selDateStr === currentCellDateStr;
+    });
+  };
   
   const handleMouseDown = (dayIndex, hour, date, event) => {
     if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; }
@@ -200,7 +206,7 @@ function VehicleGrid({ onBack, editingReservation }) {
     if (isDateInPast(date)) return;
     
     // ✅ SI ON COMMENCE UNE NOUVELLE SÉLECTION ALORS QU'ON ÉTAIT EN ÉDITION, ON VIDE L'ANCIENNE
-    if (editingReservation && selections.length > 0) {
+    if (editingReservation) {
       setSelections([]);
     }
 
@@ -229,7 +235,7 @@ function VehicleGrid({ onBack, editingReservation }) {
       const dayDate = dates[d];
       if (!isDimanche(dayDate) && !isJourFerie(dayDate) && !isDateInPast(dayDate)) {
         for (let h = minHour; h <= maxHour; h += 0.5) {
-          const exists = newSelections.some(sel => sel.dayIndex === d && sel.hour === h);
+          const exists = isSlotSelected(d, h);
           if (!exists && !isSlotReserved(d, h)) {
             newSelections.push({ dayIndex: d, hour: h, date: dates[d] });
           }
@@ -242,9 +248,12 @@ function VehicleGrid({ onBack, editingReservation }) {
   const handleMouseUp = () => { 
     if (!isDragging && mouseDownPos) { 
       const { dayIndex, hour, date } = mouseDownPos; 
-      const alreadySelected = selections.some(sel => sel.dayIndex === dayIndex && sel.hour === hour); 
+      const alreadySelected = isSlotSelected(dayIndex, hour); 
       if (alreadySelected) { 
-        const newSelections = selections.filter(sel => !(sel.dayIndex === dayIndex && sel.hour === hour)); 
+        const dateStr = toISODate(date);
+        const newSelections = selections.filter(sel => 
+          !(sel.hour === hour && toISODate(sel.date) === dateStr)
+        ); 
         setSelections(newSelections); 
       } else { 
         setSelections([...selections, { dayIndex, hour, date }]); 
@@ -255,14 +264,17 @@ function VehicleGrid({ onBack, editingReservation }) {
 
   const handleCancelSelection = () => { 
     setSelections([]); 
-    setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
-    if (onBack && editingReservation) onBack(); // Si annulation en édition, on retourne
+    setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
+    // ✅ RETOUR ARRIÈRE EN CAS D'ÉDITION
+    if (editingReservation && onBack) {
+      onBack();
+    }
   };
   
   const removeSelection = (index) => {
     const toRemove = mergedForDisplay[index];
     const selectionsToRemove = selections.filter(sel => sel.date && toRemove.date && sel.date.getTime() === toRemove.date.getTime() && sel.hour >= toRemove.hour && sel.hour < toRemove.endHour);
-    const newSelections = selections.filter(sel => !selectionsToRemove.some(remove => sel.date && remove.date && sel.date.getTime() === remove.date.getTime() && Math.abs(sel.hour - remove.hour) < 0.01));
+    const newSelections = selections.filter(sel => !selectionsToRemove.includes(sel));
     setSelections(newSelections);
   };
 
@@ -270,7 +282,7 @@ function VehicleGrid({ onBack, editingReservation }) {
     if (selections.length === 0) return [];
     const byDate = {};
     selections.forEach(sel => {
-      const dateKey = sel.date instanceof Date ? sel.date.toISOString().split('T')[0] : sel.date;
+      const dateKey = toISODate(sel.date);
       if (!byDate[dateKey]) byDate[dateKey] = [];
       byDate[dateKey].push(sel);
     });
@@ -309,10 +321,8 @@ function VehicleGrid({ onBack, editingReservation }) {
         const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); 
         const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); 
         const hasConflict = allExistingReservations.some(existing => { 
-            if (existing.statut === 'cancelled') return false;
-            // SI EDITION, ON IGNORE L'ANCIENNE RESERVATION DANS LA DETECION DE CONFLIT
+            if (existing.statut === 'cancelled') return false; 
             if (editingReservation && existing.id === editingReservation.id) return false;
-
             if (existing.salle !== candidate.salle && existing.salle.split(' - ')[0] !== candidate.salle) return false; 
             const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); 
             const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); 
@@ -327,11 +337,9 @@ function VehicleGrid({ onBack, editingReservation }) {
     setWarningModal({ show: false, conflicts: [], validReservations: [] });
     setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); 
     try { 
-        // ✅ SI EDITION : On supprime d'abord l'ancienne réservation
         if (editingReservation) {
           await googleSheetsService.deleteReservation(editingReservation.id);
         }
-
         const createdReservations = []; 
         for (const res of reservationsToSave) { 
             const result = await googleSheetsService.addReservation(res); 
@@ -379,6 +387,32 @@ function VehicleGrid({ onBack, editingReservation }) {
 
   const mergedForDisplay = selections.length > 0 ? preMergeSelections(selections) : [];
 
+  useEffect(() => {
+    if (editingReservation) {
+      setFormData({
+        nom: editingReservation.nom || '', prenom: editingReservation.prenom || '',
+        email: editingReservation.email || '', telephone: editingReservation.telephone || '',
+        service: editingReservation.service || '', objet: editingReservation.objet || '',
+        description: editingReservation.description || '', recurrence: false,
+        recurrenceType: 'weekly', recurrenceJusquau: '',
+        agencement: editingReservation.agencement || '', nbPersonnes: editingReservation.nbPersonnes || ''
+      });
+      const resDate = new Date(editingReservation.dateDebut);
+      const startHour = googleSheetsService.timeToFloat(editingReservation.heureDebut);
+      const endHour = googleSheetsService.timeToFloat(editingReservation.heureFin);
+      const newSelections = [];
+      
+      for (let h = startHour; h < endHour; h += 0.5) {
+        newSelections.push({ 
+          dayIndex: -1, 
+          hour: h, 
+          date: resDate 
+        });
+      }
+      setSelections(newSelections);
+    }
+  }, [editingReservation]);
+
   return (
     <>
       {successModal.show && createPortal(
@@ -392,13 +426,16 @@ function VehicleGrid({ onBack, editingReservation }) {
               <div className="reservations-list">
                 {successModal.reservations.map((res, i) => ( <div key={i} className="reservation-item-success"><span className="calendar-icon">📅</span> {res.salle.split(' - ')[0]} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin}</div> ))}
               </div>
+              
               <div className="ical-info-text" style={{fontSize: '0.9rem', color: '#64748b', marginBottom: '0.5rem', textAlign: 'center', fontStyle: 'italic'}}>
                 {successModal.reservations.length > 1 
                   ? "Intégration dans un agenda parallèle à transférer ensuite dans le votre" 
                   : "Intégration dans votre agenda"}
               </div>
+
               <div className="ical-download-section"><button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Calendrier iCal</button></div>
             </div>
+            
             <div className="success-modal-footer">
                 <button className="close-modal-button" onClick={() => setSuccessModal({ ...successModal, show: false })}>Fermer</button>
             </div>
@@ -512,6 +549,9 @@ function VehicleGrid({ onBack, editingReservation }) {
                       if (blocked && !reserved) cellClass += ' blocked';
                       if (past && !reserved) cellClass += ' past-date';
                       if (slot >= 12 && slot < 14) cellClass += ' lunch-break';
+
+                      // ✅ MODIFICATION : Ajout de la classe d'animation si en mode édition et case sélectionnée
+                      if (selected && editingReservation) cellClass += ' editing-pulse';
 
                       return (<td key={`${dayIndex}-${slot}`} className={cellClass} style={bgStyle} onMouseDown={(e) => handleMouseDown(dayIndex, slot, date, e)} onMouseEnter={() => handleMouseEnter(dayIndex, slot, date)}></td>); 
                     })}

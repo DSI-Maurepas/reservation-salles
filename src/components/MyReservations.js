@@ -70,6 +70,7 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
   const loadUserReservations = async () => {
     setLoading(true);
     try {
+      // Note: Si vous souhaitez voir aussi les réservations IA ici, il faudra fusionner avec getAllIAReservations()
       const allReservations = await googleSheetsService.getAllReservations();
       const userReservations = allReservations.filter(res => 
         res.email && res.email.trim().toLowerCase() === userEmail.trim().toLowerCase()
@@ -141,11 +142,13 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
       return sortDirection === 'asc' ? ' ▲' : ' ▼'; 
   };
 
+  // ✅ CORRECTION MAJEURE : Appel de la prop onEditReservation
   const handleEdit = (reservation) => {
-    const dateStr = reservation.dateDebut;
-    const salle = reservation.salle;
-    const newHash = `#calendar?salle=${encodeURIComponent(salle)}&date=${dateStr}&edit=${reservation.id}`;
-    window.location.hash = newHash;
+    if (onEditReservation) {
+      onEditReservation(reservation);
+    } else {
+      console.error("Fonction d'édition non disponible");
+    }
   };
 
   const handleDeleteClick = (reservation) => { 
@@ -219,8 +222,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
         </button>
       </div>
 
-      {/* Bouton Export Mobile SUPPRIMÉ comme demandé précédemment */}
-
       {filteredReservations.length === 0 ? <div className="no-reservations"><p>Aucune réservation trouvée pour cet email.</p></div> : (
         <div className="reservations-card">
           <div className="table-scroll-container">
@@ -229,7 +230,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
                 <tr>
                   <th onClick={() => handleSort('salle')} style={{cursor: 'pointer'}}>Salle{renderSortIcon('salle')}</th>
                   <th onClick={() => handleSort('dateDebut')} style={{cursor: 'pointer'}}>Date{renderSortIcon('dateDebut')}</th>
-                  {/* MODIF : "Heure" masqué sur mobile via desktop-view */}
                   <th onClick={() => handleSort('heureDebut')} style={{cursor: 'pointer'}}><span className="desktop-view">Heure</span>{renderSortIcon('heureDebut')}</th>
                   <th className="col-service" onClick={() => handleSort('service')} style={{cursor: 'pointer'}}>Service{renderSortIcon('service')}</th>
                   <th className="col-objet" onClick={() => handleSort('objet')} style={{cursor: 'pointer'}}>Objet{renderSortIcon('objet')}</th>
@@ -271,7 +271,6 @@ function MyReservations({ userEmail, setUserEmail, onEditReservation }) {
     {cancelModal.show && (<div className="cancel-modal-overlay" onClick={() => setCancelModal({ show: false, reservation: null })}><div className="cancel-modal" onClick={(e) => e.stopPropagation()}><h3>⚠️ Confirmer l'annulation</h3><div className="reservation-details"><p><strong>📅 </strong> {new Date(cancelModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 </strong> {cancelModal.reservation.heureDebut} - {cancelModal.reservation.heureFin}</p><p><strong>🏢 </strong> {cancelModal.reservation.salle}</p><p><strong>📝 </strong> {cancelModal.reservation.objet}</p></div><div className="motif-selection"><label><strong>💬 </strong></label><select value={selectedMotif} onChange={(e) => setSelectedMotif(e.target.value)} className="motif-select"><option value="">-- Motif --</option>{MOTIFS_ANNULATION.map((m, i) => <option key={i} value={m}>{m}</option>)}</select></div><div className="modal-actions"><button onClick={() => setCancelModal({ show: false, reservation: null })} className="cancel-action-btn">Annuler</button><button onClick={handleDeleteConfirm} className="confirm-action-btn" disabled={!selectedMotif}>Confirmer</button></div></div></div>)}
     {confirmModal.show && (<div className="confirmation-modal-overlay" onClick={() => setConfirmModal({ ...confirmModal, show: false })}><div className="confirmation-modal" onClick={(e) => e.stopPropagation()}><h3>{confirmModal.type === 'cancel' ? '✅ Annulation confirmée' : '✅ Modification confirmée'}</h3><div className="reservation-details"><p><strong>📅 Date :</strong> {new Date(confirmModal.reservation.dateDebut).toLocaleDateString('fr-FR')}</p><p><strong>🕐 Horaire :</strong> {confirmModal.reservation.heureDebut} - {confirmModal.reservation.heureFin}</p><p><strong>🏢 Salle :</strong> {confirmModal.reservation.salle}</p>{confirmModal.motif && <p><strong>💬 Motif :</strong> {confirmModal.motif}</p>}</div><button onClick={() => setConfirmModal({ ...confirmModal, show: false })}>Fermer</button></div></div>)}
     
-    {/* ✅ Popup détails flottante pour responsive */}
     {detailsModal.show && detailsModal.reservation && (
       <div 
         className={`reservation-details-popup ${popupClosing ? 'closing' : ''}`}

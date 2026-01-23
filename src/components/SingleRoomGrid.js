@@ -20,6 +20,14 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
     return monday; 
   };
 
+  // ✅ HELPER POUR COMPARER LES DATES STRICTEMENT (Sans l'heure)
+  const areDatesSame = (d1, d2) => {
+    if (!d1 || !d2) return false;
+    const date1 = d1 instanceof Date ? d1 : new Date(d1);
+    const date2 = d2 instanceof Date ? d2 : new Date(d2);
+    return date1.toDateString() === date2.toDateString();
+  };
+
   const getInitialStartDate = () => {
     const today = new Date();
     if (editingReservation) return getMondayOfWeek(new Date(editingReservation.dateDebut));
@@ -82,7 +90,6 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
 
   useEffect(() => { loadWeekReservations(); }, [currentWeekStart, selectedRoom, editingReservation]);
 
-  // ✅ Vérification de la session Admin au chargement
   useEffect(() => {
     const sessionAuth = sessionStorage.getItem('isAdminAuthenticated');
     if (sessionAuth === 'true') {
@@ -113,7 +120,6 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
   const handleAdminPasswordSubmit = () => { 
     if (adminPasswordModal.password === APP_CONFIG.ADMIN_PASSWORD) { 
       setIsAdminUnlocked(true);
-      // ✅ Enregistrement dans la session
       sessionStorage.setItem('isAdminAuthenticated', 'true');
       setAdminPasswordModal({ show: false, password: '' }); 
     } else { 
@@ -157,7 +163,15 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
     }); 
   };
 
-  const isSlotSelected = (dayIndex, slot) => selections.some(sel => sel.dayIndex === dayIndex && sel.hour === slot);
+  // ✅ CORRECTION CRÉNEAUX FANTÔMES (Date stricte)
+  const isSlotSelected = (dayIndex, slot) => {
+    // La date précise de la cellule en cours de rendu
+    const currentCellDate = dates[dayIndex];
+    return selections.some(sel => {
+      // Comparaison stricte de la date
+      return sel.hour === slot && areDatesSame(sel.date, currentCellDate);
+    });
+  };
   
   const handleMouseDown = (dayIndex, hour, date, event) => {
     if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; }
@@ -209,7 +223,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
       const dayDate = dates[d];
       if (!isDimanche(dayDate) && !isJourFerie(dayDate) && !isDateInPast(dayDate)) {
         for (let h = minHour; h <= maxHour; h += 0.5) {
-          const exists = newSelections.some(sel => sel.dayIndex === d && sel.hour === h);
+          const exists = isSlotSelected(d, h); // Use updated check
           if (!exists && !isSlotReserved(d, h)) {
             newSelections.push({ dayIndex: d, hour: h, date: dates[d] });
           }
@@ -222,9 +236,11 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
   const handleMouseUp = () => { 
     if (!isDragging && mouseDownPos) { 
       const { dayIndex, hour, date } = mouseDownPos; 
-      const alreadySelected = selections.some(sel => sel.dayIndex === dayIndex && sel.hour === hour); 
+      const alreadySelected = isSlotSelected(dayIndex, hour); // Use updated check
       if (alreadySelected) { 
-        const newSelections = selections.filter(sel => !(sel.dayIndex === dayIndex && sel.hour === hour)); 
+        const newSelections = selections.filter(sel => 
+          !(sel.hour === hour && areDatesSame(sel.date, date))
+        ); 
         setSelections(newSelections); 
         if (newSelections.length === 0) setShowForm(false); 
       } else { 
@@ -237,12 +253,24 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
     setIsDragging(false); setDragStart(null); setMouseDownPos(null); 
   };
 
-  const handleCancelSelection = () => { setSelections([]); setShowForm(false); setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); };
+  // ✅ CORRECTION BOUTON ANNULER
+  const handleCancelSelection = () => { 
+    setSelections([]); 
+    setShowForm(false); 
+    setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' }); 
+    
+    // Si on est en mode édition, on appelle le retour arrière du parent qui nettoie tout
+    if (editingReservation && onBack) {
+      onBack();
+    }
+  };
   
   const removeSelection = (index) => {
     const toRemove = mergedForDisplay[index];
-    const selectionsToRemove = selections.filter(sel => sel.date && toRemove.date && sel.date.getTime() === toRemove.date.getTime() && sel.hour >= toRemove.hour && sel.hour < toRemove.endHour);
-    const newSelections = selections.filter(sel => !selectionsToRemove.some(remove => sel.date && remove.date && sel.date.getTime() === remove.date.getTime() && Math.abs(sel.hour - remove.hour) < 0.01));
+    const selectionsToRemove = selections.filter(sel => 
+      areDatesSame(sel.date, toRemove.date) && sel.hour >= toRemove.hour && sel.hour < toRemove.endHour
+    );
+    const newSelections = selections.filter(sel => !selectionsToRemove.includes(sel));
     setSelections(newSelections);
     if (newSelections.length === 0) setShowForm(false);
   };
@@ -251,7 +279,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
     if (selections.length === 0) return [];
     const byDate = {};
     selections.forEach(sel => {
-      const dateKey = sel.date instanceof Date ? sel.date.toISOString().split('T')[0] : sel.date;
+      const dateKey = sel.date instanceof Date ? sel.date.toISOString().split('T')[0] : new Date(sel.date).toISOString().split('T')[0];
       if (!byDate[dateKey]) byDate[dateKey] = [];
       byDate[dateKey].push(sel);
     });
@@ -291,6 +319,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
         const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); 
         const hasConflict = allExistingReservations.some(existing => { 
             if (existing.statut === 'cancelled') return false; 
+            if (editingReservation && existing.id === editingReservation.id) return false;
             if (existing.salle !== candidate.salle && existing.salle.split(' - ')[0] !== candidate.salle) return false; 
             const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`); 
             const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); 
@@ -302,14 +331,12 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
   };
 
   const finalizeReservation = async (reservationsToSave) => { 
-    // Fermeture immédiate de la modale d'avertissement
     setWarningModal({ show: false, conflicts: [], validReservations: [] });
-
     setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); 
-    
-    await new Promise(r => setTimeout(r, 10));
-
     try { 
+        if (editingReservation) {
+          await googleSheetsService.deleteReservation(editingReservation.id);
+        }
         const createdReservations = []; 
         for (const res of reservationsToSave) { 
             const result = await googleSheetsService.addReservation(res); 
@@ -367,13 +394,16 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
         agencement: editingReservation.agencement || '', nbPersonnes: editingReservation.nbPersonnes || ''
       });
       const resDate = new Date(editingReservation.dateDebut);
-      const dayOfWeek = resDate.getDay();
-      const dayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
       const startHour = googleSheetsService.timeToFloat(editingReservation.heureDebut);
       const endHour = googleSheetsService.timeToFloat(editingReservation.heureFin);
       const newSelections = [];
+      
       for (let h = startHour; h < endHour; h += 0.5) {
-        newSelections.push({ dayIndex: dayIndex, hour: h, date: resDate });
+        newSelections.push({ 
+          dayIndex: -1, 
+          hour: h, 
+          date: resDate 
+        });
       }
       setSelections(newSelections);
       setShowForm(true);
@@ -414,10 +444,10 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
       <div className="single-room-container">
         <div className="week-navigation">
           <div className="nav-group-left">
+            {/* ✅ BOUTON RETOUR QUI UTILISE onBack POUR LE NETTOYAGE */}
             <button onClick={onBack} className="back-button-inline">← Autres Salles</button>
             <h2 className="room-title-inline">
               🏛️ {salleData?.nom || selectedRoom}
-              {/* ✅ MODIFICATION ICI : Affichage "Modification" en rouge */}
               {editingReservation && <span style={{fontSize:'0.8em', color:'#ef5350', marginLeft:'8px'}}>(Modification)</span>}
             </h2>
           </div>
@@ -479,7 +509,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
                   <td className={slot % 1 === 0 ? 'hour-cell-full' : 'hour-cell-half'}>{slot % 1 === 0 ? `${slot}h` : ''}</td>
                   {dates.map((date, dayIndex) => { 
                     const reserved = isSlotReserved(dayIndex, slot); 
-                    const selected = isSlotSelected(dayIndex, slot); 
+                    const selected = isSlotSelected(dayIndex, slot); // ✅ UTILISATION NOUVELLE FONCTION
                     const blocked = isDimanche(date) || isJourFerie(date); 
                     const past = isDateInPast(date); 
                     const reservation = getReservation(dayIndex, slot); 
@@ -496,6 +526,8 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
                     if (past && !reserved) cellClass += ' past-date';
                     if (isAdmin && !isAdminUnlocked && !reserved) cellClass += ' admin-only-locked';
                     if (slot >= 12 && slot < 14) cellClass += ' lunch-break';
+
+                    if (selected && editingReservation) cellClass += ' editing-pulse';
 
                     return (<td key={`${dayIndex}-${slot}`} className={cellClass} style={bgStyle} onMouseDown={(e) => handleMouseDown(dayIndex, slot, date, e)} onMouseEnter={() => handleMouseEnter(dayIndex, slot, date)}></td>); 
                   })}
