@@ -41,6 +41,8 @@ function ColorLegend({ onHoverColor }) {
 
       <div className="legend-items">
         {Object.entries(COULEURS_OBJETS)
+          // ✅ MODIFICATION : Filtrage des motifs "Déplacement" (véhicule uniquement)
+          .filter(([objet]) => !['Déplacement dans Maurepas', 'Déplacement hors de Maurepas'].includes(objet))
           .sort(([objetA], [objetB]) => objetA.localeCompare(objetB)) // Tri alphabétique
           .map(([objet, couleur]) => (
           <div

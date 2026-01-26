@@ -264,7 +264,7 @@ function VehicleGrid({ onBack, editingReservation }) {
 
   const handleCancelSelection = () => { 
     setSelections([]); 
-    setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
+    setFormData({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
     // ✅ RETOUR ARRIÈRE EN CAS D'ÉDITION
     if (editingReservation && onBack) {
       onBack();
@@ -413,6 +413,35 @@ function VehicleGrid({ onBack, editingReservation }) {
     }
   }, [editingReservation]);
 
+  // ✅ LOGIQUE DE TITRE PERSONNALISÉE
+  const getFormTitle = () => {
+    if (selections.length === 0) return "Sélectionnez un créneau";
+
+    // Trier les sélections par date puis par heure pour vérifier la contiguïté
+    const sorted = [...selections].sort((a, b) => {
+      const timeA = new Date(a.date).getTime();
+      const timeB = new Date(b.date).getTime();
+      if (timeA !== timeB) return timeA - timeB;
+      return a.hour - b.hour;
+    });
+
+    let blocks = 1;
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = sorted[i-1];
+      const curr = sorted[i];
+      const prevDate = toISODate(prev.date);
+      const currDate = toISODate(curr.date);
+
+      // Si jour différent OU trou dans les heures (> 0.51 pour gérer les float)
+      if (prevDate !== currDate || Math.abs(curr.hour - prev.hour) > 0.51) {
+        blocks++;
+      }
+    }
+
+    if (blocks > 1) return `Confirmez les ${blocks} réservations`;
+    return "Confirmez la réservation";
+  };
+
   return (
     <>
       {successModal.show && createPortal(
@@ -466,17 +495,17 @@ function VehicleGrid({ onBack, editingReservation }) {
           </div>
         </div>
 
-        <div className="single-room-layout">
+        {/* ✅ CLASS CORRIGÉE POUR ALIGNEMENT */}
+        <div className="vehicle-layout">
           <div className="room-sidebar" ref={sidebarRef}>
             <div className="room-form-container">
               <div className="vehicle-form-header-image">
                 <img src={vehicleImage || "https://images.caradisiac.com/logos-ref/modele/modele--renault-clio-5/S0-modele--renault-clio-5.jpg"} alt="Clio" />
               </div>
 
+              {/* ✅ TITRE DYNAMIQUE */}
               <h3 className="form-title">
-                {selections.length === 0 ? "Sélectionnez un créneau" : 
-                 selections.length === 1 ? "Confirmer la réservation" : 
-                 `Réservation de ${selections.length} créneaux`}
+                {getFormTitle()}
               </h3>
               
               <div className="selections-summary">
@@ -578,7 +607,7 @@ function VehicleGrid({ onBack, editingReservation }) {
           </div>
         )}
         
-        {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><div className="warning-modal-header"><span className="blocked-modal-emoji">🚫</span><h2 className="blocked-modal-title">Fermé</h2></div><p className="blocked-modal-message">Dimanche/Férié fermé.</p><button onClick={() => setBlockedDayModal(false)} className="blocked-close-button">Fermer</button></div></div>}
+        {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><div className="warning-modal-header"><span className="blocked-modal-emoji">🚫</span><h2 className="blocked-modal-title">Pas de réservation le dimanche et les jours fériés</h2></div><p className="blocked-modal-message"></p><button onClick={() => setBlockedDayModal(false)} className="blocked-close-button">Fermer</button></div></div>}
         
         {isSubmitting && <div className="modal-overlay"><div className="modal-content"><h3>Enregistrement... ({submissionProgress.current} / {submissionProgress.total})</h3><div style={{width:'100%',background:'#eee',height:'10px',borderRadius:'5px'}}><div style={{width:`${(submissionProgress.current/submissionProgress.total)*100}%`,background:'#4caf50',height:'100%'}}></div></div></div></div>}
         

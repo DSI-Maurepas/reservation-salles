@@ -5,12 +5,14 @@
   "description": "Système de réservation de salles pour la mairie",
   "private": true,
   "dependencies": {
+    "chart.js": "^4.5.1",
     "date-fns": "^2.30.0",
     "emailjs-com": "^3.2.0",
     "react": "^18.2.0",
     "react-beautiful-dnd": "^13.1.1",
     "react-big-calendar": "^1.8.5",
     "react-calendar": "^6.0.0",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
     "xlsx": "^0.18.5"

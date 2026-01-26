@@ -13,13 +13,24 @@ function IAGrid({ onBack, editingReservation }) {
   const getMonday = (d) => {
     const date = new Date(d);
     const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); 
     const monday = new Date(date.setDate(diff));
     monday.setHours(0, 0, 0, 0);
     return monday;
   };
 
-  const [currentWeekStart, setCurrentWeekStart] = useState(getMonday(new Date()));
+  // ✅ MODIFICATION : Bascule sur la semaine suivante si Samedi >= 14h ou Dimanche
+  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
+    const now = new Date();
+    const monday = getMonday(now);
+    
+    // Si Samedi (6) à 14h ou plus, ou Dimanche (0) -> Semaine suivante (+7 jours)
+    if ((now.getDay() === 6 && now.getHours() >= 14) || now.getDay() === 0) {
+      monday.setDate(monday.getDate() + 7);
+    }
+    return monday;
+  });
+
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -144,6 +155,7 @@ function IAGrid({ onBack, editingReservation }) {
   };
 
   const resetToToday = () => {
+    // Note: Le bouton "Cette semaine" ramène toujours au Lundi de la semaine actuelle réelle
     setCurrentWeekStart(getMonday(new Date()));
     setSelections([]);
     closePopover();
@@ -475,45 +487,100 @@ function IAGrid({ onBack, editingReservation }) {
     } catch(e) { console.error(e); } finally { setIsSubmitting(false); }
   };
 
+  // ✅ CORRECTION DU BOUTON ANNULER
   const handleCancelSelection = () => { 
     setSelections([]); 
-    setFormData({ nom: '', prenom: '', email: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '' });
-    // ✅ RETOUR ARRIÈRE SÉCURISÉ
+    setFormData({ nom: '', prenom: '', email: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '' }); 
+    // ✅ RETOUR ARRIÈRE EN CAS D'ÉDITION
     if (editingReservation && onBack) {
       onBack();
     }
   };
 
+  // ✅ FONCTION HELPER POUR RÉCUPÉRER LES IMAGES (Dédoublonnage visuel)
+  const getSelectedToolImages = () => {
+    // 1. Récupérer les IDs uniques des IA sélectionnées
+    let toolIds = selections.map(s => s.toolId);
+
+    // 2. Si aucune sélection mais en mode édition, ajouter l'outil en cours
+    if (toolIds.length === 0 && editingReservation) {
+       toolIds.push(editingReservation.toolId);
+    }
+
+    // 3. Map pour dédoublonner par "Nom de base" (ex: "Mistral 1" -> "Mistral")
+    const imageMap = new Map();
+
+    toolIds.forEach(id => {
+      const tool = IA_TOOLS.find(t => t.id === id);
+      if (tool) {
+        // Normalisation : on retire les chiffres et espaces à la fin
+        const baseName = tool.nom.replace(/\s+\d+$/, '').trim();
+        
+        // On ne garde qu'une image par nom de base
+        if (!imageMap.has(baseName)) {
+          imageMap.set(baseName, process.env.PUBLIC_URL + tool.image);
+        }
+      }
+    });
+
+    return Array.from(imageMap.values());
+  };
+
+  // ✅ FONCTION HELPER POUR LE TITRE
+  const getReservationCount = () => {
+    let items = [];
+    if (selections.length > 0) {
+      items = selections;
+    } else if (editingReservation) {
+      items = [{
+        toolId: editingReservation.toolId,
+        dateStr: editingReservation.dateDebut
+      }];
+    }
+    // Compte les couples uniques (Outil + Date)
+    const uniqueRes = new Set(items.map(i => `${i.toolId}_${i.dateStr}`));
+    return uniqueRes.size;
+  };
+
+  // Calculs pour le rendu
   const displaySelections = getDisplayList();
+  const selectedToolImages = getSelectedToolImages(); 
+  const uniqueDayCount = getReservationCount(); // Journée/IA uniques
+  
+  // ✅ LOGIQUE DE TITRE DEMANDÉE AVEC NOMBRE
+  let titleText = "Nouvelle Réservation";
+  if (selections.length > 0) {
+    if (uniqueDayCount === 1) {
+      titleText = "Confirmer la réservation";
+    } else {
+      titleText = `Confirmez les ${uniqueDayCount} réservations`;
+    }
+  }
 
   return (
     <div className="ia-grid-container" onMouseUp={handleMouseUp}>
       
-      <div className="ia-nav-bar">
-        {/* ✅ MODIFICATION : Bouton Retour + Titre IA alignés */}
-        <div style={{display:'flex', alignItems:'center', gap:'15px'}}>
-          <button className="back-button-original" onClick={onBack}>← Retour</button>
-          <h2 className="ia-title-inline">
+      <div className="week-navigation">
+        <div className="nav-group-left">
+          <button className="back-button-inline" onClick={onBack}>← Retour</button>
+          <h2 className="room-title-inline" style={{display:'flex', alignItems:'center', gap:'10px'}}>
             <span style={{fontSize:'1.5rem'}}>🤖</span> IA 
-            {/* ✅ INDICATEUR MODIFICATION */}
             {editingReservation && <span style={{fontSize:'0.8em', color:'#ef5350', marginLeft:'8px'}}>(Modification)</span>}
           </h2>
         </div>
 
-        <div className="ia-nav-center">
-          <button className="ia-nav-btn secondary" onClick={() => changeMonth(-1)}>◀◀ <span className="ia-nav-label"></span></button>
-          <button className="ia-nav-btn primary" onClick={() => changeWeek(-7)}>◀ <span className="ia-nav-label"></span></button>
-          <button className="ia-nav-btn secondary" onClick={resetToToday}><span className="ia-nav-label">Cette semaine</span></button>
+        <div className="nav-group-center">
+          <button className="week-nav-btn" onClick={() => changeMonth(-1)}>◀◀</button>
+          <button className="week-nav-btn" onClick={() => changeWeek(-7)}>◀</button>
+          <button className="week-nav-btn" style={{padding: '0.6rem 1.2rem', fontSize: '0.9rem'}} onClick={resetToToday}>Cette semaine</button>
           
-          {/* ✅ MODIFICATION AFFICHAGE DATE : RANGE */}
-          <div className="ia-central-date">
+          <div className="week-date-display">
             {currentWeekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} - {new Date(new Date(currentWeekStart).setDate(currentWeekStart.getDate()+6)).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} {currentWeekStart.getFullYear()}
           </div>
           
-          <button className="ia-nav-btn primary" onClick={() => changeWeek(7)}><span className="ia-nav-label"></span> ▶</button>
-          <button className="ia-nav-btn secondary" onClick={() => changeMonth(1)}><span className="ia-nav-label"></span> ▶▶</button>
+          <button className="week-nav-btn" onClick={() => changeWeek(7)}>▶</button>
+          <button className="week-nav-btn" onClick={() => changeMonth(1)}>▶▶</button>
         </div>
-        <div style={{width:'100px'}}></div>
       </div>
 
       <div className="ia-layout">
@@ -545,7 +612,32 @@ function IAGrid({ onBack, editingReservation }) {
 
           <div className={`ia-form-wrapper ${sidebarMode === 'form' ? 'visible' : ''}`}>
             <div className="ia-form-container">
-              <h3 className="form-title-ia">Nouvelle Réservation</h3>
+              {/* ✅ HEADER DU FORMULAIRE : TITRE DYNAMIQUE + VIGNETTES */}
+              <div className="form-title-ia" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 'bold' }}>
+                  {titleText}
+                </span>
+                
+                {/* Conteneur Flex pour aligner les vignettes côte à côte */}
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {selectedToolImages.map((imgSrc, idx) => (
+                    <img 
+                      key={idx}
+                      src={imgSrc} 
+                      alt="IA" 
+                      // ✅ AJOUT DE L'OMBRE (boxShadow)
+                      style={{ 
+                        height: '35px', 
+                        width: 'auto', 
+                        borderRadius: '6px', 
+                        border: '1px solid #e0e0e0', 
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)' 
+                      }} 
+                    />
+                  ))}
+                </div>
+              </div>
+
               <div className="selections-summary-ia">
                 <div className="summary-header"><strong>{selections.length} créneaux</strong> sur <strong>{getDaysCount()} jour(s)</strong></div>
                 <div className="summary-list">
