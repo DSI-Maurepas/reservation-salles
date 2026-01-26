@@ -31,7 +31,7 @@
 }
 
 .admin-panel {
-  padding: 2rem;
+  padding: 0.2rem;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -90,6 +90,7 @@
   display: flex;
   gap: 1rem;
   margin-bottom: 2rem;
+  margin-top: 40px; /* ✅ AJOUT : Décalage de 40px vers le bas */
   background: white;
   padding: 1rem;
   border-radius: 12px;
@@ -143,10 +144,10 @@
 .admin-table th:nth-child(1) { width: 6%; } /* Salle */
 .admin-table th:nth-child(2) { width: 9%; }  /* Date */
 .admin-table th:nth-child(3) { width: 10%; }  /* Horaire */
-.admin-table th:nth-child(4) { width: 10%; } /* Agent */
+.admin-table th:nth-child(4) { width: 12%; } /* Agent */
 .admin-table th:nth-child(5) { width: 16%; } /* Service */
 .admin-table th:nth-child(6) { width: 15%; } /* Objet */
-.admin-table th:nth-child(7) { width: 16%; } /* Email */
+.admin-table th:nth-child(7) { width: 14%; } /* Email */
 .admin-table th:nth-child(8) { width: 18%; } /* Actions */
 
 .admin-table th {

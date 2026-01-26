@@ -191,7 +191,7 @@ function App() {
               🏢 <span className="nav-text">Salles</span>
             </button>
             <button className={currentView === 'vehicle' ? 'active' : ''} onClick={() => resetAndNavigate('vehicle')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <img src={`${process.env.PUBLIC_URL}/images/32x32.png`} alt="Auto" style={{ height: '20px', width: 'auto' }} /> <span className="nav-text">Clio</span>
+              <img src={`${process.env.PUBLIC_URL}/images/32x32.png`} alt="Auto" style={{ height: '18px', width: 'auto' }} /> <span className="nav-text">Clio</span>
             </button>
             
             <button 
@@ -206,9 +206,9 @@ function App() {
             <div className="dropdown">
               <button className={`dropbtn ${['admin', 'adminAuto', 'adminIA'].includes(currentView) ? 'active' : ''}`}>⚙️ <span className="nav-text-opt">Admin ▼</span></button>
               <div className="dropdown-content">
-                <button onClick={() => resetAndNavigate('admin')}>Administration des Salles</button>
-                <button onClick={() => resetAndNavigate('adminAuto')}>Administration de la Clio</button>
-                <button onClick={() => resetAndNavigate('adminIA')}>Administration Des outils IA</button>
+                <button onClick={() => resetAndNavigate('admin')}>🏢 Administration des Salles</button>
+                <button onClick={() => resetAndNavigate('adminAuto')}><img src={`${process.env.PUBLIC_URL}/images/32x32.png`} alt="Auto" style={{ height: '16px', width: 'auto' }} /> Administration de la Clio</button>
+                <button onClick={() => resetAndNavigate('adminIA')}>🤖 Administration des outils IA</button>
               </div>
             </div>
           </nav>
