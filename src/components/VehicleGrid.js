@@ -519,7 +519,7 @@ function VehicleGrid({ onBack, editingReservation }) {
                 <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service *</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
                 
                 <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required>
-                  <option value="">Motif de la réservation *</option>
+                  <option value="">Choisissez le motif *</option>
                   {OBJETS_VEHICULE.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
                 
@@ -534,7 +534,7 @@ function VehicleGrid({ onBack, editingReservation }) {
                   <label htmlFor="permisAttestation">J'atteste être titulaire du permis B et avoir les points nécessaires</label>
                 </div>
 
-                <textarea className="form-textarea" placeholder="Description (facultative)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                <textarea className="form-textarea" placeholder="Commentaire" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                 <div className="recurrence-section-styled"><div className="recurrence-box"><input type="checkbox" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} /><label>Réservation récurrente</label></div>
                 {formData.recurrence && (<div className="recurrence-options slide-down"><div className="form-group"><select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}><option value="weekly">Chaque semaine</option><option value="biweekly">Une semaine sur 2</option><option value="monthly">Chaque mois</option></select></div><div className="form-group" style={{marginBottom:0}}>
                   <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(mergedForDisplay[0]?.date || new Date())} required={formData.recurrence} />

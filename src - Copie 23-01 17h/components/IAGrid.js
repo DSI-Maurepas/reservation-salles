@@ -13,24 +13,13 @@ function IAGrid({ onBack, editingReservation }) {
   const getMonday = (d) => {
     const date = new Date(d);
     const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1); 
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
     const monday = new Date(date.setDate(diff));
     monday.setHours(0, 0, 0, 0);
     return monday;
   };
 
-  // ✅ MODIFICATION : Bascule sur la semaine suivante si Samedi >= 14h ou Dimanche
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => {
-    const now = new Date();
-    const monday = getMonday(now);
-    
-    // Si Samedi (6) à 14h ou plus, ou Dimanche (0) -> Semaine suivante (+7 jours)
-    if ((now.getDay() === 6 && now.getHours() >= 14) || now.getDay() === 0) {
-      monday.setDate(monday.getDate() + 7);
-    }
-    return monday;
-  });
-
+  const [currentWeekStart, setCurrentWeekStart] = useState(getMonday(new Date()));
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -155,7 +144,6 @@ function IAGrid({ onBack, editingReservation }) {
   };
 
   const resetToToday = () => {
-    // Note: Le bouton "Cette semaine" ramène toujours au Lundi de la semaine actuelle réelle
     setCurrentWeekStart(getMonday(new Date()));
     setSelections([]);
     closePopover();
@@ -497,65 +485,34 @@ function IAGrid({ onBack, editingReservation }) {
     }
   };
 
-  // ✅ FONCTION HELPER POUR RÉCUPÉRER LES IMAGES (Dédoublonnage visuel)
+  // ✅ FONCTION HELPER CORRIGÉE : COMPTE LES COUPLES (TOOL_ID + DATE)
   const getSelectedToolImages = () => {
-    // 1. Récupérer les IDs uniques des IA sélectionnées
-    let toolIds = selections.map(s => s.toolId);
+    // Stockage des clés uniques "ID_DATE" pour ne pas afficher 2 fois la même vignette si Matin+Après-Midi même jour
+    const uniqueKeys = new Set();
+    const images = [];
 
-    // 2. Si aucune sélection mais en mode édition, ajouter l'outil en cours
-    if (toolIds.length === 0 && editingReservation) {
-       toolIds.push(editingReservation.toolId);
-    }
-
-    // 3. Map pour dédoublonner par "Nom de base" (ex: "Mistral 1" -> "Mistral")
-    const imageMap = new Map();
-
-    toolIds.forEach(id => {
-      const tool = IA_TOOLS.find(t => t.id === id);
-      if (tool) {
-        // Normalisation : on retire les chiffres et espaces à la fin
-        const baseName = tool.nom.replace(/\s+\d+$/, '').trim();
-        
-        // On ne garde qu'une image par nom de base
-        if (!imageMap.has(baseName)) {
-          imageMap.set(baseName, process.env.PUBLIC_URL + tool.image);
-        }
+    const addItem = (tid, dStr) => {
+      const key = `${tid}_${dStr}`;
+      // Si ce couple Outil/Date n'est pas déjà présent
+      if (!uniqueKeys.has(key)) {
+        uniqueKeys.add(key);
+        const tool = IA_TOOLS.find(t => t.id === tid);
+        if (tool) images.push(process.env.PUBLIC_URL + tool.image);
       }
-    });
+    };
 
-    return Array.from(imageMap.values());
-  };
-
-  // ✅ FONCTION HELPER POUR LE TITRE
-  const getReservationCount = () => {
-    let items = [];
     if (selections.length > 0) {
-      items = selections;
+      selections.forEach(s => addItem(s.toolId, s.dateStr));
     } else if (editingReservation) {
-      items = [{
-        toolId: editingReservation.toolId,
-        dateStr: editingReservation.dateDebut
-      }];
+      // En mode édition, on considère la réservation en cours comme une sélection
+      addItem(editingReservation.toolId, editingReservation.dateDebut);
     }
-    // Compte les couples uniques (Outil + Date)
-    const uniqueRes = new Set(items.map(i => `${i.toolId}_${i.dateStr}`));
-    return uniqueRes.size;
+
+    return images;
   };
 
-  // Calculs pour le rendu
   const displaySelections = getDisplayList();
-  const selectedToolImages = getSelectedToolImages(); 
-  const uniqueDayCount = getReservationCount(); // Journée/IA uniques
-  
-  // ✅ LOGIQUE DE TITRE DEMANDÉE
-  let titleText = "Nouvelle Réservation";
-  if (selections.length > 0) {
-    if (uniqueDayCount === 1) {
-      titleText = "Confirmer la réservation";
-    } else {
-      titleText = `Confirmez les ${uniqueDayCount} réservations`;
-    }
-  }
+  const selectedToolImages = getSelectedToolImages(); // Récupère le tableau (1 ou plusieurs images)
 
   return (
     <div className="ia-grid-container" onMouseUp={handleMouseUp}>
@@ -612,10 +569,11 @@ function IAGrid({ onBack, editingReservation }) {
 
           <div className={`ia-form-wrapper ${sidebarMode === 'form' ? 'visible' : ''}`}>
             <div className="ia-form-container">
-              {/* ✅ HEADER DU FORMULAIRE : TITRE DYNAMIQUE + VIGNETTES */}
+              {/* ✅ HEADER DU FORMULAIRE : TITRE GAUCHE + VIGNETTES DROITE */}
               <div className="form-title-ia" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {/* ✅ TITRE DYNAMIQUE : Pluriel si > 1 image unique */}
                 <span style={{ fontWeight: 'bold' }}>
-                  {titleText}
+                  {selectedToolImages.length > 1 ? 'Nouvelles Réservations' : 'Nouvelle Réservation'}
                 </span>
                 
                 {/* Conteneur Flex pour aligner les vignettes côte à côte */}
@@ -658,45 +616,29 @@ function IAGrid({ onBack, editingReservation }) {
                   </div>
                   <input className="form-input" placeholder="Email *" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
                   <select className="form-select" required value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})}>
-                    <option value="">Choisissez le service *</option>
+                    <option value="">Service *</option>
                     {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                   
                   {/* ✅ NOUVEAU CHAMP MOTIF OBLIGATOIRE */}
                   <select className="form-select" required value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})}>
-                    <option value="">Choisissez le motif *</option>
-                    {['Pour une production - Priorité 1', 'Pour tester l\'outil sélectionné - Priorité 2'].map(o => <option key={o} value={o}>{o}</option>)}
+                    <option value="">Motif *</option>
+                    {['Déplacement dans Maurepas', 'Déplacement hors de Maurepas'].map(o => <option key={o} value={o}>{o}</option>)}
                   </select>
 
-                  <textarea className="form-textarea" placeholder="Commentaire" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                  <textarea className="form-textarea" placeholder="Commentaire (facultatif)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                   <div className="recurrence-section-styled">
                     <div className="recurrence-box">
-                      {/* ✅ MODIFICATION ICI : DÉFINITION DE LA DATE PAR DÉFAUT */}
-                      <input 
-                        type="checkbox" 
-                        checked={formData.recurrence} 
-                        onChange={e => {
-                          const isChecked = e.target.checked;
-                          let initialDate = '';
-                          if (isChecked && selections.length > 0) {
-                              // On trie les sélections par date pour trouver la première
-                              const sorted = [...selections].sort((a, b) => a.date.getTime() - b.date.getTime());
-                              if(sorted.length > 0) {
-                                   initialDate = sorted[0].dateStr;
-                              }
-                          }
-                          setFormData({...formData, recurrence: isChecked, recurrenceJusquau: initialDate || formData.recurrenceJusquau});
-                        }} 
-                      />
+                      <input type="checkbox" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} />
                       <label>Réservation récurrente</label>
                     </div>
                     {formData.recurrence && (
                       <div className="recurrence-options slide-down">
                         <div className="form-group">
                           <select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}>
-                            <option value="weekly">Toutes les semaines</option>
-                            <option value="biweekly">Tous les 15 jours</option>
-                            <option value="monthly">Tous les mois</option>
+                            <option value="weekly">Chaque semaine</option>
+                            <option value="biweekly">Une semaine sur 2</option>
+                            <option value="monthly">Chaque mois</option>
                           </select>
                         </div>
                         <div className="form-group" style={{marginBottom:0}}>
