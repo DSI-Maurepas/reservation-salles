@@ -7,7 +7,6 @@ import emailService from '../services/emailService';
 import { IA_TOOLS } from '../data/iaData'; 
 import { APP_CONFIG, MOTIFS_ANNULATION } from '../config/googleSheets'; 
 import './Statistics.css';
-import './AdminPanel.css'; // Style standard Admin
 
 // --- SOUS-COMPOSANT PIECHART ---
 const PieChart = ({ data, title, colors, sortOrder = 'alpha', className = '', onHover, activeLabel }) => {
@@ -165,17 +164,6 @@ function AdminIA({ onEditReservation }) {
     return tool ? tool.nom : 'Inconnue';
   };
 
-  // ✅ Helper pour récupérer la couleur de l'IA
-  const getIAColor = (res) => {
-    let tool;
-    if (res.salle && res.salle.trim() !== '') {
-      tool = IA_TOOLS.find(t => t.nom === res.salle);
-    } else {
-      tool = IA_TOOLS.find(t => t.id === res.toolId);
-    }
-    return tool ? tool.imageColor : '#f8fafc';
-  };
-
   // Gestion Actions
   const handleEdit = (res) => {
     if (onEditReservation) {
@@ -303,9 +291,9 @@ function AdminIA({ onEditReservation }) {
     setSortConfig({ key, direction });
   };
 
-  const renderSortIcon = (column) => {
-    if (sortConfig.key !== column) return <span className="sort-icon">↕</span>;
-    return <span className="sort-icon">{sortConfig.direction === 'asc' ? '↑' : '↓'}</span>;
+  const getSortIcon = (name) => {
+    if (sortConfig.key !== name) return '↕';
+    return sortConfig.direction === 'asc' ? '🔼' : '🔽';
   };
 
   // FONCTION EXPORT EXCEL IA
@@ -424,103 +412,98 @@ function AdminIA({ onEditReservation }) {
         <PieChart data={stats.parService} title="🏛️ Réservations par service" colors={c3} sortOrder="alpha" onHover={handleSliceHover} activeLabel={hoveredSlice?.label} />
       </div>
 
-      {/* ✅ BLOC 1 : FILTRES - FIXE SUR UNE SEULE LIGNE */}
-      <div className="filters-section" style={{ 
-          display: 'flex', 
-          flexWrap: 'nowrap', /* 🔥 EMPÊCHE le retour à la ligne */
-          overflowX: 'hidden', /* Cache ascenseur */
-          alignItems: 'center', 
-          gap: '0.5rem', /* Gap réduit pour gagner de la place */
-          whiteSpace: 'nowrap'
-        }}>
+      <div className="admin-list-section admin-ia-list" style={{background:'white', padding:'1.5rem', borderRadius:'12px', boxShadow:'0 4px 15px rgba(0,0,0,0.1)'}}>
+        <h3 style={{color:'#0f6aba', marginTop:0, borderBottom:'2px solid #e0e0e0', paddingBottom:'0.5rem'}}>
+          📋 Liste des Réservations IA ({filteredAndSortedReservations.length})
+        </h3>
         
-        <div className="filter-group">
-          <label>Outil IA :</label>
-          <select value={filterIA} onChange={e => setFilterIA(e.target.value)} className="admin-select" style={{minWidth: 'auto', width: 'auto'}}>
-            <option value="Toutes">Toutes</option>
-            {IA_TOOLS.map(t => <option key={t.id} value={t.nom}>{t.nom}</option>)}
-          </select>
+        <div className="admin-filters" style={{display:'flex', flexWrap:'wrap', gap:'1rem', marginBottom:'1.5rem', padding:'1rem', background:'#f8fafc', borderRadius:'8px'}}>
+          <div style={{flex:1, minWidth:'200px'}}>
+            <label style={{display:'block', marginBottom:'5px', fontSize:'0.9rem', color:'#64748b'}}>Recherche :</label>
+            <input type="text" placeholder="Nom, Prénom, Email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{width:'100%', padding:'8px', borderRadius:'6px', border:'1px solid #cbd5e1'}} />
+          </div>
+          
+          <div>
+            <label style={{display:'block', marginBottom:'5px', fontSize:'0.9rem', color:'#64748b'}}>Outil IA :</label>
+            <select value={filterIA} onChange={e => setFilterIA(e.target.value)} style={{padding:'8px', borderRadius:'6px', border:'1px solid #cbd5e1', minWidth:'150px'}}>
+              <option value="Toutes">Toutes les IA</option>
+              {IA_TOOLS.map(t => <option key={t.id} value={t.nom}>{t.nom}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label style={{display:'block', marginBottom:'5px', fontSize:'0.9rem', color:'#64748b'}}>Service :</label>
+            <select value={filterService} onChange={e => setFilterService(e.target.value)} style={{padding:'8px', borderRadius:'6px', border:'1px solid #cbd5e1', minWidth:'150px'}}>
+              <option value="Tous">Tous les services</option>
+              {servicesUniques.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label style={{display:'block', marginBottom:'5px', fontSize:'0.9rem', color:'#64748b'}}>Période :</label>
+            <div style={{display:'flex', gap:'5px'}}>
+              <input type="date" value={filterDateStart} onChange={e => setFilterDateStart(e.target.value)} style={{padding:'8px', borderRadius:'6px', border:'1px solid #cbd5e1'}} />
+              <span style={{alignSelf:'center'}}>à</span>
+              <input type="date" value={filterDateEnd} onChange={e => setFilterDateEnd(e.target.value)} style={{padding:'8px', borderRadius:'6px', border:'1px solid #cbd5e1'}} />
+            </div>
+          </div>
         </div>
 
-        <div className="filter-group">
-          <label>Service :</label>
-          <select value={filterService} onChange={e => setFilterService(e.target.value)} className="admin-select" style={{minWidth: 'auto', width: 'auto'}}>
-            <option value="Tous">Tous</option>
-            {servicesUniques.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%', borderCollapse:'collapse', fontSize:'0.9rem'}}>
+            <thead>
+              <tr style={{background:'#0f6aba', color:'white'}}>
+                <th onClick={() => requestSort('dateDebut')} style={{padding:'12px', textAlign:'left', borderRadius:'6px 0 0 6px', cursor:'pointer', userSelect:'none'}}>
+                  Date {getSortIcon('dateDebut')}
+                </th>
+                <th onClick={() => requestSort('heureDebut')} style={{padding:'12px', textAlign:'left', cursor:'pointer', userSelect:'none'}}>
+                  Créneau {getSortIcon('heureDebut')}
+                </th>
+                <th onClick={() => requestSort('salle')} style={{padding:'12px', textAlign:'left', cursor:'pointer', userSelect:'none'}}>
+                  Outil IA {getSortIcon('salle')}
+                </th>
+                <th onClick={() => requestSort('utilisateur')} style={{padding:'12px', textAlign:'left', cursor:'pointer', userSelect:'none'}}>
+                  Utilisateur {getSortIcon('utilisateur')}
+                </th>
+                <th onClick={() => requestSort('service')} style={{padding:'12px', textAlign:'left', cursor:'pointer', userSelect:'none'}}>
+                  Service {getSortIcon('service')}
+                </th>
+                <th style={{padding:'12px', textAlign:'center', borderRadius:'0 6px 6px 0'}}>
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAndSortedReservations.map((res, i) => (
+                <tr key={i} style={{borderBottom:'1px solid #e2e8f0', background: i % 2 === 0 ? 'white' : '#f8fafc'}}>
+                  <td style={{padding:'12px', textAlign:'left'}}>{new Date(res.dateDebut).toLocaleDateString()}</td>
+                  <td style={{padding:'12px', textAlign:'left'}}>{res.heureDebut === '08:00' ? 'Matin' : 'Après-midi'}</td>
+                  <td style={{padding:'12px', textAlign:'left', fontWeight:'600', color:'#0f6aba'}}>{getIAName(res)}</td>
+                  <td style={{padding:'12px', textAlign:'left'}}>
+                    <div style={{fontWeight:'bold'}}>{res.prenom} {res.nom}</div>
+                    <div style={{fontSize:'0.8rem', color:'#64748b'}}>{res.email}</div>
+                  </td>
+                  <td style={{padding:'12px', textAlign:'left'}}>{res.service}</td>
+                  <td style={{padding:'12px', textAlign:'center'}}>
+                    <div className="actions-wrapper">
+                      <button onClick={() => handleEdit(res)} className="edit-button">Modifier</button>
+                      <button onClick={() => handleDeleteClick(res)} className="delete-button">Supprimer</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredAndSortedReservations.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{padding:'2rem', textAlign:'center', color:'#64748b'}}>Aucune réservation trouvée.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
-        <div className="filter-group" style={{flex: 1}}>
-          <label>Recherche :</label>
-          <input type="text" placeholder="Nom..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="admin-input" style={{width: '100%', minWidth: '80px'}} />
-        </div>
-
-        <div className="filter-group">
-          <label>Du :</label>
-          <input type="date" value={filterDateStart} onChange={e => setFilterDateStart(e.target.value)} className="admin-input" style={{width: '115px'}} />
-        </div>
-
-        <div className="filter-group">
-          <label>Au :</label>
-          <input type="date" value={filterDateEnd} onChange={e => setFilterDateEnd(e.target.value)} className="admin-input" style={{width: '115px'}} />
+        <div style={{marginTop:'1rem', fontSize:'0.85rem', color:'#64748b', textAlign:'right'}}>
+          Total affiché : {filteredAndSortedReservations.length} réservation(s)
         </div>
       </div>
-
-      {/* ✅ BLOC 2 : LISTE RÉSERVATIONS (Structure standardisée AdminPanel) */}
-<div className="reservations-section">
-  <h3>📋 Liste des Réservations IA ({filteredAndSortedReservations.length})</h3>
-    <div className="admin-table-container">
-    <table className="admin-table">
-      <thead>
-        <tr>
-          <th style={{ textAlign: 'center' }} onClick={() => requestSort('dateDebut')}>
-            Date {renderSortIcon('dateDebut')}
-          </th>
-          <th style={{ textAlign: 'center' }} onClick={() => requestSort('heureDebut')}>
-            Créneau {renderSortIcon('heureDebut')}
-          </th>
-          <th style={{ textAlign: 'center' }} onClick={() => requestSort('salle')}>
-            Outil IA {renderSortIcon('salle')}
-          </th>
-          <th style={{ textAlign: 'center' }} onClick={() => requestSort('utilisateur')}>
-            Utilisateur {renderSortIcon('utilisateur')}
-          </th>
-          <th style={{ textAlign: 'center' }} onClick={() => requestSort('service')}>
-            Service {renderSortIcon('service')}
-          </th>
-          <th style={{ textAlign: 'center' }}>
-            Actions
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {filteredAndSortedReservations.map((res, i) => (
-          <tr key={i} style={{borderBottom:'1px solid #e2e8f0', backgroundColor: `${getIAColor(res)}20`}}>
-            <td>{new Date(res.dateDebut).toLocaleDateString()}</td>
-            <td>{res.heureDebut === '08:00' ? 'Matin' : 'Après-midi'}</td>
-            <td>{getIAName(res)}</td>
-            <td>
-              <div style={{fontWeight:'bold'}}>{res.prenom} {res.nom}</div>
-              <div style={{fontSize:'0.8rem', color:'#64748b'}}>{res.email}</div>
-            </td>
-            <td>{res.service}</td>
-            <td>
-              <div className="actions-wrapper">
-                <button onClick={() => handleEdit(res)} className="edit-button">Modifier</button>
-                <button onClick={() => handleDeleteClick(res)} className="delete-button">Supprimer</button>
-              </div>
-            </td>
-          </tr>
-        ))}
-        {filteredAndSortedReservations.length === 0 && (
-          <tr>
-            <td colSpan="6" style={{textAlign:'center', padding:'2rem', color:'#64748b'}}>Aucune réservation trouvée.</td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
 
       {cancelModal.show && (
         <div className="cancel-modal-overlay">
