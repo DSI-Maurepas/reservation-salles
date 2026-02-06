@@ -59,18 +59,9 @@ export const SERVICES = [
 ];
 
 export const OBJETS_RESERVATION = [
-  'Entretien RH',
-  'Événement municipal / public',
-  'Formation interne', 
-  'Formation externe (prestataires)',
-  'Mariage',
-  'Parrainage',
-  'Permanence (élus ou services)', 
-  'Réunion de service', 
-  'Réunion Élus / Commissions', 
-  'Réunion avec prestataire',
-  'Usage logistique / technique', 
-  'Autre'
+  'Réunion de service', 'Réunion Élus / Commissions', 'Réunion avec prestataire',
+  'Formation interne', 'Formation externe (prestataires)', 'Événement municipal / public',
+  'Entretien RH', 'Usage logistique / technique', 'Permanence (élus ou services)', 'Autre'
 ];
 
 export const OBJETS_VEHICULE = [

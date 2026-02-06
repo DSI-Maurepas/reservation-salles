@@ -82,14 +82,14 @@ export const sallesData = [
     nom: 'Salle Conseil',
     image: 'Salle_Conseil.jpg',
     capacite: 100,
-    dispositions: ['Tables en U', 'Tables en carré', 'Format Conférence', 'Format Libre', 'Format Conseil', 'Format Mariage', 'Format Table Ronde']
+    dispositions: ['Tables en U', 'Tables en carré', 'Format Conférence', 'Format Libre', 'Format Conseil']
   },
   {
     id: 2,
     nom: 'Salle Mariages',
     image: 'Salle_Mariages.jpg',
     capacite: 30,
-    dispositions: ['Tables en U', 'Tables en carré', 'Format Conférence', 'Format Libre', 'Format Mariage', 'Format Table Ronde']
+    dispositions: ['Tables en U', 'Tables en carré', 'Format Conférence', 'Format Libre']
   },
   {
     id: 3,
