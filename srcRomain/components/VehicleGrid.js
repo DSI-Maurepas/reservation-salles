@@ -1,7 +1,7 @@
 // src/components/VehicleGrid.js
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import googleSheetsService from '../services/googleSheetsService';
+import apiService from '../services/apiService';
 import icalService from '../services/icalService';
 import emailService from '../services/emailService';
 // Import de OBJETS_VEHICULE depuis la config centralisée
@@ -57,8 +57,7 @@ function VehicleGrid({ onBack, editingReservation }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
   const [successModal, setSuccessModal] = useState({ show: false, reservations: [], message: '' });
-  const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [], conflictDetails: [] });
-  const [confirmModal, setConfirmModal] = useState({ show: false, reservations: [] });
+  const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [] });
   // PermisAttestation dans state
   const [formData, setFormData] = useState({ nom: '', prenom: '', email: '', telephone: '', service: '', objet: '', description: '', permisAttestation: false, recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '', agencement: '', nbPersonnes: '' });
   
@@ -90,8 +89,8 @@ function VehicleGrid({ onBack, editingReservation }) {
       setCurrentWeekStart(getMondayOfWeek(dateRes));
 
       // 3. Mettre en surbrillance (Sélection)
-      const startSlot = googleSheetsService.timeToFloat(editingReservation.heureDebut);
-      const endSlot = googleSheetsService.timeToFloat(editingReservation.heureFin);
+      const startSlot = apiService.timeToFloat(editingReservation.heureDebut);
+      const endSlot = apiService.timeToFloat(editingReservation.heureFin);
       
       const newSelections = [];
       for (let h = startSlot; h < endSlot; h += 0.5) {
@@ -125,7 +124,7 @@ function VehicleGrid({ onBack, editingReservation }) {
   const loadWeekReservations = async () => { 
     setLoading(true); 
     try { 
-      const allReservations = await googleSheetsService.getAllReservations(); 
+      const allReservations = await apiService.getAllReservations(); 
       const weekEnd = new Date(currentWeekStart); 
       weekEnd.setDate(currentWeekStart.getDate() + 6); 
       
@@ -154,26 +153,26 @@ function VehicleGrid({ onBack, editingReservation }) {
   const handlePreviousMonth = () => { const d = new Date(currentWeekStart); d.setMonth(d.getMonth() - 1); setCurrentWeekStart(getMondayOfWeek(d)); };
   const handleNextMonth = () => { const d = new Date(currentWeekStart); d.setMonth(d.getMonth() + 1); setCurrentWeekStart(getMondayOfWeek(d)); };
 
-  const isJourFerie = (date) => JOURS_FERIES.includes(googleSheetsService.formatDate(date));
+  const isJourFerie = (date) => JOURS_FERIES.includes(apiService.formatDate(date));
   const isDimanche = (date) => date.getDay() === 0;
   const isDateInPast = (date) => { const t = new Date(); t.setHours(0,0,0,0); const c = new Date(date); c.setHours(0,0,0,0); return c < t; };
   
   const isSlotReserved = (dayIndex, slotStart) => { 
-    const slotEnd = slotStart + 0.5; const date = dates[dayIndex]; const dateStr = googleSheetsService.formatDate(date); 
+    const slotEnd = slotStart + 0.5; const date = dates[dayIndex]; const dateStr = apiService.formatDate(date); 
     return reservations.some(res => { 
       if (res.dateDebut !== dateStr) return false; 
-      const resStart = googleSheetsService.timeToFloat(res.heureDebut); 
-      const resEnd = googleSheetsService.timeToFloat(res.heureFin); 
+      const resStart = apiService.timeToFloat(res.heureDebut); 
+      const resEnd = apiService.timeToFloat(res.heureFin); 
       return (slotStart < resEnd && slotEnd > resStart); 
     }); 
   };
   
   const getReservation = (dayIndex, slotStart) => { 
-    const slotEnd = slotStart + 0.5; const date = dates[dayIndex]; const dateStr = googleSheetsService.formatDate(date); 
+    const slotEnd = slotStart + 0.5; const date = dates[dayIndex]; const dateStr = apiService.formatDate(date); 
     return reservations.find(res => { 
       if (res.dateDebut !== dateStr) return false; 
-      const resStart = googleSheetsService.timeToFloat(res.heureDebut); 
-      const resEnd = googleSheetsService.timeToFloat(res.heureFin); 
+      const resStart = apiService.timeToFloat(res.heureDebut); 
+      const resEnd = apiService.timeToFloat(res.heureFin); 
       return (slotStart < resEnd && slotEnd > resStart); 
     }); 
   };
@@ -190,12 +189,12 @@ function VehicleGrid({ onBack, editingReservation }) {
   const handleMouseDown = (dayIndex, hour, date, event) => {
     if (isDimanche(date) || isJourFerie(date)) { setBlockedDayModal(true); return; }
     
-    const dateStr = googleSheetsService.formatDate(date);
+    const dateStr = apiService.formatDate(date);
     const reservation = reservations.find(r => 
       r.salle === selectedRoom && 
       r.dateDebut === dateStr &&
-      hour >= googleSheetsService.timeToFloat(r.heureDebut) && 
-      hour < googleSheetsService.timeToFloat(r.heureFin)
+      hour >= apiService.timeToFloat(r.heureDebut) && 
+      hour < apiService.timeToFloat(r.heureFin)
     );
     
     if (reservation) {
@@ -317,11 +316,11 @@ function VehicleGrid({ onBack, editingReservation }) {
   };
 
   const checkConflicts = (candidates, allExistingReservations) => { 
-    const conflicts = []; const valid = []; const conflictDetails = [];
+    const conflicts = []; const valid = []; 
     candidates.forEach(candidate => { 
         const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`); 
         const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`); 
-        const blockedBy = allExistingReservations.find(existing => { 
+        const hasConflict = allExistingReservations.some(existing => { 
             if (existing.statut === 'cancelled') return false; 
             if (editingReservation && existing.id === editingReservation.id) return false;
             if (existing.salle !== candidate.salle && existing.salle.split(' - ')[0] !== candidate.salle) return false; 
@@ -329,23 +328,21 @@ function VehicleGrid({ onBack, editingReservation }) {
             const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`); 
             return (candidateStart < existingEnd && candidateEnd > existingStart); 
         }); 
-        if (blockedBy) { conflicts.push(candidate); conflictDetails.push({ candidate, blockedBy }); }
-        else valid.push(candidate); 
+        if (hasConflict) conflicts.push(candidate); else valid.push(candidate); 
     }); 
-    return { conflicts, valid, conflictDetails }; 
+    return { conflicts, valid }; 
   };
 
   const finalizeReservation = async (reservationsToSave) => { 
-    setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] });
-    setConfirmModal({ show: false, reservations: [] });
+    setWarningModal({ show: false, conflicts: [], validReservations: [] });
     setIsSubmitting(true); setSubmissionProgress({ current: 0, total: reservationsToSave.length }); 
     try { 
         if (editingReservation) {
-          await googleSheetsService.deleteReservation(editingReservation.id);
+          await apiService.deleteReservation(editingReservation.id);
         }
         const createdReservations = []; 
         for (const res of reservationsToSave) { 
-            const result = await googleSheetsService.addReservation(res); 
+            const result = await apiService.addReservation(res); 
             createdReservations.push({ ...res, id: result.id }); 
             setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 })); 
             try { await emailService.sendConfirmation(res); } catch(e) { console.error("Mail error", e); }
@@ -371,19 +368,19 @@ function VehicleGrid({ onBack, editingReservation }) {
         const mergedSelections = preMergeSelections(selections); 
         let allCandidates = []; 
         mergedSelections.forEach(sel => { 
-            const dateStr = googleSheetsService.formatDate(sel.date); 
-            const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.hour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; 
+            const dateStr = apiService.formatDate(sel.date); 
+            const baseRes = { salle: selectedRoom, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: apiService.formatTime(sel.hour), heureFin: apiService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes, statut: 'active' }; 
             allCandidates.push(baseRes); 
             if (formData.recurrence && formData.recurrenceJusquau) { 
                 const selDateObj = sel.date instanceof Date ? sel.date : new Date(sel.date); 
                 const datesRecur = generateRecurrenceDates(selDateObj, new Date(formData.recurrenceJusquau), formData.recurrenceType); 
-                datesRecur.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); 
+                datesRecur.forEach(date => { const dateRecurStr = apiService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); }); 
             } 
         }); 
-        const allExisting = await googleSheetsService.getAllReservations(true); 
-        const { conflicts, valid, conflictDetails } = checkConflicts(allCandidates, allExisting); 
+        const allExisting = await apiService.getAllReservations(true); 
+        const { conflicts, valid } = checkConflicts(allCandidates, allExisting); 
         setIsSubmitting(false); 
-        if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid, conflictDetails }); } 
+        if (conflicts.length > 0) { setWarningModal({ show: true, conflicts, validReservations: valid }); } 
         else { await finalizeReservation(valid); } 
     } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); } 
   };
@@ -401,8 +398,8 @@ function VehicleGrid({ onBack, editingReservation }) {
         agencement: editingReservation.agencement || '', nbPersonnes: editingReservation.nbPersonnes || ''
       });
       const resDate = new Date(editingReservation.dateDebut);
-      const startHour = googleSheetsService.timeToFloat(editingReservation.heureDebut);
-      const endHour = googleSheetsService.timeToFloat(editingReservation.heureFin);
+      const startHour = apiService.timeToFloat(editingReservation.heureDebut);
+      const endHour = apiService.timeToFloat(editingReservation.heureFin);
       const newSelections = [];
       
       for (let h = startHour; h < endHour; h += 0.5) {
@@ -513,7 +510,7 @@ function VehicleGrid({ onBack, editingReservation }) {
               
               <div className="selections-summary">
                 {selections.length === 0 && <p style={{color: '#64748b', fontSize: '0.9rem', fontStyle: 'italic'}}>Aucun créneau sélectionné.</p>}
-                {mergedForDisplay.map((sel, idx) => (<div key={idx} className="selection-item">{googleSheetsService.formatDate(sel.date)} : {googleSheetsService.formatTime(sel.hour)} - {googleSheetsService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => removeSelection(idx)}>✕</button></div>))}
+                {mergedForDisplay.map((sel, idx) => (<div key={idx} className="selection-item">{apiService.formatDate(sel.date)} : {apiService.formatTime(sel.hour)} - {apiService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => removeSelection(idx)}>✕</button></div>))}
               </div>
               
               <form onSubmit={handleFormSubmit} className="room-form">
@@ -522,7 +519,7 @@ function VehicleGrid({ onBack, editingReservation }) {
                 <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required><option value="">Choisissez le service *</option>{SERVICES.map(s => <option key={s} value={s}>{s}</option>)}</select>
                 
                 <select className="form-select" value={formData.objet} onChange={e => setFormData({...formData, objet: e.target.value})} required>
-                  <option value="">Choisissez le motif *</option>
+                  <option value="">Motif de la réservation *</option>
                   {OBJETS_VEHICULE.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
                 
@@ -537,10 +534,10 @@ function VehicleGrid({ onBack, editingReservation }) {
                   <label htmlFor="permisAttestation">J'atteste être titulaire du permis B et avoir les points nécessaires</label>
                 </div>
 
-                <textarea className="form-textarea" placeholder="Commentaire" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                <textarea className="form-textarea" placeholder="Description (facultative)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                 <div className="recurrence-section-styled"><div className="recurrence-box"><input type="checkbox" checked={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.checked})} /><label>Réservation récurrente</label></div>
                 {formData.recurrence && (<div className="recurrence-options slide-down"><div className="form-group"><select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}><option value="weekly">Chaque semaine</option><option value="biweekly">Une semaine sur 2</option><option value="monthly">Chaque mois</option></select></div><div className="form-group" style={{marginBottom:0}}>
-                  <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(mergedForDisplay[0]?.date || new Date())} required={formData.recurrence} />
+                  <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={apiService.formatDate(mergedForDisplay[0]?.date || new Date())} required={formData.recurrence} />
                 </div></div>)}</div>
                 <div className="form-actions"><button type="button" className="btn-cancel" onClick={handleCancelSelection}>Annuler</button><button type="submit" className="btn-submit" disabled={isSubmitting}>Valider</button></div>
               </form>
@@ -614,99 +611,7 @@ function VehicleGrid({ onBack, editingReservation }) {
         
         {isSubmitting && <div className="modal-overlay"><div className="modal-content"><h3>Enregistrement... ({submissionProgress.current} / {submissionProgress.total})</h3><div style={{width:'100%',background:'#eee',height:'10px',borderRadius:'5px'}}><div style={{width:`${(submissionProgress.current/submissionProgress.total)*100}%`,background:'#4caf50',height:'100%'}}></div></div></div></div>}
         
-        {warningModal.show && createPortal(
-          <div className="modal-overlay" onClick={() => setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] })}>
-            <div className="warning-modal warning-modal-large" onClick={e => e.stopPropagation()}>
-              <div className="warning-modal-header">
-                <h2>⚠️ {warningModal.conflicts.length > 1 ? 'Conflits détectés' : 'Conflit détecté'}</h2>
-                <p className="warning-modal-subtitle">
-                  {warningModal.conflicts.length} créneau{warningModal.conflicts.length > 1 ? 'x' : ''} en conflit
-                  {warningModal.validReservations.length > 0 && ` · ${warningModal.validReservations.length} créneau${warningModal.validReservations.length > 1 ? 'x' : ''} disponible${warningModal.validReservations.length > 1 ? 's' : ''}`}
-                </p>
-              </div>
-              <div className="warning-modal-body">
-                <div className="conflict-section">
-                  <div className="conflict-section-title">
-                    <span className="conflict-section-icon">🚫</span>
-                    <span>{warningModal.conflicts.length > 1 ? 'Créneaux bloqués' : 'Créneau bloqué'} ({warningModal.conflicts.length})</span>
-                  </div>
-                  <div className="conflict-list-new">
-                    {warningModal.conflictDetails.map((detail, i) => (
-                      <div key={i} className="conflict-item">
-                        <div className="conflict-item-date">
-                          📅 {new Date(detail.candidate.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                          <span className="conflict-item-hours"> · {detail.candidate.heureDebut} – {detail.candidate.heureFin}</span>
-                        </div>
-                        <div className="conflict-item-blocked-by">
-                          Occupé par : <strong>{detail.blockedBy.prenom} {detail.blockedBy.nom}</strong>
-                          {detail.blockedBy.service && <span className="conflict-item-service"> — {detail.blockedBy.service}</span>}
-                          <span className="conflict-item-hours"> ({detail.blockedBy.heureDebut} – {detail.blockedBy.heureFin})</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                {warningModal.validReservations.length > 0 && (
-                  <div className="valid-section">
-                    <div className="valid-section-title">
-                      <span className="valid-section-icon">✅</span>
-                      <span>{warningModal.validReservations.length > 1 ? 'Créneaux disponibles' : 'Créneau disponible'} ({warningModal.validReservations.length})</span>
-                    </div>
-                    <div className="valid-list">
-                      {warningModal.validReservations.map((res, i) => (
-                        <div key={i} className="valid-item">
-                          📅 {new Date(res.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                          <span className="conflict-item-hours"> · {res.heureDebut} – {res.heureFin}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="warning-modal-footer">
-                <button className="btn-conflict-reject" onClick={() => setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] })}>
-                  ✕ Annuler toute la série
-                </button>
-                {warningModal.validReservations.length > 0 && (
-                  <button className="btn-conflict-validate" onClick={() => {
-                    setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] });
-                    setConfirmModal({ show: true, reservations: warningModal.validReservations });
-                  }}>
-                    ✓ {warningModal.validReservations.length > 1 ? `Valider les ${warningModal.validReservations.length} créneaux disponibles` : 'Valider le créneau disponible'}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>, document.body
-        )}
-
-        {confirmModal.show && createPortal(
-          <div className="modal-overlay" onClick={() => setConfirmModal({ show: false, reservations: [] })}>
-            <div className="confirm-modal" onClick={e => e.stopPropagation()}>
-              <div className="confirm-modal-header">
-                <h2>✅ Confirmer la réservation</h2>
-                <p className="confirm-modal-subtitle">
-                  Les {confirmModal.reservations.length} créneau{confirmModal.reservations.length > 1 ? 'x' : ''} suivant{confirmModal.reservations.length > 1 ? 's' : ''} seront enregistré{confirmModal.reservations.length > 1 ? 's' : ''} :
-                </p>
-              </div>
-              <div className="confirm-modal-body">
-                <div className="confirm-list">
-                  {confirmModal.reservations.map((res, i) => (
-                    <div key={i} className="confirm-item">
-                      📅 <strong>{new Date(res.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>
-                      <span className="conflict-item-hours"> · {res.heureDebut} – {res.heureFin}</span>
-                      {res.salle && <span className="confirm-item-salle"> — {res.salle.split(' - ')[0]}</span>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="confirm-modal-footer">
-                <button className="btn-confirm-back" onClick={() => setConfirmModal({ show: false, reservations: [] })}>◀ Retour</button>
-                <button className="btn-confirm-ok" onClick={() => finalizeReservation(confirmModal.reservations)}>✓ Confirmer et enregistrer</button>
-              </div>
-            </div>
-          </div>, document.body
-        )}
+        {warningModal.show && <div className="modal-overlay"><div className="warning-modal"><div className="warning-modal-header"><h2>⚠️ Conflit</h2></div><div className="warning-modal-body"><p>{warningModal.conflicts.length} conflits détectés.</p></div><div className="warning-modal-footer"><button className="cancel-button" onClick={() => setWarningModal({show:false, conflicts:[], validReservations:[]})}>Annuler</button></div></div></div>}
       </div>
     </>
   );

@@ -1,9 +1,7 @@
 // src/components/IAGrid.js
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import googleSheetsService from '../services/googleSheetsService';
-import icalService from '../services/icalService';
-import emailService from '../services/emailService';
+import apiService from '../services/apiService';
 import { SERVICES, JOURS_FERIES, OBJETS_VEHICULE } from '../config/googleSheets';
 import { IA_TOOLS } from '../data/iaData';
 import './IAGrid.css';
@@ -56,9 +54,8 @@ function IAGrid({ onBack, editingReservation }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
   
-  const [successModal, setSuccessModal] = useState({ show: false, reservations: [] });
-  const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [], conflictDetails: [] });
-  const [confirmModal, setConfirmModal] = useState({ show: false, reservations: [] });
+  const [successModal, setSuccessModal] = useState({ show: false, count: 0 });
+  const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [] });
   const [errorModal, setErrorModal] = useState({ show: false, message: '' });
 
   useEffect(() => { loadIAReservations(); }, [currentWeekStart]);
@@ -128,7 +125,7 @@ function IAGrid({ onBack, editingReservation }) {
   const loadIAReservations = async () => {
     setLoading(true);
     try {
-      const res = await googleSheetsService.getAllIAReservations();
+      const res = await apiService.getAllIAReservations();
       // En mode édition, on filtre la réservation en cours pour ne pas la marquer comme occupée
       if (editingReservation) {
         setReservations(res.filter(r => r.id !== editingReservation.id));
@@ -258,7 +255,7 @@ function IAGrid({ onBack, editingReservation }) {
     e.stopPropagation();
     const tool = IA_TOOLS[toolIndex];
     const date = weekDates[dayIndex];
-    const dateStr = googleSheetsService.formatDate(date);
+    const dateStr = apiService.formatDate(date);
     const period = periodIndex === 0 ? 'Matin' : 'Après-midi';
     
     const existingRes = getReservation(tool.id, dateStr, period);
@@ -301,7 +298,7 @@ function IAGrid({ onBack, editingReservation }) {
     if (minTool === maxTool && minDay === maxDay && start.periodIndex === current.periodIndex) {
         const tool = IA_TOOLS[minTool];
         const date = weekDates[minDay];
-        const dateStr = googleSheetsService.formatDate(date);
+        const dateStr = apiService.formatDate(date);
         const period = start.periodIndex === 0 ? 'Matin' : 'Après-midi';
         const existingIndex = selections.findIndex(s => 
             s.toolId === tool.id && s.dateStr === dateStr && s.period === period
@@ -328,7 +325,7 @@ function IAGrid({ onBack, editingReservation }) {
             const tool = IA_TOOLS[t];
             const date = weekDates[d];
             const periodName = p === 0 ? 'Matin' : 'Après-midi';
-            const dateStr = googleSheetsService.formatDate(date);
+            const dateStr = apiService.formatDate(date);
             if (!isOccupied(tool.id, dateStr, periodName) && !checkIfPast(date, periodName)) {
               if (!newSelections.some(s => s.toolId === tool.id && s.dateStr === dateStr && s.period === periodName)) {
                  tempSelections.push({ toolIndex: t, toolId: tool.id, toolName: tool.nom, date: date, dateStr: dateStr, period: periodName, periodIndex: p });
@@ -429,12 +426,17 @@ function IAGrid({ onBack, editingReservation }) {
       let allCandidates = [];
       selections.forEach(sel => {
         const baseRes = {
-          toolId: sel.toolId, salle: sel.toolName, dateDebut: sel.dateStr,
-          heureDebut: sel.period === 'Matin' ? '08:00' : '12:30',
-          heureFin: sel.period === 'Matin' ? '12:30' : '17:30',
-          // ✅ ENVOI DU MOTIF CHOISI DANS 'objet'
-          ...formData, telephone: '', objet: formData.objet
-        };
+  		toolId: sel.toolId,
+  		salle: sel.toolName,          // optionnel pour affichage/mails
+  		dateDebut: sel.dateStr,
+  		dateFin: sel.dateStr,         // ? AJOUT IMPORTANT
+  		heureDebut: sel.period === 'Matin' ? '08:00' : '12:30',
+  		heureFin: sel.period === 'Matin' ? '12:30' : '17:30',
+  		...formData,
+  		telephone: '',
+  		objet: formData.objet
+	};
+
         allCandidates.push(baseRes);
         if (formData.recurrence && formData.recurrenceJusquau) {
            let nextDate = new Date(sel.date);
@@ -445,56 +447,67 @@ function IAGrid({ onBack, editingReservation }) {
              else if (formData.recurrenceType === 'biweekly') nextDate.setDate(nextDate.getDate() + 14);
              else if (formData.recurrenceType === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
              if (nextDate > endDate) break;
-             const dStr = googleSheetsService.formatDate(nextDate);
-             allCandidates.push({ ...baseRes, dateDebut: dStr });
+             const dStr = apiService.formatDate(nextDate);
+             allCandidates.push({ ...baseRes, dateDebut: dStr, dateFin: dStr });
            }
         }
       });
       setSubmissionProgress({ current: 0, total: allCandidates.length });
-      const allExisting = await googleSheetsService.getAllIAReservations(true);
+      const allExisting = await apiService.getAllIAReservations(true);
       const conflicts = [];
       const valid = [];
-      const conflictDetails = [];
       allCandidates.forEach(cand => {
-        const blockedBy = allExisting.find(exist => 
+        const isConflict = allExisting.some(exist => 
           exist.statut !== 'cancelled' && exist.toolId === cand.toolId &&
           exist.dateDebut === cand.dateDebut && exist.heureDebut === cand.heureDebut
         );
-        if (blockedBy) {
-          conflicts.push(cand);
-          conflictDetails.push({ candidate: cand, blockedBy });
-        } else {
-          valid.push(cand);
-        }
+        if (isConflict) conflicts.push(cand); else valid.push(cand);
       });
       if (conflicts.length > 0) {
         setIsSubmitting(false);
-        setWarningModal({ show: true, conflicts, validReservations: valid, conflictDetails });
+        setWarningModal({ show: true, conflicts, validReservations: valid });
         return;
       }
       await finalizeReservation(valid);
     } catch (error) { alert('Erreur: ' + error.message); setIsSubmitting(false); }
   };
 
-  const finalizeReservation = async (reservationsToSave) => {
-    setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] });
-    setConfirmModal({ show: false, reservations: [] });
-    setIsSubmitting(true);
-    try {
-      const createdReservations = [];
-      for (const res of reservationsToSave) {
-        const result = await googleSheetsService.addIAReservation(res);
-        createdReservations.push({ ...res, id: result.id });
-        setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 }));
-        try { await emailService.sendConfirmation(res); } catch(e){}
-      }
-      setSuccessModal({ show: true, reservations: createdReservations });
-      loadIAReservations();
-      setSelections([]);
-      // Reset form including objet
-      setFormData({ nom: '', prenom: '', email: '', service: '', objet: '', description: '', recurrence: false, recurrenceType: 'weekly', recurrenceJusquau: '' });
-    } catch(e) { console.error(e); } finally { setIsSubmitting(false); }
-  };
+const finalizeReservation = async (reservationsToSave) => {
+  setWarningModal({ show: false, conflicts: [], validReservations: [] });
+  setIsSubmitting(true);
+
+  try {
+    // Progression visuelle : total = nb de cr�neaux
+    setSubmissionProgress({ current: 0, total: reservationsToSave.length });
+
+    // Un seul appel backend (bulk)
+    await apiService.addIAReservationsBulk(reservationsToSave);
+
+    // On met la progression � 100%
+    setSubmissionProgress({ current: reservationsToSave.length, total: reservationsToSave.length });
+
+    setSuccessModal({ show: true, count: reservationsToSave.length });
+    loadIAReservations();
+    setSelections([]);
+
+    setFormData({
+      nom: '',
+      prenom: '',
+      email: '',
+      service: '',
+      objet: '',
+      description: '',
+      recurrence: false,
+      recurrenceType: 'weekly',
+      recurrenceJusquau: ''
+    });
+  } catch (e) {
+    console.error(e);
+    setErrorModal({ show: true, message: e.message || 'Erreur lors de la r�servation IA' });
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // ✅ CORRECTION DU BOUTON ANNULER
   const handleCancelSelection = () => { 
@@ -709,7 +722,7 @@ function IAGrid({ onBack, editingReservation }) {
                           </select>
                         </div>
                         <div className="form-group" style={{marginBottom:0}}>
-                          <input type="date" className="form-input" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(new Date())} required={formData.recurrence} />
+                          <input type="date" className="form-input" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={apiService.formatDate(new Date())} required={formData.recurrence} />
                         </div>
                       </div>
                     )}
@@ -739,7 +752,7 @@ function IAGrid({ onBack, editingReservation }) {
                     <div className="ia-row-thumb" style={{ backgroundImage: `url(${process.env.PUBLIC_URL + tool.image})` }}></div>
                   </td>
                   {weekDates.map((date, dIdx) => {
-                    const dateStr = googleSheetsService.formatDate(date);
+                    const dateStr = apiService.formatDate(date);
                     const matinOcc = isOccupied(tool.id, dateStr, 'Matin');
                     const amOcc = isOccupied(tool.id, dateStr, "Après-midi");
                     const isMatinSel = selections.some(s => s.toolId === tool.id && s.dateStr === dateStr && s.period === 'Matin');
@@ -799,146 +812,9 @@ function IAGrid({ onBack, editingReservation }) {
       )}
 
       {errorModal.show && createPortal(<div className="blocked-modal-overlay" onClick={() => setErrorModal({show:false, message:''})}><div className="blocked-modal"><div className="warning-modal-header" style={{background:'#ef5350'}}><span className="blocked-modal-emoji">⛔</span><h2 className="blocked-modal-title">Attention</h2></div><p className="blocked-modal-message">{errorModal.message}</p><button className="blocked-close-button" onClick={() => setErrorModal({show:false, message:''})}>Compris</button></div></div>, document.body)}
-      {warningModal.show && createPortal(
-        <div className="modal-overlay" onClick={() => setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] })}>
-          <div className="warning-modal warning-modal-large" onClick={e => e.stopPropagation()}>
-
-            <div className="warning-modal-header">
-              <h2>⚠️ {warningModal.conflicts.length > 1 ? 'Conflits détectés' : 'Conflit détecté'}</h2>
-              <p className="warning-modal-subtitle">
-                {warningModal.conflicts.length} créneau{warningModal.conflicts.length > 1 ? 'x' : ''} en conflit
-                {warningModal.validReservations.length > 0 && ` · ${warningModal.validReservations.length} créneau${warningModal.validReservations.length > 1 ? 'x' : ''} disponible${warningModal.validReservations.length > 1 ? 's' : ''}`}
-              </p>
-            </div>
-
-            <div className="warning-modal-body">
-
-              <div className="conflict-section">
-                <div className="conflict-section-title">
-                  <span className="conflict-section-icon">🚫</span>
-                  <span>{warningModal.conflicts.length > 1 ? 'Créneaux bloqués' : 'Créneau bloqué'} ({warningModal.conflicts.length})</span>
-                </div>
-                <div className="conflict-list-new">
-                  {warningModal.conflictDetails.map((detail, i) => (
-                    <div key={i} className="conflict-item">
-                      <div className="conflict-item-date">
-                        📅 {new Date(detail.candidate.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                        <span className="conflict-item-hours"> · {detail.candidate.heureDebut === '08:00' ? 'Matin (08:00–12:00)' : 'Après-midi (13:00–17:00)'}</span>
-                      </div>
-                      <div className="conflict-item-blocked-by">
-                        Occupé par : <strong>{detail.blockedBy.prenom} {detail.blockedBy.nom}</strong>
-                        {detail.blockedBy.service && <span className="conflict-item-service"> — {detail.blockedBy.service}</span>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {warningModal.validReservations.length > 0 && (
-                <div className="valid-section">
-                  <div className="valid-section-title">
-                    <span className="valid-section-icon">✅</span>
-                    <span>{warningModal.validReservations.length > 1 ? 'Créneaux disponibles' : 'Créneau disponible'} ({warningModal.validReservations.length})</span>
-                  </div>
-                  <div className="valid-list">
-                    {warningModal.validReservations.map((res, i) => (
-                      <div key={i} className="valid-item">
-                        📅 {new Date(res.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                        <span className="conflict-item-hours"> · {res.heureDebut === '08:00' ? 'Matin' : 'Après-midi'}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-            </div>
-
-            <div className="warning-modal-footer">
-              <button
-                className="btn-conflict-reject"
-                onClick={() => setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] })}
-              >
-                ✕ Annuler toute la série
-              </button>
-              {warningModal.validReservations.length > 0 && (
-                <button
-                  className="btn-conflict-validate"
-                  onClick={() => {
-                    setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] });
-                    setConfirmModal({ show: true, reservations: warningModal.validReservations });
-                  }}
-                >
-                  ✓ {warningModal.validReservations.length > 1 ? `Valider les ${warningModal.validReservations.length} créneaux disponibles` : 'Valider le créneau disponible'}
-                </button>
-              )}
-            </div>
-
-          </div>
-        </div>, document.body
-      )}
-
-      {confirmModal.show && createPortal(
-        <div className="modal-overlay" onClick={() => setConfirmModal({ show: false, reservations: [] })}>
-          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
-
-            <div className="confirm-modal-header">
-              <h2>✅ Confirmer la réservation</h2>
-              <p className="confirm-modal-subtitle">
-                Les {confirmModal.reservations.length} créneau{confirmModal.reservations.length > 1 ? 'x' : ''} suivant{confirmModal.reservations.length > 1 ? 's' : ''} seront enregistré{confirmModal.reservations.length > 1 ? 's' : ''} :
-              </p>
-            </div>
-
-            <div className="confirm-modal-body">
-              <div className="confirm-list">
-                {confirmModal.reservations.map((res, i) => (
-                  <div key={i} className="confirm-item">
-                    📅 <strong>{new Date(res.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>
-                    <span className="conflict-item-hours"> · {res.heureDebut === '08:00' ? 'Matin (08:00–12:00)' : 'Après-midi (13:00–17:00)'}</span>
-                    {res.salle && <span className="confirm-item-salle"> — {res.salle}</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="confirm-modal-footer">
-              <button className="btn-confirm-back" onClick={() => setConfirmModal({ show: false, reservations: [] })}>◀ Retour</button>
-              <button className="btn-confirm-ok" onClick={() => finalizeReservation(confirmModal.reservations)}>✓ Confirmer et enregistrer</button>
-            </div>
-
-          </div>
-        </div>, document.body
-      )}
+      {warningModal.show && createPortal(<div className="modal-overlay"><div className="warning-modal"><div className="warning-modal-header"><h2>⚠️ Conflit de réservation</h2></div><div className="warning-modal-body"><p>{warningModal.conflicts.length} créneaux sont déjà réservés :</p><div className="conflict-list">{warningModal.conflicts.map((c, i) => (<li key={i}>{c.salle} • {new Date(c.dateDebut).toLocaleDateString()} ({c.heureDebut === '08:00' ? 'Matin' : 'PM'})</li>))}</div></div><div className="warning-modal-footer"><button className="btn-cancel" onClick={() => setWarningModal({show:false, conflicts:[], validReservations:[]})}>Annuler</button>{warningModal.validReservations.length > 0 && (<button className="btn-submit" onClick={() => finalizeReservation(warningModal.validReservations)}>Valider les {warningModal.validReservations.length} disponibles</button>)}</div></div></div>, document.body)}
       {isSubmitting && createPortal(<div className="modal-overlay"><div className="modal-content"><h3>Enregistrement... ({submissionProgress.current} / {submissionProgress.total})</h3><div style={{width:'100%',background:'#eee',height:'10px',borderRadius:'5px'}}><div style={{width:`${(submissionProgress.current/submissionProgress.total)*100}%`,background:'#0f6aba',height:'100%',transition:'width 0.3s ease'}}></div></div></div></div>, document.body)}
-      {successModal.show && createPortal(
-        <div className="success-modal-overlay" onClick={() => setSuccessModal({ show: false, reservations: [] })} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingBottom: '70px' }}>
-          <div className="success-modal" onClick={e => e.stopPropagation()}>
-            <div className="success-modal-header">
-              <h2>{successModal.reservations.length > 1 ? '✅ Réservations confirmées !' : '✅ Réservation confirmée !'}</h2>
-            </div>
-            <div className="success-modal-body">
-              <p className="success-subtitle"><b>{successModal.reservations.length} {successModal.reservations.length > 1 ? 'créneaux confirmés' : 'créneau confirmé'}</b></p>
-              <div className="reservations-list">
-                {successModal.reservations.map((res, i) => (
-                  <div key={i} className="reservation-item-success">
-                    <span className="calendar-icon">📅</span> {res.salle} - {new Date(res.dateDebut).toLocaleDateString('fr-FR')} : {res.heureDebut} - {res.heureFin}
-                  </div>
-                ))}
-              </div>
-              <div className="ical-info-text" style={{fontSize: '0.9rem', color: '#64748b', marginBottom: '0.5rem', textAlign: 'center', fontStyle: 'italic'}}>
-                {successModal.reservations.length > 1
-                  ? 'Intégration dans un agenda parallèle à transférer ensuite dans le vôtre'
-                  : 'Intégration dans votre agenda'}
-              </div>
-              <div className="ical-download-section">
-                <button className="download-ical-button" onClick={() => icalService.generateAndDownload(successModal.reservations)}>📥 Calendrier iCal</button>
-              </div>
-            </div>
-            <div className="success-modal-footer">
-              <button className="close-modal-button" onClick={() => setSuccessModal({ show: false, reservations: [] })}>Fermer</button>
-            </div>
-          </div>
-        </div>, document.body
-      )}
+      {successModal.show && createPortal(<div className="success-modal-overlay" onClick={() => setSuccessModal({show:false, count:0})}><div className="success-modal"><div className="success-modal-header" style={{background:'#4caf50'}}><h2>✅ Réservation confirmée !</h2></div><div className="success-modal-body"><p style={{textAlign:'center', fontSize:'1.1rem'}}>{successModal.count} créneau(x) enregistré(s) avec succès.</p></div><div className="success-modal-footer"><button className="close-modal-button" onClick={() => setSuccessModal({show:false, count:0})}>Fermer</button></div></div></div>, document.body)}
     </div>
   );
 }

@@ -199,7 +199,7 @@ function App() {
               onClick={() => resetAndNavigate('ia')}
               style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
             >
-              🤖 <span className="nav-text">IA</span>
+              🤖 <span className="nav-text">FabLab IA</span>
             </button>
 
             <button className={currentView === 'myreservations' ? 'active' : ''} onClick={() => resetAndNavigate('myreservations')}>✏️ <span className="nav-text-opt">Mes Réservations</span></button>

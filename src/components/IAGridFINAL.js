@@ -1,9 +1,7 @@
 // src/components/IAGrid.js
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import googleSheetsService from '../services/googleSheetsService';
-import icalService from '../services/icalService';
-import emailService from '../services/emailService';
+import apiService from '../services/apiService';
 import { SERVICES, JOURS_FERIES, OBJETS_VEHICULE } from '../config/googleSheets';
 import { IA_TOOLS } from '../data/iaData';
 import './IAGrid.css';
@@ -128,7 +126,7 @@ function IAGrid({ onBack, editingReservation }) {
   const loadIAReservations = async () => {
     setLoading(true);
     try {
-      const res = await googleSheetsService.getAllIAReservations();
+      const res = await apiService.getAllIAReservations();
       // En mode édition, on filtre la réservation en cours pour ne pas la marquer comme occupée
       if (editingReservation) {
         setReservations(res.filter(r => r.id !== editingReservation.id));
@@ -258,7 +256,7 @@ function IAGrid({ onBack, editingReservation }) {
     e.stopPropagation();
     const tool = IA_TOOLS[toolIndex];
     const date = weekDates[dayIndex];
-    const dateStr = googleSheetsService.formatDate(date);
+    const dateStr = apiService.formatDate(date);
     const period = periodIndex === 0 ? 'Matin' : 'Après-midi';
     
     const existingRes = getReservation(tool.id, dateStr, period);
@@ -301,7 +299,7 @@ function IAGrid({ onBack, editingReservation }) {
     if (minTool === maxTool && minDay === maxDay && start.periodIndex === current.periodIndex) {
         const tool = IA_TOOLS[minTool];
         const date = weekDates[minDay];
-        const dateStr = googleSheetsService.formatDate(date);
+        const dateStr = apiService.formatDate(date);
         const period = start.periodIndex === 0 ? 'Matin' : 'Après-midi';
         const existingIndex = selections.findIndex(s => 
             s.toolId === tool.id && s.dateStr === dateStr && s.period === period
@@ -328,7 +326,7 @@ function IAGrid({ onBack, editingReservation }) {
             const tool = IA_TOOLS[t];
             const date = weekDates[d];
             const periodName = p === 0 ? 'Matin' : 'Après-midi';
-            const dateStr = googleSheetsService.formatDate(date);
+            const dateStr = apiService.formatDate(date);
             if (!isOccupied(tool.id, dateStr, periodName) && !checkIfPast(date, periodName)) {
               if (!newSelections.some(s => s.toolId === tool.id && s.dateStr === dateStr && s.period === periodName)) {
                  tempSelections.push({ toolIndex: t, toolId: tool.id, toolName: tool.nom, date: date, dateStr: dateStr, period: periodName, periodIndex: p });
@@ -429,12 +427,16 @@ function IAGrid({ onBack, editingReservation }) {
       let allCandidates = [];
       selections.forEach(sel => {
         const baseRes = {
-          toolId: sel.toolId, salle: sel.toolName, dateDebut: sel.dateStr,
-          heureDebut: sel.period === 'Matin' ? '08:00' : '12:30',
-          heureFin: sel.period === 'Matin' ? '12:30' : '17:30',
-          // ✅ ENVOI DU MOTIF CHOISI DANS 'objet'
-          ...formData, telephone: '', objet: formData.objet
-        };
+  		toolId: sel.toolId,
+  		salle: sel.toolName,          // optionnel pour affichage/mails
+  		dateDebut: sel.dateStr,
+  		dateFin: sel.dateStr,         // ? AJOUT IMPORTANT
+  		heureDebut: sel.period === 'Matin' ? '08:00' : '12:30',
+  		heureFin: sel.period === 'Matin' ? '12:30' : '17:30',
+  		...formData,
+  		telephone: '',
+  		objet: formData.objet
+	};
         allCandidates.push(baseRes);
         if (formData.recurrence && formData.recurrenceJusquau) {
            let nextDate = new Date(sel.date);
@@ -445,13 +447,13 @@ function IAGrid({ onBack, editingReservation }) {
              else if (formData.recurrenceType === 'biweekly') nextDate.setDate(nextDate.getDate() + 14);
              else if (formData.recurrenceType === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
              if (nextDate > endDate) break;
-             const dStr = googleSheetsService.formatDate(nextDate);
-             allCandidates.push({ ...baseRes, dateDebut: dStr });
+             const dStr = apiService.formatDate(nextDate);
+             allCandidates.push({ ...baseRes, dateDebut: dStr, dateFin: dStr });
            }
         }
       });
       setSubmissionProgress({ current: 0, total: allCandidates.length });
-      const allExisting = await googleSheetsService.getAllIAReservations(true);
+      const allExisting = await apiService.getAllIAReservations(true);
       const conflicts = [];
       const valid = [];
       const conflictDetails = [];
@@ -709,7 +711,7 @@ function IAGrid({ onBack, editingReservation }) {
                           </select>
                         </div>
                         <div className="form-group" style={{marginBottom:0}}>
-                          <input type="date" className="form-input" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(new Date())} required={formData.recurrence} />
+                          <input type="date" className="form-input" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={apiService.formatDate(new Date())} required={formData.recurrence} />
                         </div>
                       </div>
                     )}
@@ -739,7 +741,7 @@ function IAGrid({ onBack, editingReservation }) {
                     <div className="ia-row-thumb" style={{ backgroundImage: `url(${process.env.PUBLIC_URL + tool.image})` }}></div>
                   </td>
                   {weekDates.map((date, dIdx) => {
-                    const dateStr = googleSheetsService.formatDate(date);
+                    const dateStr = apiService.formatDate(date);
                     const matinOcc = isOccupied(tool.id, dateStr, 'Matin');
                     const amOcc = isOccupied(tool.id, dateStr, "Après-midi");
                     const isMatinSel = selections.some(s => s.toolId === tool.id && s.dateStr === dateStr && s.period === 'Matin');

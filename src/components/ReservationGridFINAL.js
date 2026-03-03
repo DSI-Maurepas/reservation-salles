@@ -1,7 +1,7 @@
 // src/components/ReservationGrid.js
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import googleSheetsService from '../services/googleSheetsService';
+import apiService from '../services/apiService';
 import emailService from '../services/emailService';
 import icalService from '../services/icalService';
 import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, COULEURS_OBJETS, JOURS_FERIES, APP_CONFIG } from '../config/googleSheets';
@@ -77,8 +77,8 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
   const loadReservations = useCallback(async () => {
     setLoading(true);
     try {
-      const all = await googleSheetsService.getAllReservations();
-      const dStr = googleSheetsService.formatDate(currentDate);
+      const all = await apiService.getAllReservations();
+      const dStr = apiService.formatDate(currentDate);
       const dayRes = all.filter(res => res.statut !== 'cancelled' && (res.dateDebut === dStr || (res.dateDebut <= dStr && res.dateFin >= dStr)));
       setReservations(dayRes);
     } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -116,7 +116,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
     return () => { clearTimeout(timerWait); clearTimeout(timerFade); };
   }, [hoveredSalle, selections.length]);
 
-  const isJourFerie = (date) => JOURS_FERIES.includes(googleSheetsService.formatDate(date));
+  const isJourFerie = (date) => JOURS_FERIES.includes(apiService.formatDate(date));
   const isDimanche = (date) => date.getDay() === 0;
   const isDateInPast = (date) => { const t = new Date(); t.setHours(0,0,0,0); const c = new Date(date); c.setHours(0,0,0,0); return c < t; };
 
@@ -131,7 +131,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
 
   const handleMouseDown = (salle, hour, e) => {
     const sShort = salle.split(' - ')[0];
-    const res = reservations.find(r => r.salle.includes(sShort) && hour >= googleSheetsService.timeToFloat(r.heureDebut) && hour < googleSheetsService.timeToFloat(r.heureFin));
+    const res = reservations.find(r => r.salle.includes(sShort) && hour >= apiService.timeToFloat(r.heureDebut) && hour < apiService.timeToFloat(r.heureFin));
     if (res) {
       setPopupPosition({ x: e.clientX, y: e.clientY });
       setHoveredReservation(res);
@@ -270,7 +270,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
       if (isFullHour) grid.push(<div key={`t-${h}`} className="time-label" style={{ gridRow: `${row} / span 2` }}>{h}h</div>);
       SALLES.forEach((salle, idx) => {
         const sShort = salle.split(' - ')[0];
-        const res = reservations.find(r => r.salle.includes(sShort) && h >= googleSheetsService.timeToFloat(r.heureDebut) && h < googleSheetsService.timeToFloat(r.heureFin));
+        const res = reservations.find(r => r.salle.includes(sShort) && h >= apiService.timeToFloat(r.heureDebut) && h < apiService.timeToFloat(r.heureFin));
         const isLocked = SALLES_ADMIN_ONLY.some(a => salle.includes(a)) && !isAdminUnlocked;
         const selected = selections.some(sel => sel.salle === salle && h >= sel.startHour && h < sel.endHour) || (currentSelection && currentSelection.salle === salle && h >= currentSelection.startHour && h < currentSelection.endHour);
         let classes = `time-slot ${isFullHour ? 'full-hour-start' : 'half-hour-start'}`;
@@ -311,8 +311,8 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
       const mergedSelections = preMergeSelections(selections);
       let allCandidates = [];
       mergedSelections.forEach(sel => {
-        const dateStr = googleSheetsService.formatDate(currentDate);
-        const baseRes = { salle: sel.salle, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.startHour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes || '', statut: 'active' };
+        const dateStr = apiService.formatDate(currentDate);
+        const baseRes = { salle: sel.salle, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: apiService.formatTime(sel.startHour), heureFin: apiService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes || '', statut: 'active' };
         allCandidates.push(baseRes);
         if (formData.recurrence && formData.recurrenceJusquau) {
           const selDateObj = new Date(dateStr);
@@ -322,10 +322,10 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
              if (formData.recurrenceType === 'monthly') current.setMonth(current.getMonth() + 1); else if (formData.recurrenceType === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7);
              while (current <= end) { datesRecur.push(new Date(current)); if (formData.recurrenceType === 'monthly') current.setMonth(current.getMonth() + 1); else if (formData.recurrenceType === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); }
           }
-          datesRecur.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); });
+          datesRecur.forEach(date => { const dateRecurStr = apiService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); });
         }
       });
-      const allExisting = await googleSheetsService.getAllReservations(true); 
+      const allExisting = await apiService.getAllReservations(true); 
       const { conflicts, valid, conflictDetails } = checkConflicts(allCandidates, allExisting); 
       
       setIsSubmitting(false); 
@@ -374,7 +374,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
     try {
       const createdReservations = [];
       for (const res of reservationsToSave) {
-        const result = await googleSheetsService.addReservation(res);
+        const result = await apiService.addReservation(res);
         createdReservations.push({ ...res, id: result.id });
         setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 }));
         try { await emailService.sendConfirmation(res); } catch (e) { console.error(e); }
@@ -462,7 +462,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                 {/* ✅ SUPPRESSION DE SELECTION-COUNT COMME DEMANDÉ */}
                 {/* <p className="selection-count">...</p> SUPPRIMÉ */}
 
-                <div className="selections-summary">{preMergeSelections(selections).map((sel, idx) => (<div key={idx} className="selection-item">{sel.salle.split(' - ')[0]} : {googleSheetsService.formatTime(sel.startHour)} - {googleSheetsService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => {
+                <div className="selections-summary">{preMergeSelections(selections).map((sel, idx) => (<div key={idx} className="selection-item">{sel.salle.split(' - ')[0]} : {apiService.formatTime(sel.startHour)} - {apiService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => {
                    const newSelections = selections.filter(s => !(s.salle === sel.salle && s.startHour >= sel.startHour && s.endHour <= sel.endHour));
                    if(newSelections.length === 0) {
                        setIsSidebarFading(true);
@@ -516,7 +516,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                         onChange={e => {
                            const isChecked = e.target.checked;
                            // ✅ DATE PAR DÉFAUT = CURRENT DATE
-                           const defaultDate = googleSheetsService.formatDate(currentDate);
+                           const defaultDate = apiService.formatDate(currentDate);
                            setFormData({...formData, recurrence: isChecked, recurrenceJusquau: isChecked ? defaultDate : ''});
                         }} 
                       />
@@ -533,7 +533,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                           </select>
                         </div>
                         <div className="form-group" style={{marginBottom:0}}>
-                          <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(currentDate)} required={formData.recurrence} />
+                          <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={apiService.formatDate(currentDate)} required={formData.recurrence} />
                         </div>
                       </div>
                     )}

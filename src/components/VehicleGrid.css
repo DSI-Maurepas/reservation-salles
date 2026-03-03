@@ -149,16 +149,10 @@
 .popup-info-text { flex: 1; font-weight: 500; }
 
 .modal-overlay, .blocked-modal-overlay, .success-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 99999; display: flex; align-items: center; justify-content: center; }
-.modal-content, .blocked-modal, .success-modal { background: white; padding: 1.5rem; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; }
-.success-modal-header h2 { color: #10b981; text-align: center; }
-.success-subtitle { margin-bottom: 1rem; font-weight: normal; }
-.reservations-list { text-align: left; margin: 1rem 0; background: #f9f9f9; padding: 1rem; border-radius: 8px; max-height: 200px; overflow-y: auto; }
-.reservation-item-success { border-bottom: 1px dashed #ddd; padding: 0.5rem 0; display: flex; align-items: center; font-size: 0.9rem; }
-.calendar-icon { margin-right: 8px; font-size: 1rem; }
-.close-modal-button { margin-top: 1rem; padding: 0.6rem 2rem; background: #1e293b; color: white; border: none; border-radius: 10px; cursor: pointer; width: 100%; }
-.download-ical-button { background: #2196f3; color: white; border: none; padding: 0.6rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 1rem; }
+.modal-content, .blocked-modal, .success-modal { background: white; padding: 0; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.3); text-align: center; overflow: hidden; }
+.success-modal-body { padding: 1.5rem; text-align: left; }
 .warning-modal { background: white; padding: 0; border-radius: 20px; max-width: 450px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); overflow: hidden; }
-.warning-modal-header { background: #ff9800; padding: 1.5rem; text-align: center; }
+.warning-modal-header { background: #ff9800; padding: 1.4rem 1.5rem; text-align: center; border-radius: 20px 20px 0 0; }
 .warning-modal-header h2 { color: white; margin: 0; }
 .blocked-modal-emoji { font-size: 3rem; display: block; }
 .blocked-modal-title { margin: 0.5rem 0 0 0; color: white; font-size: 1.5rem; font-weight: 700; }
@@ -166,10 +160,55 @@
 .blocked-close-button { padding: 0.8rem 2rem; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); margin-bottom: 1rem; }
 .blocked-close-button:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); }
 .blocked-close-button:active { transform: translateY(0); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); }
-.warning-modal-body { padding: 1.5rem; text-align: left; color: #333; }
-.conflict-list { background: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; padding: 1rem; margin: 1rem 0; max-height: 150px; overflow-y: auto; list-style-type: none; }
-.conflict-list li { font-size: 0.9rem; margin-bottom: 0.5rem; color: #e65100; font-weight: 600; }
-.warning-modal-footer { padding: 1.5rem; background: #f9f9f9; display: flex; justify-content: space-between; gap: 1rem; }
+
+/* ============================================================
+   BLOC MODALS CONFLITS / CONFIRMATION / SUCCÈS — UNIFIÉ
+   ============================================================ */
+.warning-modal-large { max-width: 580px; }
+.warning-modal-subtitle { color: rgba(255,255,255,0.92); margin: 0.3rem 0 0 0; font-size: 0.9rem; font-weight: 500; }
+.warning-modal-body { padding: 1.4rem 1.5rem; text-align: left; color: #333; max-height: 55vh; overflow-y: auto; }
+.conflict-section { margin-bottom: 1rem; }
+.conflict-section-title { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; color: #b91c1c; margin-bottom: 0.6rem; }
+.conflict-section-icon { font-size: 1.1rem; }
+.conflict-list-new { display: flex; flex-direction: column; gap: 0.5rem; }
+.conflict-item { background: #fff1f1; border: 1px solid #fca5a5; border-left: 4px solid #ef4444; border-radius: 8px; padding: 0.7rem 0.9rem; font-size: 0.88rem; }
+.conflict-item-date { font-weight: 600; color: #1e293b; margin-bottom: 0.2rem; }
+.conflict-item-hours { color: #64748b; font-weight: 400; }
+.conflict-item-blocked-by { color: #7f1d1d; font-size: 0.83rem; margin-top: 0.2rem; }
+.conflict-item-service { color: #9a3412; }
+.valid-section { margin-top: 1rem; }
+.valid-section-title { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; font-size: 0.95rem; color: #15803d; margin-bottom: 0.6rem; }
+.valid-section-icon { font-size: 1.1rem; }
+.valid-list { display: flex; flex-direction: column; gap: 0.4rem; }
+.valid-item { background: #f0fdf4; border: 1px solid #86efac; border-left: 4px solid #22c55e; border-radius: 8px; padding: 0.6rem 0.9rem; font-size: 0.88rem; color: #14532d; font-weight: 500; }
+.warning-modal-footer { padding: 1.2rem 1.5rem; background: #f9f9f9; display: flex; justify-content: space-between; gap: 0.8rem; border-top: 1px solid #e2e8f0; }
+.btn-conflict-reject { flex: 1; padding: 0.75rem 1rem; background: #ef4444; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+.btn-conflict-reject:hover { background: #dc2626; }
+.btn-conflict-validate { flex: 2; padding: 0.75rem 1rem; background: #16a34a; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+.btn-conflict-validate:hover { background: #15803d; }
+.confirm-modal { background: white; padding: 0; border-radius: 20px; max-width: 520px; width: 90%; box-shadow: 0 25px 50px rgba(0,0,0,0.3); overflow: hidden; }
+.confirm-modal-header { background: #1e40af; padding: 1.4rem 1.5rem; text-align: center; }
+.confirm-modal-header h2 { color: white !important; margin: 0 0 0.3rem 0; font-size: 1.35rem; }
+.confirm-modal-subtitle { color: rgba(255,255,255,0.88); margin: 0; font-size: 0.9rem; }
+.confirm-modal-body { padding: 1.4rem 1.5rem; max-height: 50vh; overflow-y: auto; }
+.confirm-list { display: flex; flex-direction: column; gap: 0.45rem; }
+.confirm-item { background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #3b82f6; border-radius: 8px; padding: 0.65rem 0.9rem; font-size: 0.88rem; color: #1e3a8a; font-weight: 500; }
+.confirm-item-salle { color: #475569; font-weight: 400; }
+.confirm-modal-footer { padding: 1.2rem 1.5rem; background: #f9f9f9; display: flex; justify-content: space-between; gap: 0.8rem; border-top: 1px solid #e2e8f0; }
+.btn-confirm-back { flex: 1; padding: 0.75rem 1rem; background: #94a3b8; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+.btn-confirm-back:hover { background: #64748b; }
+.btn-confirm-ok { flex: 2; padding: 0.75rem 1rem; background: #1e40af; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+.btn-confirm-ok:hover { background: #1e3a8a; }
+.success-modal-header { background: #4caf50 !important; padding: 1.5rem; color: white; border-radius: 20px 20px 0 0; }
+.success-modal-header h2 { margin: 0; color: white !important; font-size: 1.5rem; text-align: center; }
+.success-subtitle { margin-bottom: 1rem; font-weight: normal; text-align: center; }
+.reservations-list { text-align: left; margin: 1rem 0; background: #f9f9f9; padding: 1rem; border-radius: 8px; max-height: 200px; overflow-y: auto; }
+.reservation-item-success { border-bottom: 1px dashed #ddd; padding: 0.5rem 0; display: flex; align-items: center; font-size: 0.9rem; }
+.calendar-icon { margin-right: 8px; font-size: 1rem; }
+.ical-info-text { font-size: 0.9rem; color: #64748b; margin-bottom: 0.5rem; text-align: center; font-style: italic; }
+.download-ical-button { background: #2196f3; color: white; border: none; padding: 0.8rem; border-radius: 8px; cursor: pointer; font-weight: 700; width: 100%; font-size: 1rem; margin-top: 0.5rem; }
+.success-modal-footer { padding: 1rem; background: #f9f9f9; text-align: center; border-top: 1px solid #e2e8f0; }
+.close-modal-button { padding: 0.8rem 2rem; background: #1e293b; color: white; border: none; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; }
 
 .week-grid th.day-header { border: 1px solid #1976d2 !important; border-radius: 0 !important; }
 .hour-header { border: 0px solid #e2e8f0 !important; border-radius: 0 !important; }

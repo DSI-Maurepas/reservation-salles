@@ -20,6 +20,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
     return monday; 
   };
 
+  // ✅ HELPER POUR COMPARER LES DATES STRICTEMENT (Sans l'heure)																  
   const areDatesSame = (d1, d2) => {
     if (!d1 || !d2) return false;
     const date1 = d1 instanceof Date ? d1 : new Date(d1);
@@ -155,9 +156,12 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
     }); 
   };
 
+  // ✅ CORRECTION CRÉNEAUX FANTÔMES (Date stricte)													  
   const isSlotSelected = (dayIndex, slot) => {
+    // La date précise de la cellule en cours de rendu													   
     const currentCellDate = dates[dayIndex];
     return selections.some(sel => {
+      // Comparaison stricte de la date									   
       return sel.hour === slot && areDatesSame(sel.date, currentCellDate);
     });
   };
@@ -212,7 +216,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
       const dayDate = dates[d];
       if (!isDimanche(dayDate) && !isJourFerie(dayDate) && !isDateInPast(dayDate)) {
         for (let h = minHour; h <= maxHour; h += 0.5) {
-          const exists = isSlotSelected(d, h); 
+          const exists = isSlotSelected(d, h); // Use updated check 
           if (!exists && !isSlotReserved(d, h)) {
             newSelections.push({ dayIndex: d, hour: h, date: dates[d] });
           }
@@ -225,7 +229,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
   const handleMouseUp = () => { 
     if (!isDragging && mouseDownPos) { 
       const { dayIndex, hour, date } = mouseDownPos; 
-      const alreadySelected = isSlotSelected(dayIndex, hour);
+      const alreadySelected = isSlotSelected(dayIndex, hour); // Use updated check
       if (alreadySelected) { 
         const newSelections = selections.filter(sel => 
           !(sel.hour === hour && areDatesSame(sel.date, date))
@@ -267,6 +271,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
     setIsDragging(false); setDragStart(null); setMouseDownPos(null); 
   };
 
+  // ✅ CORRECTION BOUTON ANNULER								  
   const handleCancelSelection = () => { 
     setIsFading(true);
     setTimeout(() => {
@@ -511,6 +516,7 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
       <div className="single-room-container">
         <div className="week-navigation">
           <div className="nav-group-left">
+            {/* ✅ BOUTON RETOUR QUI UTILISE onBack POUR LE NETTOYAGE */}																		  
             <button onClick={onBack} className="back-button-inline">← Autres Salles</button>
             <h2 className="room-title-inline">
               🏛️ {salleData?.nom || selectedRoom}
@@ -681,7 +687,37 @@ function SingleRoomGrid({ selectedRoom, editingReservation, onBack, onSuccess })
             </table>
           </div>
         </div>
-
+        
+        {/* ✅ POPUP FICHE RÉSERVATION */}
+        {hoveredReservation && (
+          <div 
+            className={`reservation-popup-card ${isFading ? 'fading-out' : ''}`} 
+            style={{ 
+              position: 'fixed', 
+              left: popupPosition.x, 
+              top: popupPosition.y, 
+              transform: 'translate(-50%, -50%)', 
+              zIndex: 10001 
+            }} 
+            onClick={() => setHoveredReservation(null)}
+          >
+            <div className="popup-card-header"><span className="popup-icon">👤</span> {hoveredReservation.prenom} {hoveredReservation.nom}</div>
+            <div className="popup-card-body">
+              <div className="popup-info-line"><span className="popup-info-icon">🏢</span> {hoveredReservation.service}</div>
+              <div className="popup-info-line"><span className="popup-info-icon">📧</span> {hoveredReservation.email}</div>
+              <div className="popup-info-line"><span className="popup-info-icon">📝</span> {hoveredReservation.objet}</div>
+              <div className="popup-info-line"><span className="popup-info-icon">📅</span> {new Date(hoveredReservation.dateDebut).toLocaleDateString('fr-FR')} - {hoveredReservation.heureDebut} à {hoveredReservation.heureFin}</div>
+              {(hoveredReservation.salle.includes('Conseil') || hoveredReservation.salle.includes('Mariages')) && (
+                <>
+                  <div className="popup-info-line"><span className="popup-info-icon">🪑</span> {hoveredReservation.agencement || 'N/A'}</div>
+                  <div className="popup-info-line"><span className="popup-info-icon">👥</span> {hoveredReservation.nbPersonnes || 'N/A'} personnes</div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><div className="warning-modal-header"><span className="blocked-modal-emoji">🚫</span><h2 className="blocked-modal-title">Fermé</h2></div><p className="blocked-modal-message">Dimanche/Férié fermé.</p><button onClick={() => setBlockedDayModal(false)} className="blocked-close-button">Fermer</button></div></div>}
         {adminPasswordModal.show && <div className="modal-overlay"><div className="modal-content"><h3>🔑 Accès Administrateur</h3><input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" autoFocus /><div className="form-actions"><button className="btn-cancel" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button><button className="btn-submit" onClick={handleAdminPasswordSubmit}>Débloquer</button></div></div></div>}
         
         {/* ✅ MODALE PROGRESSION */}

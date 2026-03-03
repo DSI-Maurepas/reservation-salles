@@ -1,7 +1,7 @@
 // src/components/ReservationGrid.js
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import googleSheetsService from '../services/googleSheetsService';
+import apiService from '../services/apiService';
 import emailService from '../services/emailService';
 import icalService from '../services/icalService';
 import { SALLES, SERVICES, OBJETS_RESERVATION, HORAIRES, SALLES_ADMIN_ONLY, COULEURS_OBJETS, JOURS_FERIES, APP_CONFIG } from '../config/googleSheets';
@@ -39,8 +39,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionProgress, setSubmissionProgress] = useState({ current: 0, total: 0 });
   const [successModal, setSuccessModal] = useState({ show: false, reservations: [], message: '' });
-  const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [], conflictDetails: [] });
-  const [confirmModal, setConfirmModal] = useState({ show: false, reservations: [] });
+  const [warningModal, setWarningModal] = useState({ show: false, conflicts: [], validReservations: [] });
 
   const detailsRef = useRef(null);
   const [formData, setFormData] = useState({
@@ -77,8 +76,8 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
   const loadReservations = useCallback(async () => {
     setLoading(true);
     try {
-      const all = await googleSheetsService.getAllReservations();
-      const dStr = googleSheetsService.formatDate(currentDate);
+      const all = await apiService.getAllReservations();
+      const dStr = apiService.formatDate(currentDate);
       const dayRes = all.filter(res => res.statut !== 'cancelled' && (res.dateDebut === dStr || (res.dateDebut <= dStr && res.dateFin >= dStr)));
       setReservations(dayRes);
     } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -116,7 +115,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
     return () => { clearTimeout(timerWait); clearTimeout(timerFade); };
   }, [hoveredSalle, selections.length]);
 
-  const isJourFerie = (date) => JOURS_FERIES.includes(googleSheetsService.formatDate(date));
+  const isJourFerie = (date) => JOURS_FERIES.includes(apiService.formatDate(date));
   const isDimanche = (date) => date.getDay() === 0;
   const isDateInPast = (date) => { const t = new Date(); t.setHours(0,0,0,0); const c = new Date(date); c.setHours(0,0,0,0); return c < t; };
 
@@ -131,7 +130,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
 
   const handleMouseDown = (salle, hour, e) => {
     const sShort = salle.split(' - ')[0];
-    const res = reservations.find(r => r.salle.includes(sShort) && hour >= googleSheetsService.timeToFloat(r.heureDebut) && hour < googleSheetsService.timeToFloat(r.heureFin));
+    const res = reservations.find(r => r.salle.includes(sShort) && hour >= apiService.timeToFloat(r.heureDebut) && hour < apiService.timeToFloat(r.heureFin));
     if (res) {
       setPopupPosition({ x: e.clientX, y: e.clientY });
       setHoveredReservation(res);
@@ -270,7 +269,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
       if (isFullHour) grid.push(<div key={`t-${h}`} className="time-label" style={{ gridRow: `${row} / span 2` }}>{h}h</div>);
       SALLES.forEach((salle, idx) => {
         const sShort = salle.split(' - ')[0];
-        const res = reservations.find(r => r.salle.includes(sShort) && h >= googleSheetsService.timeToFloat(r.heureDebut) && h < googleSheetsService.timeToFloat(r.heureFin));
+        const res = reservations.find(r => r.salle.includes(sShort) && h >= apiService.timeToFloat(r.heureDebut) && h < apiService.timeToFloat(r.heureFin));
         const isLocked = SALLES_ADMIN_ONLY.some(a => salle.includes(a)) && !isAdminUnlocked;
         const selected = selections.some(sel => sel.salle === salle && h >= sel.startHour && h < sel.endHour) || (currentSelection && currentSelection.salle === salle && h >= currentSelection.startHour && h < currentSelection.endHour);
         let classes = `time-slot ${isFullHour ? 'full-hour-start' : 'half-hour-start'}`;
@@ -311,8 +310,8 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
       const mergedSelections = preMergeSelections(selections);
       let allCandidates = [];
       mergedSelections.forEach(sel => {
-        const dateStr = googleSheetsService.formatDate(currentDate);
-        const baseRes = { salle: sel.salle, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: googleSheetsService.formatTime(sel.startHour), heureFin: googleSheetsService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes || '', statut: 'active' };
+        const dateStr = apiService.formatDate(currentDate);
+        const baseRes = { salle: sel.salle, service: formData.service, nom: formData.nom, prenom: formData.prenom, email: formData.email, telephone: formData.telephone, dateDebut: dateStr, dateFin: dateStr, heureDebut: apiService.formatTime(sel.startHour), heureFin: apiService.formatTime(sel.endHour), objet: formData.objet, description: formData.description, recurrence: formData.recurrence ? 'OUI' : 'NON', recurrenceJusquau: formData.recurrenceJusquau, agencement: formData.agencement || '', nbPersonnes: formData.nbPersonnes || '', statut: 'active' };
         allCandidates.push(baseRes);
         if (formData.recurrence && formData.recurrenceJusquau) {
           const selDateObj = new Date(dateStr);
@@ -322,16 +321,16 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
              if (formData.recurrenceType === 'monthly') current.setMonth(current.getMonth() + 1); else if (formData.recurrenceType === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7);
              while (current <= end) { datesRecur.push(new Date(current)); if (formData.recurrenceType === 'monthly') current.setMonth(current.getMonth() + 1); else if (formData.recurrenceType === 'biweekly') current.setDate(current.getDate() + 14); else current.setDate(current.getDate() + 7); }
           }
-          datesRecur.forEach(date => { const dateRecurStr = googleSheetsService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); });
+          datesRecur.forEach(date => { const dateRecurStr = apiService.formatDate(date); allCandidates.push({ ...baseRes, dateDebut: dateRecurStr, dateFin: dateRecurStr }); });
         }
       });
-      const allExisting = await googleSheetsService.getAllReservations(true); 
-      const { conflicts, valid, conflictDetails } = checkConflicts(allCandidates, allExisting); 
+      const allExisting = await apiService.getAllReservations(true); 
+      const { conflicts, valid } = checkConflicts(allCandidates, allExisting); 
       
       setIsSubmitting(false); 
       
       if (conflicts.length > 0) {
-        setWarningModal({ show: true, conflicts, validReservations: valid, conflictDetails });
+        setWarningModal({ show: true, conflicts, validReservations: valid });
       } else {
         await finalizeReservation(valid);
       }
@@ -342,29 +341,28 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
   };
 
   const checkConflicts = (candidates, allExistingReservations) => {
-    const conflicts = []; const valid = []; const conflictDetails = [];
+    const conflicts = []; const valid = [];
     candidates.forEach(candidate => {
       const candidateStart = new Date(`${candidate.dateDebut}T${candidate.heureDebut}`);
       const candidateEnd = new Date(`${candidate.dateFin}T${candidate.heureFin}`);
       const candShortName = candidate.salle.split(' - ')[0].trim();
 
-      const blockedBy = allExistingReservations.find(existing => {
+      const hasConflict = allExistingReservations.some(existing => {
         if (existing.statut === 'cancelled') return false;
         const existShortName = existing.salle.split(' - ')[0].trim();
         if (candShortName !== existShortName) return false;
+
         const existingStart = new Date(`${existing.dateDebut}T${existing.heureDebut}`);
         const existingEnd = new Date(`${existing.dateFin || existing.dateDebut}T${existing.heureFin}`);
         return (candidateStart < existingEnd && candidateEnd > existingStart);
       });
-      if (blockedBy) { conflicts.push(candidate); conflictDetails.push({ candidate, blockedBy }); }
-      else valid.push(candidate);
+      if (hasConflict) conflicts.push(candidate); else valid.push(candidate);
     });
-    return { conflicts, valid, conflictDetails };
+    return { conflicts, valid };
   };
 
   const finalizeReservation = async (reservationsToSave) => {
-    setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] });
-    setConfirmModal({ show: false, reservations: [] });
+    setWarningModal({ show: false, conflicts: [], validReservations: [] });
 
     setIsSubmitting(true); 
     setSubmissionProgress({ current: 0, total: reservationsToSave.length });
@@ -374,7 +372,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
     try {
       const createdReservations = [];
       for (const res of reservationsToSave) {
-        const result = await googleSheetsService.addReservation(res);
+        const result = await apiService.addReservation(res);
         createdReservations.push({ ...res, id: result.id });
         setSubmissionProgress(prev => ({ ...prev, current: prev.current + 1 }));
         try { await emailService.sendConfirmation(res); } catch (e) { console.error(e); }
@@ -462,7 +460,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                 {/* ✅ SUPPRESSION DE SELECTION-COUNT COMME DEMANDÉ */}
                 {/* <p className="selection-count">...</p> SUPPRIMÉ */}
 
-                <div className="selections-summary">{preMergeSelections(selections).map((sel, idx) => (<div key={idx} className="selection-item">{sel.salle.split(' - ')[0]} : {googleSheetsService.formatTime(sel.startHour)} - {googleSheetsService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => {
+                <div className="selections-summary">{preMergeSelections(selections).map((sel, idx) => (<div key={idx} className="selection-item">{sel.salle.split(' - ')[0]} : {apiService.formatTime(sel.startHour)} - {apiService.formatTime(sel.endHour)}<button className="remove-selection-btn" onClick={() => {
                    const newSelections = selections.filter(s => !(s.salle === sel.salle && s.startHour >= sel.startHour && s.endHour <= sel.endHour));
                    if(newSelections.length === 0) {
                        setIsSidebarFading(true);
@@ -483,7 +481,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                   <input className="form-input" placeholder="Email *" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} required />
                   
                   {/* ✅ TÉLÉPHONE SEUL */}
-                  <input className="form-input" placeholder="Téléphone" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} />
+                  <input className="form-input" placeholder="Téléphone (Facultatif)" value={formData.telephone} onChange={e => setFormData({...formData, telephone: e.target.value})} />
                   
                   {/* ✅ SERVICE DESSOUS */}
                   <select className="form-select" value={formData.service} onChange={e => setFormData({...formData, service: e.target.value})} required>
@@ -506,7 +504,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                     </>
                   )}
 
-                  <textarea className="form-textarea" placeholder="Commentaire" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                  <textarea className="form-textarea" placeholder="Description (facultative)" rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
                   
                   <div className="recurrence-section-styled">
                     <div className="recurrence-box">
@@ -516,7 +514,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                         onChange={e => {
                            const isChecked = e.target.checked;
                            // ✅ DATE PAR DÉFAUT = CURRENT DATE
-                           const defaultDate = googleSheetsService.formatDate(currentDate);
+                           const defaultDate = apiService.formatDate(currentDate);
                            setFormData({...formData, recurrence: isChecked, recurrenceJusquau: isChecked ? defaultDate : ''});
                         }} 
                       />
@@ -527,13 +525,13 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
                         {/* ✅ CHAMPS RÉCURRENCE SUR 2 LIGNES */}
                         <div className="form-group">
                           <select className="form-select" value={formData.recurrenceType} onChange={e => setFormData({...formData, recurrenceType: e.target.value})}>
-                            <option value="weekly">Toutes les semaine</option>
-                            <option value="biweekly">Tous les 15 jours</option>
-                            <option value="monthly">Tous les mois</option>
+                            <option value="weekly">Chaque semaine</option>
+                            <option value="biweekly">Une semaine sur 2</option>
+                            <option value="monthly">Chaque mois</option>
                           </select>
                         </div>
                         <div className="form-group" style={{marginBottom:0}}>
-                          <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={googleSheetsService.formatDate(currentDate)} required={formData.recurrence} />
+                          <input type="date" className="form-input" placeholder="JJ/MM/AAAA" value={formData.recurrenceJusquau} onChange={e => setFormData({...formData, recurrenceJusquau: e.target.value})} min={apiService.formatDate(currentDate)} required={formData.recurrence} />
                         </div>
                       </div>
                     )}
@@ -630,99 +628,7 @@ function ReservationGrid({ selectedDate, onBack, editingReservation }) {
         </div>, document.body
       )}
 
-      {warningModal.show && createPortal(
-        <div className="modal-overlay" onClick={() => setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] })}>
-          <div className="warning-modal warning-modal-large" onClick={e => e.stopPropagation()}>
-            <div className="warning-modal-header">
-              <h2>⚠️ {warningModal.conflicts.length > 1 ? 'Conflits détectés' : 'Conflit détecté'}</h2>
-              <p className="warning-modal-subtitle">
-                {warningModal.conflicts.length} créneau{warningModal.conflicts.length > 1 ? 'x' : ''} en conflit
-                {warningModal.validReservations.length > 0 && ` · ${warningModal.validReservations.length} créneau${warningModal.validReservations.length > 1 ? 'x' : ''} disponible${warningModal.validReservations.length > 1 ? 's' : ''}`}
-              </p>
-            </div>
-            <div className="warning-modal-body">
-              <div className="conflict-section">
-                <div className="conflict-section-title">
-                  <span className="conflict-section-icon">🚫</span>
-                  <span>{warningModal.conflicts.length > 1 ? 'Créneaux bloqués' : 'Créneau bloqué'} ({warningModal.conflicts.length})</span>
-                </div>
-                <div className="conflict-list-new">
-                  {warningModal.conflictDetails.map((detail, i) => (
-                    <div key={i} className="conflict-item">
-                      <div className="conflict-item-date">
-                        📅 {new Date(detail.candidate.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                        <span className="conflict-item-hours"> · {detail.candidate.heureDebut} – {detail.candidate.heureFin}</span>
-                      </div>
-                      <div className="conflict-item-blocked-by">
-                        Occupé par : <strong>{detail.blockedBy.prenom} {detail.blockedBy.nom}</strong>
-                        {detail.blockedBy.service && <span className="conflict-item-service"> — {detail.blockedBy.service}</span>}
-                        <span className="conflict-item-hours"> ({detail.blockedBy.heureDebut} – {detail.blockedBy.heureFin})</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {warningModal.validReservations.length > 0 && (
-                <div className="valid-section">
-                  <div className="valid-section-title">
-                    <span className="valid-section-icon">✅</span>
-                    <span>{warningModal.validReservations.length > 1 ? 'Créneaux disponibles' : 'Créneau disponible'} ({warningModal.validReservations.length})</span>
-                  </div>
-                  <div className="valid-list">
-                    {warningModal.validReservations.map((res, i) => (
-                      <div key={i} className="valid-item">
-                        📅 {new Date(res.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                        <span className="conflict-item-hours"> · {res.heureDebut} – {res.heureFin}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="warning-modal-footer">
-              <button className="btn-conflict-reject" onClick={() => setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] })}>
-                ✕ Annuler toute la série
-              </button>
-              {warningModal.validReservations.length > 0 && (
-                <button className="btn-conflict-validate" onClick={() => {
-                  setWarningModal({ show: false, conflicts: [], validReservations: [], conflictDetails: [] });
-                  setConfirmModal({ show: true, reservations: warningModal.validReservations });
-                }}>
-                  ✓ {warningModal.validReservations.length > 1 ? `Valider les ${warningModal.validReservations.length} créneaux disponibles` : 'Valider le créneau disponible'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>, document.body
-      )}
-
-      {confirmModal.show && createPortal(
-        <div className="modal-overlay" onClick={() => setConfirmModal({ show: false, reservations: [] })}>
-          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
-            <div className="confirm-modal-header">
-              <h2>✅ Confirmer la réservation</h2>
-              <p className="confirm-modal-subtitle">
-                Les {confirmModal.reservations.length} créneau{confirmModal.reservations.length > 1 ? 'x' : ''} suivant{confirmModal.reservations.length > 1 ? 's' : ''} seront enregistré{confirmModal.reservations.length > 1 ? 's' : ''} :
-              </p>
-            </div>
-            <div className="confirm-modal-body">
-              <div className="confirm-list">
-                {confirmModal.reservations.map((res, i) => (
-                  <div key={i} className="confirm-item">
-                    📅 <strong>{new Date(res.dateDebut).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>
-                    <span className="conflict-item-hours"> · {res.heureDebut} – {res.heureFin}</span>
-                    {res.salle && <span className="confirm-item-salle"> — {res.salle.split(' - ')[0]}</span>}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="confirm-modal-footer">
-              <button className="btn-confirm-back" onClick={() => setConfirmModal({ show: false, reservations: [] })}>◀ Retour</button>
-              <button className="btn-confirm-ok" onClick={() => finalizeReservation(confirmModal.reservations)}>✓ Confirmer et enregistrer</button>
-            </div>
-          </div>
-        </div>, document.body
-      )}
+      {warningModal.show && <div className="modal-overlay"><div className="warning-modal"><div className="warning-modal-header"><h2>⚠️ Conflit</h2></div><div className="warning-modal-body"><p>{warningModal.conflicts.length} conflits détectés.</p></div><div className="warning-modal-footer"><button className="cancel-button" onClick={() => setWarningModal({show:false, conflicts:[], validReservations:[]})}>Annuler</button></div></div></div>}
       
       {blockedDayModal && <div className="blocked-modal-overlay" onClick={() => setBlockedDayModal(false)}><div className="blocked-modal"><h2>Salles fermées</h2><button onClick={() => setBlockedDayModal(false)}>Fermer</button></div></div>}
       {adminPasswordModal.show && <div className="modal-overlay"><div className="modal-content"><h3>🔑 Accès Administrateur</h3><p>Saisissez le mot de passe pour déverrouiller cette salle :</p><input type="password" value={adminPasswordModal.password} onChange={e => setAdminPasswordModal({...adminPasswordModal, password:e.target.value})} className="form-input" autoFocus /><div className="form-actions"><button className="btn-cancel" onClick={() => setAdminPasswordModal({show:false, password:''})}>Annuler</button><button className="btn-submit" onClick={handleAdminPasswordSubmit}>Débloquer</button></div></div></div>}
